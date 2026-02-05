@@ -1,17 +1,17 @@
-local HttpService = game:GetService("HttpService") -- V0.0.3
+local HttpService = game:GetService("HttpService") -- V0.0.2
 
-if not isfolder("NexaHub") then
-    makefolder("NexaHub")
+if not isfolder("NateiraHub") then
+    makefolder("NateiraHub")
 end
-if not isfolder("NexaHub/Config") then
-    makefolder("NexaHub/Config")
+if not isfolder("NateiraHub/Config") then
+    makefolder("NateiraHub/Config")
 end
 
 local gameName   = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
 gameName         = gameName:gsub("[^%w_ ]", "")
 gameName         = gameName:gsub("%s+", "_")
 
-local ConfigFile = "NexaHub/Config/NEX_" .. gameName .. ".json"
+local ConfigFile = "NateiraHub/Config/CHX_" .. gameName .. ".json"
 
 ConfigData       = {}
 Elements         = {}
@@ -54,7 +54,7 @@ end
 
 local Icons = {
     Nt        = "rbxassetid://84946340265305", 
-    Nexahub   = "rbxassetid://71947103252559",
+    lexshub   = "rbxassetid://71947103252559",
     player    = "rbxassetid://12120698352",
     web       = "rbxassetid://137601480983962",
     bag       = "rbxassetid://8601111810",
@@ -82,18 +82,13 @@ local Icons = {
     alert     = "rbxassetid://73186275216515",
     question  = "rbxassetid://17510196486",
     idea      = "rbxassetid://16833255748",
-    storm     = "rbxassetid://13321880293",
+    strom     = "rbxassetid://13321880293",
     water     = "rbxassetid://100076212630732",
     dcs       = "rbxassetid://15310731934",
     start     = "rbxassetid://108886429866687",
     next      = "rbxassetid://12662718374",
     rod       = "rbxassetid://103247953194129",
     fish      = "rbxassetid://97167558235554",
-    neon      = "rbxassetid://16548147978",
-    glow      = "rbxassetid://15854327938",
-    crystal   = "rbxassetid://14356789102",
-    sparkle   = "rbxassetid://14874392145",
-    gradient  = "rbxassetid://15938311322",
 }
 
 local UserInputService = game:GetService("UserInputService")
@@ -261,19 +256,19 @@ function CircleClick(Button, X, Y)
             Time, false, nil)
         for i = 1, 10 do
             Circle.ImageTransparency = Circle.ImageTransparency + 0.01
-            task.wait(Time / 10)
+            wait(Time / 10)
         end
         Circle:Destroy()
     end)
 end
 
-local NexaHub = {}
-function NexaHub:MakeNotify(NotifyConfig)
+local Chloex = {}
+function Chloex:MakeNotify(NotifyConfig)
     local NotifyConfig = NotifyConfig or {}
-    NotifyConfig.Title = NotifyConfig.Title or "NexaHub"
+    NotifyConfig.Title = NotifyConfig.Title or "Chloe X"
     NotifyConfig.Description = NotifyConfig.Description or "Notification"
     NotifyConfig.Content = NotifyConfig.Content or "Content"
-    NotifyConfig.Color = NotifyConfig.Color or Color3.fromRGB(0, 200, 255)
+    NotifyConfig.Color = NotifyConfig.Color or Color3.fromRGB(255, 0, 255)
     NotifyConfig.Time = NotifyConfig.Time or 0.5
     NotifyConfig.Delay = NotifyConfig.Delay or 5
     local NotifyFunction = {}
@@ -466,9 +461,9 @@ function NexaHub:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
-function Nx(msg, delay, color, title, desc)
-    return NexaHub:MakeNotify({
-        Title = title or "NexaHub",
+function Nt(msg, delay, color, title, desc)
+    return Chloex:MakeNotify({
+        Title = title or "NateiraHub",
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
@@ -476,78 +471,20 @@ function Nx(msg, delay, color, title, desc)
     })
 end
 
-local TransparencyManager = {
-    Windows = {},
-    TransparentMode = false,
-    DefaultTransparency = 0,
-    TransparentValue = 0.85
-}
-
-function TransparencyManager:SetTransparentMode(enabled)
-    self.TransparentMode = enabled
-    local targetTransparency = enabled and self.TransparentValue or self.DefaultTransparency
-    
-    for _, windowData in pairs(self.Windows) do
-        if windowData.Main and windowData.Main.Parent then
-            TweenService:Create(windowData.Main, TweenInfo.new(0.5), {
-                BackgroundTransparency = targetTransparency
-            }):Play()
-            
-            if windowData.Overlay then
-                windowData.Overlay.Visible = enabled
-                TweenService:Create(windowData.Overlay, TweenInfo.new(0.5), {
-                    BackgroundTransparency = enabled and 0.7 or 1
-                }):Play()
-            end
-        end
-    end
-end
-
-function TransparencyManager:RegisterWindow(windowInstance, mainFrame)
-    local windowId = #self.Windows + 1
-    local overlay = Instance.new("Frame")
-    overlay.Name = "TransparencyOverlay"
-    overlay.Size = UDim2.new(1, 0, 1, 0)
-    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    overlay.BackgroundTransparency = 1
-    overlay.ZIndex = -1
-    overlay.Parent = mainFrame
-    
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 30)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10, 10, 20)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
-    })
-    gradient.Rotation = 45
-    gradient.Parent = overlay
-    
-    self.Windows[windowId] = {
-        Instance = windowInstance,
-        Main = mainFrame,
-        Overlay = overlay
-    }
-    
-    return windowId
-end
-
-function NexaHub:Window(GuiConfig)
+function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
-    GuiConfig.Title        = GuiConfig.Title or "NexaHub"
-    GuiConfig.Footer       = GuiConfig.Footer or "NexaHub :3"
-    GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(0, 200, 255)
+    GuiConfig.Title        = GuiConfig.Title or "Chloe X"
+    GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
+    GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
-    GuiConfig.Transparent  = GuiConfig.Transparent or false
-    GuiConfig.Image        = GuiConfig.Image or Icons.Nexahub
-    GuiConfig.BlurRadius   = GuiConfig.BlurRadius or 10
 
     CURRENT_VERSION        = GuiConfig.Version
     LoadConfigFromFile()
 
     local GuiFunc = {}
 
-    local NexaHubUI = Instance.new("ScreenGui");
+    local Chloeex = Instance.new("ScreenGui");
     local DropShadowHolder = Instance.new("Frame");
     local DropShadow = Instance.new("ImageLabel");
     local Main = Instance.new("Frame");
@@ -569,12 +506,11 @@ function NexaHub:Window(GuiConfig)
     local LayersReal = Instance.new("Frame");
     local LayersFolder = Instance.new("Folder");
     local LayersPageLayout = Instance.new("UIPageLayout");
-    local TransparentToggle = Instance.new("TextButton");
 
-    NexaHubUI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    NexaHubUI.Name = "NexaHubUI"
-    NexaHubUI.ResetOnSpawn = false
-    NexaHubUI.Parent = game:GetService("CoreGui")
+    Chloeex.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    Chloeex.Name = "Chloeex"
+    Chloeex.ResetOnSpawn = false
+    Chloeex.Parent = game:GetService("CoreGui")
 
     DropShadowHolder.BackgroundTransparency = 1
     DropShadowHolder.BorderSizePixel = 0
@@ -587,10 +523,10 @@ function NexaHub:Window(GuiConfig)
     end
     DropShadowHolder.ZIndex = 0
     DropShadowHolder.Name = "DropShadowHolder"
-    DropShadowHolder.Parent = NexaHubUI
+    DropShadowHolder.Parent = Chloeex
 
-    DropShadowHolder.Position = UDim2.new(0, (NexaHubUI.AbsoluteSize.X // 2 - DropShadowHolder.Size.X.Offset // 2), 0,
-        (NexaHubUI.AbsoluteSize.Y // 2 - DropShadowHolder.Size.Y.Offset // 2))
+    DropShadowHolder.Position = UDim2.new(0, (Chloeex.AbsoluteSize.X // 2 - DropShadowHolder.Size.X.Offset // 2), 0,
+        (Chloeex.AbsoluteSize.Y // 2 - DropShadowHolder.Size.Y.Offset // 2))
     DropShadow.Image = "rbxassetid://6015897843"
     DropShadow.ImageColor3 = Color3.fromRGB(15, 15, 15)
     DropShadow.ImageTransparency = 1
@@ -614,7 +550,7 @@ function NexaHub:Window(GuiConfig)
         Main.ImageTransparency = GuiConfig.ThemeTransparency or 0.15
     else
         Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Main.BackgroundTransparency = GuiConfig.Transparent and 0.85 or 0
+        Main.BackgroundTransparency = 0
     end
 
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -626,28 +562,6 @@ function NexaHub:Window(GuiConfig)
     Main.Parent = DropShadow
 
     UICorner.Parent = Main
-
-    local overlay = Instance.new("Frame")
-    overlay.Name = "TransparencyOverlay"
-    overlay.Size = UDim2.new(1, 0, 1, 0)
-    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    overlay.BackgroundTransparency = 1
-    overlay.ZIndex = -1
-    overlay.Parent = Main
-    
-    local gradient = Instance.new("UIGradient")
-    gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 30)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(10, 10, 20)),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 30))
-    })
-    gradient.Rotation = 45
-    gradient.Parent = overlay
-    
-    if GuiConfig.Transparent then
-        overlay.BackgroundTransparency = 0.7
-        Main.BackgroundTransparency = 0.85
-    end
 
     Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Top.BackgroundTransparency = 0.9990000128746033
@@ -733,59 +647,6 @@ function NexaHub:Window(GuiConfig)
     ImageLabel2.Position = UDim2.new(0.5, 0, 0.5, 0)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
-
-    TransparentToggle.Font = Enum.Font.SourceSans
-    TransparentToggle.Text = ""
-    TransparentToggle.TextColor3 = Color3.fromRGB(0, 0, 0)
-    TransparentToggle.TextSize = 14
-    TransparentToggle.AnchorPoint = Vector2.new(1, 0.5)
-    TransparentToggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    TransparentToggle.BackgroundTransparency = 0.9990000128746033
-    TransparentToggle.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    TransparentToggle.BorderSizePixel = 0
-    TransparentToggle.Position = UDim2.new(1, -68, 0.5, 0)
-    TransparentToggle.Size = UDim2.new(0, 25, 0, 25)
-    TransparentToggle.Name = "TransparentToggle"
-    TransparentToggle.Parent = Top
-
-    local TransparentIcon = Instance.new("ImageLabel")
-    TransparentIcon.Image = Icons.glow
-    TransparentIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-    TransparentIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    TransparentIcon.BackgroundTransparency = 0.9990000128746033
-    TransparentIcon.ImageColor3 = GuiConfig.Color
-    TransparentIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    TransparentIcon.BorderSizePixel = 0
-    TransparentIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    TransparentIcon.Size = UDim2.new(1, -9, 1, -9)
-    TransparentIcon.Parent = TransparentToggle
-
-    TransparentToggle.Activated:Connect(function()
-        CircleClick(TransparentToggle, Mouse.X, Mouse.Y)
-        GuiConfig.Transparent = not GuiConfig.Transparent
-        
-        if GuiConfig.Transparent then
-            TweenService:Create(Main, TweenInfo.new(0.5), {
-                BackgroundTransparency = 0.85
-            }):Play()
-            TweenService:Create(overlay, TweenInfo.new(0.5), {
-                BackgroundTransparency = 0.7
-            }):Play()
-            TweenService:Create(TransparentIcon, TweenInfo.new(0.3), {
-                ImageColor3 = Color3.fromRGB(0, 255, 255)
-            }):Play()
-        else
-            TweenService:Create(Main, TweenInfo.new(0.5), {
-                BackgroundTransparency = 0
-            }):Play()
-            TweenService:Create(overlay, TweenInfo.new(0.5), {
-                BackgroundTransparency = 1
-            }):Play()
-            TweenService:Create(TransparentIcon, TweenInfo.new(0.3), {
-                ImageColor3 = GuiConfig.Color
-            }):Play()
-        end
-    end)
 
     LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     LayersTab.BackgroundTransparency = 0.9990000128746033
@@ -888,8 +749,8 @@ function NexaHub:Window(GuiConfig)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
     function GuiFunc:DestroyGui()
-        if CoreGui:FindFirstChild("NexaHubUI") then
-            NexaHubUI:Destroy()
+        if CoreGui:FindFirstChild("Chloeex") then
+            Chloeex:Destroy()
         end
     end
 
@@ -946,7 +807,7 @@ function NexaHub:Window(GuiConfig)
         Title.Position = UDim2.new(0, 0, 0, 4)
         Title.BackgroundTransparency = 1
         Title.Font = Enum.Font.GothamBold
-        Title.Text = "NexaHub Window"
+        Title.Text = "NateiraHub Window"
         Title.TextSize = 22
         Title.TextColor3 = Color3.fromRGB(255, 255, 255)
         Title.ZIndex = 52
@@ -995,7 +856,7 @@ function NexaHub:Window(GuiConfig)
         Instance.new("UICorner", Cancel).CornerRadius = UDim.new(0, 6)
 
         Yes.MouseButton1Click:Connect(function()
-            if NexaHubUI then NexaHubUI:Destroy() end
+            if Chloeex then Chloeex:Destroy() end
             if game.CoreGui:FindFirstChild("ToggleUIButton") then
                 game.CoreGui.ToggleUIButton:Destroy()
             end
@@ -1017,7 +878,7 @@ function NexaHub:Window(GuiConfig)
         MainButton.Size = UDim2.new(0, 40, 0, 40)
         MainButton.Position = UDim2.new(0, 20, 0, 100)
         MainButton.BackgroundTransparency = 1
-        MainButton.Image = GuiConfig.Image
+        MainButton.Image = "rbxassetid://" .. GuiConfig.Image
         MainButton.ScaleType = Enum.ScaleType.Fit
 
         local UICorner = Instance.new("UICorner")
@@ -1183,7 +1044,7 @@ function NexaHub:Window(GuiConfig)
     DropPageLayout.Archivable = false
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
-
+    --// Tabs
     local Tabs = {}
     local CountTab = 0
     local CountDropdown = 0
@@ -1344,7 +1205,7 @@ function NexaHub:Window(GuiConfig)
                 ):Play()
             end
         end)
-
+        --// Section
         local Sections = {}
         local CountSection = 0
         function Sections:AddSection(Title, AlwaysOpen)
@@ -1455,6 +1316,7 @@ function NexaHub:Window(GuiConfig)
             }
             UIGradient.Parent = SectionDecideFrame
 
+            --// Section Add
             local SectionAdd = Instance.new("Frame");
             local UICorner8 = Instance.new("UICorner");
             local UIListLayout2 = Instance.new("UIListLayout");
@@ -2833,11 +2695,7 @@ function NexaHub:Window(GuiConfig)
         return Sections
     end
 
-    TransparencyManager:RegisterWindow(NexaHubUI, Main)
-    
-    LoadConfigElements()
-
     return Tabs
 end
 
-return NexaHub
+return Chloex
