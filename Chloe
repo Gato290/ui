@@ -1,17 +1,17 @@
 local HttpService = game:GetService("HttpService") -- V0.0.2
 
-if not isfolder("NateiraHub") then
-    makefolder("NateiraHub")
+if not isfolder("NexaHub") then
+    makefolder("NexaHub")
 end
-if not isfolder("NateiraHub/Config") then
-    makefolder("NateiraHub/Config")
+if not isfolder("NexaHub/Config") then
+    makefolder("NexaHub/Config")
 end
 
 local gameName   = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
 gameName         = gameName:gsub("[^%w_ ]", "")
 gameName         = gameName:gsub("%s+", "_")
 
-local ConfigFile = "NateiraHub/Config/CHX_" .. gameName .. ".json"
+local ConfigFile = "NexaHub/Config/CHX_" .. gameName .. ".json"
 
 ConfigData       = {}
 Elements         = {}
@@ -463,7 +463,7 @@ end
 
 function Nt(msg, delay, color, title, desc)
     return Chloex:MakeNotify({
-        Title = title or "NateiraHub",
+        Title = title or "NexaHub",
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
@@ -807,7 +807,7 @@ function Chloex:Window(GuiConfig)
         Title.Position = UDim2.new(0, 0, 0, 4)
         Title.BackgroundTransparency = 1
         Title.Font = Enum.Font.GothamBold
-        Title.Text = "NateiraHub Window"
+        Title.Text = "NexaHub Window"
         Title.TextSize = 22
         Title.TextColor3 = Color3.fromRGB(255, 255, 255)
         Title.ZIndex = 52
