@@ -10,44 +10,10 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 
 Icon Name
 ```lua
-alert
-bag
-boss
-cart
-compas
-crosshair
-dcs
-discord
-eyes
-fish
-folder
-gamepad
-gps
-home
-idea
-lexshub
-loop
-menu
-next
-Nt
-payment
-player
-plug
-question
-rod
-scan
-scroll
-settings
-shop
-skeleton
-star
-start
-stat
-strom
-sword
-user
-water
-web
+alert, bag, boss, cart, compas, crosshair, dcs, discord, eyes, fish, folder,
+gamepad, gps, home, idea, lexshub, loop, menu, next, Nt, payment, player,
+plug, question, rod, scan, scroll, settings, shop, skeleton, star, start,
+stat, strom, sword, user, water, web
 ```
 
 Tabs
