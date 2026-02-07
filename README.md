@@ -8,6 +8,48 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Chloe%20X%20NexaHub"))()
 ```
 
+Icon Name
+```lua
+alert
+bag
+boss
+cart
+compas
+crosshair
+dcs
+discord
+eyes
+fish
+folder
+gamepad
+gps
+home
+idea
+lexshub
+loop
+menu
+next
+Nt
+payment
+player
+plug
+question
+rod
+scan
+scroll
+settings
+shop
+skeleton
+star
+start
+stat
+strom
+sword
+user
+water
+web
+```
+
 Tabs
 ```lua
 local Tabs = {
@@ -507,8 +549,4 @@ Sec.Ui:AddInput({
         -- Contoh simpan atau bind hotkey
     end
 })
-```
-Icon Name
-```lua
-
 ```
