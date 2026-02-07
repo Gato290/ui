@@ -196,6 +196,36 @@ Sec.Dropdwon:AddDropdown({
 
 ```
 
+Method Dropdwom
+```lua
+-- 1. Get Value
+local currentExample = ExampleSelect:GetValue()
+print("Current example selected:", currentExample)
+
+-- 2. Set Value
+-- Single select
+ExampleSelect:Set("Example Option A")
+
+-- Multi select
+ExampleMultiSelect:Set({"Example Option 1", "Example Option 2"})
+
+-- 3. Clear Options
+ExampleSelect:Clear()
+
+-- 4. Add New Option
+ExampleSelect:AddOption("Example Option X")
+ExampleSelect:AddOption({Label = "Example Label Y", Value = "example_value_y"})
+
+-- 5. Set All Options
+-- Update all options at once, with default value
+ExampleSelect:SetValues({
+    "Example Option A",
+    "Example Option B",
+    "Example Option C",
+    {Label = "Example Label D", Value = "example_value_d"}
+}, "Example Option A") -- Default value after update
+```
+
 Input
 ```lua
 Sec.Input:AddInput({
@@ -234,6 +264,22 @@ Sec.Input:AddInput({
         end
     end
 })
+```
+
+Method Input
+```lua
+-- 1. Get Value
+local currentExampleInput = ExampleInput.Value
+-- atau
+local currentExampleInput = ExampleInput:Get()
+print("Current example input:", currentExampleInput)
+
+-- 2. Set Value
+-- Update input box value
+ExampleInput:Set("ExampleNewValue123")
+
+-- Clear input
+ExampleInput:Set("")
 ```
 
 Panel
@@ -280,6 +326,11 @@ Sec.Panel:AddPanel({
 })
 ```
 
+Method Panel
+```lua
+PanelFunc:GetInput()
+```
+
 Paragraph
 ```lua
 -- Example Paragraph (Simple)
@@ -317,6 +368,11 @@ Sec.Paragraph:AddParagraph({
     end
 })
 ```
+Method Paragraph
+```lua
+ParagraphFunc:SetContent(newContent)
+```
+
 Divider & SubSection
 ```lua
 Sec.Other:AddDivider()
@@ -387,6 +443,11 @@ local exampleCustomNotify = Chloex:MakeNotify({
     Content = "Click or close manually",  -- Content message
     Delay = 60                            -- Max display time (seconds)
 })
+```
+
+Method Notify
+```lua
+NotifyFunc:Close()
 ```
 
 Ui
