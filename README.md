@@ -1,3 +1,5 @@
+![Uploading image.png…]()
+
 loadstring
 ```lua
 -- Pilih salah satu
