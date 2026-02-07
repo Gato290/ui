@@ -20,12 +20,16 @@ local Tabs = {
 
 Section
 ```lua
+local Sec = {}
+
 Sec.Section1 = Tabs.Main:AddSection("Section Example 1", true) -- true = selalu terbuka tidak bisa di tutup
 Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara default 
 ```
 
 Botton
 ```lua
+Sec.Botton = Tabs.Main:AddSection("Botton")
+
 -- Example Button (Single)
 Sec.Botton:AddButton({
     Title = "Example",
@@ -53,6 +57,8 @@ Sec.Botton:AddButton({
 
 Toggle
 ```lua
+Sec.Toggle = Tabs.Main:AddSection("Toggle")
+
 -- Example Toggle (Basic)
 Sec.Toggle:AddToggle({
     Title = "Example",
@@ -103,6 +109,8 @@ Sec.Toggle:AddToggle({
 ```
 Slider
 ```lua
+Sec.Slider = Tabs.Main:AddSection("Slider") 
+
 -- Example Slider (Basic)
 Sec.Slider:AddSlider({
     Title = "Example",
@@ -135,6 +143,8 @@ Sec.Slider:AddSlider({
 
 Dropdwom
 ```lua
+Sec.Dropdwon = Tabs.Main:AddSection("Dropdown")
+
 -- Example Dropdown (Single Select)
 Sec.Dropdwon:AddDropdown({
     Title = "Example",
@@ -228,6 +238,8 @@ ExampleSelect:SetValues({
 
 Input
 ```lua
+Sec.Input = Tabs.Main:AddSection("Input")
+
 Sec.Input:AddInput({
     Title = "Username",
     Content = "Enter your username",
@@ -284,6 +296,8 @@ ExampleInput:Set("")
 
 Panel
 ```lua
+Sec.Panel = Tabs.Main:AddSection("Panel")
+
 -- Example Panel (Single Button)
 Sec.Panel:AddPanel({
     Title = "Example",
@@ -333,6 +347,8 @@ PanelFunc:GetInput()
 
 Paragraph
 ```lua
+Sec.Paragraph = Tabs.Main:AddSection("Paragraph") 
+
 -- Example Paragraph (Simple)
 Sec.Paragraph:AddParagraph({
     Title = "Example",
@@ -375,6 +391,8 @@ ParagraphFunc:SetContent(newContent)
 
 Divider & SubSection
 ```lua
+Sec.Other = Tabs.Main:AddSection("SubSection & Divider")
+
 Sec.Other:AddDivider()
 Sec.Other:AddSubSection("Example Sub Section")
 ```
@@ -452,6 +470,8 @@ NotifyFunc:Close()
 
 Ui
 ```lua
+Sec.Ui = Tabs.Main:AddSection("Ui")
+
 -- Example Input: UI Transparency
 Sec.Ui:AddInput({
     Title = "Example",
