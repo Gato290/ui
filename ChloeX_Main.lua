@@ -519,3 +519,5 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
+
+bagusin lagi
