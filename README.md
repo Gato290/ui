@@ -26,7 +26,7 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 List icon yang bisa dipakai di tab / section / paragraph.
 ```lua
 alert, bag, boss, cart, compas, crosshair, dcs, discord, eyes, fish, folder,
-gamepad, gps, home, idea, lexshub, loop, menu, next, Nt, payment, player,
+gamepad, gps, home, idea, lexshub, loop, menu, next, Notify, payment, player,
 plug, question, rod, scan, scroll, settings, shop, skeleton, star, start,
 stat, strom, sword, user, water, web
 ```
@@ -67,7 +67,7 @@ Sec.Botton:AddButton({
     Title = "Example",
     Callback = function()
         print("This is an example button")
-        Nt("Example clicked!", 2)
+        Notify("Example clicked!", 2)
     end
 })
 ```
@@ -78,13 +78,13 @@ Sec.Botton:AddButton({
     Title = "Example",
     Callback = function()
         print("Example ON")
-        Nt("Example enabled!", 2)
+        Notify("Example enabled!", 2)
     end,
 
     SubTitle = "Example Off",
     SubCallback = function()
         print("Example OFF")
-        Nt("Example disabled!", 2)
+        Notify("Example disabled!", 2)
     end
 })
 ```
@@ -104,9 +104,9 @@ Sec.Toggle:AddToggle({
         print("Example toggle:", value)
 
         if value then
-            Nt("Example enabled!", 2)
+            Notify("Example enabled!", 2)
         else
-            Nt("Example disabled!", 2)
+            Notify("Example disabled!", 2)
         end
     end
 })
@@ -122,10 +122,10 @@ Sec.Toggle:AddToggle({
     Callback = function(value)
         if value then
             print("Example ON")
-            Nt("Example enabled!", 2)
+            Notify("Example enabled!", 2)
         else
             print("Example OFF")
-            Nt("Example disabled!", 2)
+            Notify("Example disabled!", 2)
         end
     end
 })
@@ -140,9 +140,9 @@ Sec.Toggle:AddToggle({
     Default = false,
     Callback = function(value)
         if value then
-            Nt("Example enabled!", 2)
+            Notify("Example enabled!", 2)
         else
-            Nt("Example disabled!", 2)
+            Notify("Example disabled!", 2)
         end
     end
 })
@@ -324,7 +324,7 @@ Sec.Input:AddInput({
             print("Adding", amount, "coins")
             -- Add coins logic
         else
-            Nt("Invalid amount!", 3)
+            Notify("Invalid amount!", 3)
         end
     end
 })
@@ -362,7 +362,7 @@ Sec.Panel:AddPanel({
     ButtonCallback = function(value)
         print("Example value:", value)
         -- Example logic here
-        Nt("Example action executed!", 2)
+        Notify("Example action executed!", 2)
     end
 })
 ```
@@ -378,9 +378,9 @@ Sec.Panel:AddPanel({
     ButtonCallback = function(value)
         if value ~= "" then
             print("Example save:", value)
-            Nt("Example saved!", 2)
+            Notify("Example saved!", 2)
         else
-            Nt("Example name required!", 2)
+            Notify("Example name required!", 2)
         end
     end,
 
@@ -388,9 +388,9 @@ Sec.Panel:AddPanel({
     SubButtonCallback = function(value)
         if value ~= "" then
             print("Example load:", value)
-            Nt("Example loaded!", 2)
+            Notify("Example loaded!", 2)
         else
-            Nt("Example name required!", 2)
+            Notify("Example name required!", 2)
         end
     end
 })
@@ -456,25 +456,25 @@ Sec.Other:AddSubSection("Example Sub Section")
 # 🔔 Notification
 ```lua
 -- Basic notification
-Nt(
+Notify(
     "Example message"  -- Notification message
 )
 
 -- Notification with custom duration
-Nt(
+Notify(
     "Example started!",  -- Message
     5                   -- Duration in seconds
 )
 
 -- Notification with custom color
-Nt(
+Notify(
     "Example success!",                  -- Message
     3,                                 -- Duration
     Color3.fromRGB(0, 255, 0)           -- Color
 )
 
 -- Full notification (message, duration, color, title, subtitle)
-Nt(
+Notify(
     "Example completed",                -- Main message
     4,                                 -- Duration
     Color3.fromRGB(0, 208, 255),       -- Color
