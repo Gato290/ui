@@ -49,8 +49,8 @@ local Window = Chloex:Window({
 tambahan ``Configname = "MyCustomConfig"``
 ```lua
 local Window = Chloex:Window({
-    Title = "NexaHub | v0.2.0 |",           -- Judul window
-    Footer = "Premium",          -- Footer text
+    Title = "Title",           -- Judul window
+    Footer = "Footer",          -- Footer text
     Color = Color3.fromRGB(0, 208, 255),  -- Warna utama
     Version = 1.0,                -- Versi config
     ["Tab Width"] = 120,          -- Lebar sidebar tab
