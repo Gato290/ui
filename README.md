@@ -12,7 +12,7 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 
 Pilih salah satu versi.
 
-## loadstring
+## loadstring v1
 ```lua
 -- Pilih salah satu
 
@@ -21,7 +21,10 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 -- NexaHub
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Chloe%20X%20NexaHub"))()
 ```
-
+## loadstring v2
+```lua
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
+```
 # 🎨 Icon Name
 List icon yang bisa dipakai di tab / section / paragraph.
 ```lua
@@ -29,6 +32,31 @@ alert, bag, boss, cart, compas, crosshair, dcs, discord, eyes, fish, folder,
 gamepad, gps, home, idea, lexshub, loop, menu, next, Notify, payment, player,
 plug, question, rod, scan, scroll, settings, shop, skeleton, star, start,
 stat, strom, sword, user, water, web
+```
+
+# Window v1
+```lua
+local Window = Chloex:Window({
+    Title = "Title",           -- Judul window
+    Footer = "Footer",          -- Footer text
+    Color = Color3.fromRGB(0, 208, 255),  -- Warna utama
+    Version = 1.0,                -- Versi config
+    ["Tab Width"] = 120,          -- Lebar sidebar tab
+    Image = "70884221600423", -- Icon untuk toggle button
+})
+```
+## Window v2
+tambahan ``Configname = "MyCustomConfig"``
+```lua
+local Window = Chloex:Window({
+    Title = "NexaHub | v0.2.0 |",           -- Judul window
+    Footer = "Premium",          -- Footer text
+    Color = Color3.fromRGB(0, 208, 255),  -- Warna utama
+    Version = 1.0,                -- Versi config
+    ["Tab Width"] = 120,          -- Lebar sidebar tab
+    Image = "70884221600423", -- Icon untuk toggle button
+    Configname = "MyCustomConfig"  -- Nama folder config
+})
 ```
 
 # 🗂 Tabs
