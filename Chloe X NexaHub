@@ -1,3 +1,4 @@
+
 local HttpService = game:GetService("HttpService") -- V0.0.2
 
 if not isfolder("NexaHub") then
@@ -63,16 +64,16 @@ local Icons = {
     discord   = "rbxassetid://94434236999817",
     eyes      = "rbxassetid://14321059114",
     fish      = "rbxassetid://97167558235554",
-    folder      = "rbxassetid://111411260968321",
+    folder    = "rbxassetid://111411260968321",
     gamepad   = "rbxassetid://84173963561612",
     gps       = "rbxassetid://17824309485",
-    home       = "rbxassetid://70416927963252",
+    home      = "rbxassetid://70416927963252",
     idea      = "rbxassetid://16833255748",
     lexshub   = "rbxassetid://71947103252559",
     loop      = "rbxassetid://122032243989747",
     menu      = "rbxassetid://6340513838",
     next      = "rbxassetid://12662718374",
-    Nt        = "rbxassetid://70884221600423",
+    Notify    = "rbxassetid://70884221600423",
     payment   = "rbxassetid://18747025078",
     player    = "rbxassetid://12120698352",
     plug      = "rbxassetid://137601480983962",
@@ -463,7 +464,7 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
-function (msg, delay, color, title, desc)
+function Notify(msg, delay, color, title, desc)
     return Chloex:MakeNotify({
         Title = title or "NexaHub",
         Description = desc or "Notification",
