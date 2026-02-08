@@ -1,5 +1,16 @@
 ![ChloeXUi](https://i.imgur.com/8KqTL0X.jpeg)
 
+# Chloe X UI — Documentation (GitHub README)
+
+UI library Roblox **Chloe X**
+Support: VikaiHub & NexaHub version
+Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dropdown, dll.
+
+> **Catatan:** Dokumentasi ini hanya menjelaskan cara pakai.
+> **Tidak ada satu pun kode yang dihapus atau diubah** dari source contoh.
+# 📥 Load UI
+
+Pilih salah satu versi.
 
 ## loadstring
 ```lua
@@ -11,7 +22,8 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Chloe%20X%20NexaHub"))()
 ```
 
-Icon Name
+# 🎨 Icon Name
+List icon yang bisa dipakai di tab / section / paragraph.
 ```lua
 alert, bag, boss, cart, compas, crosshair, dcs, discord, eyes, fish, folder,
 gamepad, gps, home, idea, lexshub, loop, menu, next, Nt, payment, player,
@@ -19,7 +31,8 @@ plug, question, rod, scan, scroll, settings, shop, skeleton, star, start,
 stat, strom, sword, user, water, web
 ```
 
-Tabs
+# 🗂 Tabs
+Contoh membuat tab UI.
 ```lua
 local Tabs = {
     Home = Window:AddTab({
@@ -34,7 +47,8 @@ local Tabs = {
 }
 ```
 
-Section
+# 📦 Section
+Section adalah container untuk button/toggle dll.
 ```lua
 local Sec = {}
 
@@ -42,7 +56,9 @@ Sec.Section1 = Tabs.Main:AddSection("Section Example 1", true) -- true = selalu 
 Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara default 
 ```
 
-Botton
+# 🔘 Button
+
+## Single Button
 ```lua
 Sec.Botton = Tabs.Main:AddSection("Botton")
 
@@ -54,7 +70,9 @@ Sec.Botton:AddButton({
         Nt("Example clicked!", 2)
     end
 })
-
+```
+## Dual Button
+```lua
 -- Example Button (Dual Button)
 Sec.Botton:AddButton({
     Title = "Example",
@@ -71,11 +89,14 @@ Sec.Botton:AddButton({
 })
 ```
 
-Toggle
+# 🔁 Toggle
 ```lua
 Sec.Toggle = Tabs.Main:AddSection("Toggle")
+```
 
--- Example Toggle (Basic)
+## Basic
+
+```lua
 Sec.Toggle:AddToggle({
     Title = "Example",
     Default = false,
@@ -89,8 +110,11 @@ Sec.Toggle:AddToggle({
         end
     end
 })
+```
 
--- Example Toggle (With Title2)
+## With Title2
+
+```lua
 Sec.Toggle:AddToggle({
     Title = "Example",
     Title2 = "Example Sub Title",
@@ -105,29 +129,34 @@ Sec.Toggle:AddToggle({
         end
     end
 })
+```
 
--- Example Toggle (With Content)
+## With Content
+
+```lua
 Sec.Toggle:AddToggle({
     Title = "Example",
     Content = "This is an example toggle description",
     Default = false,
     Callback = function(value)
         if value then
-            -- Enable example feature
             Nt("Example enabled!", 2)
         else
-            -- Disable example feature
             Nt("Example disabled!", 2)
         end
     end
 })
-
 ```
-Slider
+
+# 🎚 Slider
+
 ```lua
 Sec.Slider = Tabs.Main:AddSection("Slider") 
+```
 
--- Example Slider (Basic)
+## Basic
+
+```lua
 Sec.Slider:AddSlider({
     Title = "Example",
     Content = "Example slider description",
@@ -137,11 +166,13 @@ Sec.Slider:AddSlider({
     Increment = 1,
     Callback = function(value)
         print("Example slider value:", value)
-        -- Example logic here
     end
 })
+```
 
--- Example Slider (Alternative Example)
+## Alternative
+
+```lua
 Sec.Slider:AddSlider({
     Title = "Example",
     Content = "Another example slider",
@@ -151,17 +182,20 @@ Sec.Slider:AddSlider({
     Increment = 5,
     Callback = function(value)
         print("Example value:", value)
-        -- Another example logic
     end
 })
-
 ```
 
-Dropdwom
+
+# 📂 Dropdown
+
 ```lua
 Sec.Dropdwon = Tabs.Main:AddSection("Dropdown")
+```
 
--- Example Dropdown (Single Select)
+## Single
+
+```lua
 Sec.Dropdwon:AddDropdown({
     Title = "Example",
     Content = "Example dropdown description",
@@ -175,11 +209,13 @@ Sec.Dropdwon:AddDropdown({
     Default = "Option A",
     Callback = function(value)
         print("Example selected:", value)
-        -- Example logic here
     end
 })
+```
 
--- Example Dropdown (Multi Select)
+## Multi
+
+```lua
 Sec.Dropdwon:AddDropdown({
     Title = "Example",
     Content = "Example multi dropdown description",
@@ -199,11 +235,13 @@ Sec.Dropdwon:AddDropdown({
         for _, v in ipairs(selectedTable) do
             print("- " .. v)
         end
-        -- Example logic here
     end
 })
+```
 
--- Example Dropdown (Label + Value)
+## Label + Value
+
+```lua
 Sec.Dropdwon:AddDropdown({
     Title = "Example",
     Content = "Example value dropdown description",
@@ -216,13 +254,11 @@ Sec.Dropdwon:AddDropdown({
     Default = "value_1",
     Callback = function(value)
         print("Example value selected:", value)
-        -- Example logic here
     end
 })
-
 ```
 
-Method Dropdwom
+## Funcions Dropdwom
 ```lua
 -- 1. Get Value
 local currentExample = ExampleSelect:GetValue()
@@ -252,7 +288,7 @@ ExampleSelect:SetValues({
 }, "Example Option A") -- Default value after update
 ```
 
-Input
+# ⌨ Input
 ```lua
 Sec.Input = Tabs.Main:AddSection("Input")
 
@@ -294,7 +330,7 @@ Sec.Input:AddInput({
 })
 ```
 
-Method Input
+## Funcions Input
 ```lua
 -- 1. Get Value
 local currentExampleInput = ExampleInput.Value
@@ -310,10 +346,12 @@ ExampleInput:Set("ExampleNewValue123")
 ExampleInput:Set("")
 ```
 
-Panel
+# 🧾 Panel
 ```lua
 Sec.Panel = Tabs.Main:AddSection("Panel")
-
+```
+# Single Button
+```lua
 -- Example Panel (Single Button)
 Sec.Panel:AddPanel({
     Title = "Example",
@@ -327,7 +365,9 @@ Sec.Panel:AddPanel({
         Nt("Example action executed!", 2)
     end
 })
-
+```
+# Dual Button
+```lua
 -- Example Panel (Dual Button)
 Sec.Panel:AddPanel({
     Title = "Example",
@@ -356,12 +396,12 @@ Sec.Panel:AddPanel({
 })
 ```
 
-Method Panel
+## Funcions Panel
 ```lua
 PanelFunc:GetInput()
 ```
 
-Paragraph
+# 📄 Paragraph
 ```lua
 Sec.Paragraph = Tabs.Main:AddSection("Paragraph") 
 
@@ -400,12 +440,12 @@ Sec.Paragraph:AddParagraph({
     end
 })
 ```
-Method Paragraph
+## Funcions Paragraph
 ```lua
 ParagraphFunc:SetContent(newContent)
 ```
 
-Divider & SubSection
+# ➖ Divider & SubSection
 ```lua
 Sec.Other = Tabs.Main:AddSection("SubSection & Divider")
 
@@ -413,7 +453,7 @@ Sec.Other:AddDivider()
 Sec.Other:AddSubSection("Example Sub Section")
 ```
 
-Notify
+# 🔔 Notification
 ```lua
 -- Basic notification
 Nt(
@@ -479,12 +519,12 @@ local exampleCustomNotify = Chloex:MakeNotify({
 })
 ```
 
-Method Notify
+## Funcions Notify
 ```lua
 NotifyFunc:Close()
 ```
 
-Ui
+# 🧩 UI Settings
 ```lua
 Sec.Ui = Tabs.Main:AddSection("Ui")
 
