@@ -510,7 +510,7 @@ function Nt(msg, delay, color, title, desc)
 end
 
 -- Load Elements module
-local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/main/Chloe/Elements.lua"))()
+local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements.lua"))()
 
 -- Main Window function (to be continued in next file)
 function Chloex:Window(GuiConfig)
