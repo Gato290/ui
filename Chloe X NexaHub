@@ -2701,5 +2701,3 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
-
-Nt
