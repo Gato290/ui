@@ -57,11 +57,11 @@ Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara defa
 ```
 
 # 🔘 Button
-
+``lua
+Sec.Botton = Tabs.Main:AddSection("Botton")
+``
 ## Single Button
 ```lua
-Sec.Botton = Tabs.Main:AddSection("Botton")
-
 -- Example Button (Single)
 Sec.Botton:AddButton({
     Title = "Example",
