@@ -12,31 +12,22 @@ end
 
 local Elements = ElementsModule
 
-if not isfolder("NexaHub") then
-    makefolder("NexaHub")
-end
-if not isfolder("NexaHub/Config") then
-    makefolder("NexaHub/Config")
-end
+-- Variabel global untuk config
+local CURRENT_CONFIG_NAME = "NexaHub" -- Default value
+ConfigData = {}
+CURRENT_VERSION = nil
+local ConfigFile = ""
 
-local gameName   = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-gameName         = gameName:gsub("[^%w_ ]", "")
-gameName         = gameName:gsub("%s+", "_")
-
-local ConfigFile = "NexaHub/Config/CHX_" .. gameName .. ".json"
-
-ConfigData       = {}
-CURRENT_VERSION  = nil
-
+-- Fungsi-fungsi config yang akan diupdate berdasarkan Configname
 function SaveConfig()
-    if writefile then
+    if writefile and ConfigFile ~= "" then
         ConfigData._version = CURRENT_VERSION
         writefile(ConfigFile, HttpService:JSONEncode(ConfigData))
     end
 end
 
 function LoadConfigFromFile()
-    if not CURRENT_VERSION then return end
+    if not CURRENT_VERSION or ConfigFile == "" then return end
     if isfile and isfile(ConfigFile) then
         local success, result = pcall(function()
             return HttpService:JSONDecode(readfile(ConfigFile))
@@ -474,9 +465,10 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
+-- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME
 function Notify(msg, delay, color, title, desc)
     return Chloex:MakeNotify({
-        Title = title or "NexaHub",
+        Title = title or CURRENT_CONFIG_NAME, -- Menggunakan CURRENT_CONFIG_NAME sebagai default
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
@@ -491,8 +483,31 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
+    GuiConfig.Configname   = GuiConfig.Configname or "NexaHub" -- Parameter baru
+    GuiConfig.Image        = GuiConfig.Image or "71947103252559"
 
-    CURRENT_VERSION        = GuiConfig.Version
+    -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
+    CURRENT_CONFIG_NAME = GuiConfig.Configname
+    
+    -- Proses folder dan file config berdasarkan Configname
+    local configFolderName = GuiConfig.Configname:gsub("%s+", "_")
+    
+    if not isfolder(configFolderName) then
+        makefolder(configFolderName)
+    end
+    if not isfolder(configFolderName .. "/Config") then
+        makefolder(configFolderName .. "/Config")
+    end
+    
+    local gameName = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+    gameName = gameName:gsub("[^%w_ ]", "")
+    gameName = gameName:gsub("%s+", "_")
+    
+    ConfigFile = configFolderName .. "/Config/CHX_" .. gameName .. ".json"
+    
+    CURRENT_VERSION = GuiConfig.Version
+    
+    -- Panggil fungsi LoadConfigFromFile
     LoadConfigFromFile()
     Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
 
@@ -816,12 +831,13 @@ function Chloex:Window(GuiConfig)
         Gradient.Rotation = 90
         Gradient.Parent = DialogGlow
 
+        -- Perbarui judul dialog untuk menggunakan CURRENT_CONFIG_NAME
         local Title = Instance.new("TextLabel")
         Title.Size = UDim2.new(1, 0, 0, 40)
         Title.Position = UDim2.new(0, 0, 0, 4)
         Title.BackgroundTransparency = 1
         Title.Font = Enum.Font.GothamBold
-        Title.Text = "NexaHub Window"
+        Title.Text = CURRENT_CONFIG_NAME .. " Window"
         Title.TextSize = 22
         Title.TextColor3 = Color3.fromRGB(255, 255, 255)
         Title.ZIndex = 52
