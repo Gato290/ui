@@ -463,7 +463,7 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
-function Nt(msg, delay, color, title, desc)
+function (msg, delay, color, title, desc)
     return Chloex:MakeNotify({
         Title = title or "NexaHub",
         Description = desc or "Notification",
@@ -2701,3 +2701,5 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
+
+Nt
