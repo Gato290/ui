@@ -1,460 +1,638 @@
--- ChloeX UI Library - UI Components Module
+-- ChloeX UI Library - Tab System Module
+-- Version: V0.0.3
 -- Part 3 of 3
 
-local UIComponents = {}
+local TabSystem = {}
 
 -- Services
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
+local HttpService = game:GetService("HttpService")
 
--- CircleClick function
-local function CircleClick(Button, X, Y)
-    spawn(function()
-        Button.ClipsDescendants = true
-        local Circle = Instance.new("ImageLabel")
-        Circle.Image = "rbxassetid://266543268"
-        Circle.ImageColor3 = Color3.fromRGB(80, 80, 80)
-        Circle.ImageTransparency = 0.8999999761581421
-        Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Circle.BackgroundTransparency = 1
-        Circle.ZIndex = 10
-        Circle.Name = "Circle"
-        Circle.Parent = Button
+-- Constants
+local ANIMATION_DURATION = 0.3
+local TAB_HEIGHT = 36
+local SECTION_HEIGHT = 32
 
-        local NewX = X - Circle.AbsolutePosition.X
-        local NewY = Y - Circle.AbsolutePosition.Y
-        Circle.Position = UDim2.new(0, NewX, 0, NewY)
-        local Size = 0
-        if Button.AbsoluteSize.X > Button.AbsoluteSize.Y then
-            Size = Button.AbsoluteSize.X * 1.5
-        elseif Button.AbsoluteSize.X < Button.AbsoluteSize.Y then
-            Size = Button.AbsoluteSize.Y * 1.5
-        elseif Button.AbsoluteSize.X == Button.AbsoluteSize.Y then
-            Size = Button.AbsoluteSize.X * 1.5
-        end
-
-        local Time = 0.5
-        Circle:TweenSizeAndPosition(UDim2.new(0, Size, 0, Size), UDim2.new(0.5, -Size / 2, 0.5, -Size / 2), "Out", "Quad",
-            Time, false, nil)
-        for i = 1, 10 do
-            Circle.ImageTransparency = Circle.ImageTransparency + 0.01
-            wait(Time / 10)
-        end
-        Circle:Destroy()
+-- Ripple Effect (Optimized)
+local function CreateRipple(parent, position, color)
+    parent.ClipsDescendants = true
+    
+    local ripple = Instance.new("Frame")
+    ripple.Name = "RippleEffect"
+    ripple.BackgroundColor3 = color or Color3.fromRGB(200, 200, 200)
+    ripple.BackgroundTransparency = 0.7
+    ripple.BorderSizePixel = 0
+    ripple.ZIndex = 10
+    ripple.Parent = parent
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(1, 0)
+    corner.Parent = ripple
+    
+    -- Calculate position
+    local parentPos = parent.AbsolutePosition
+    local parentSize = parent.AbsoluteSize
+    local relativeX = (position.X - parentPos.X) / parentSize.X
+    local relativeY = (position.Y - parentPos.Y) / parentSize.Y
+    
+    ripple.Position = UDim2.new(relativeX, -1, relativeY, -1)
+    ripple.Size = UDim2.new(0, 2, 0, 2)
+    
+    -- Animate
+    local maxSize = math.max(parentSize.X, parentSize.Y) * 2
+    local expand = TweenService:Create(ripple, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, maxSize, 0, maxSize),
+        Position = UDim2.new(0.5, -maxSize/2, 0.5, -maxSize/2),
+        BackgroundTransparency = 1
+    })
+    
+    expand:Play()
+    expand.Completed:Connect(function()
+        ripple:Destroy()
     end)
 end
 
--- Create Tabs system
-function UIComponents:CreateTabs(ScrollTab, LayersFolder, LayersPageLayout, NameTab, GuiConfig, Icons, Elements, ConfigData, SaveConfig, TweenService)
-    local Mouse = game:GetService("Players").LocalPlayer:GetMouse()
+-- Tab Manager
+local TabManager = {
+    ActiveTabs = {},
+    ActiveSections = {},
+    CurrentTab = nil,
+    CurrentSection = nil
+}
+
+-- Tab Creation
+function TabSystem:Create(tabContainer, contentContainer, tabTitle, config, getIcon, configManager, elementManager, uiElements)
+    config = config or {}
+    local themeColor = config.Color or Color3.fromRGB(255, 0, 255)
     
-    local Tabs = {}
-    local CountTab = 0
+    local tabSystem = {
+        Tabs = {},
+        ActiveTab = nil,
+        ActiveSections = {},
+        TabCount = 0,
+        SectionCount = 0
+    }
     
-    function Tabs:AddTab(TabConfig)
-        local TabConfig = TabConfig or {}
-        TabConfig.Name = TabConfig.Name or "Tab"
-        TabConfig.Icon = TabConfig.Icon or ""
-
-        local ScrolLayers = Instance.new("ScrollingFrame")
-        local UIListLayout1 = Instance.new("UIListLayout")
-
-        ScrolLayers.ScrollBarImageColor3 = Color3.fromRGB(80.00000283122063, 80.00000283122063, 80.00000283122063)
-        ScrolLayers.ScrollBarThickness = 0
-        ScrolLayers.Active = true
-        ScrolLayers.LayoutOrder = CountTab
-        ScrolLayers.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ScrolLayers.BackgroundTransparency = 0.9990000128746033
-        ScrolLayers.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        ScrolLayers.BorderSizePixel = 0
-        ScrolLayers.Size = UDim2.new(1, 0, 1, 0)
-        ScrolLayers.Name = "ScrolLayers"
-        ScrolLayers.Parent = LayersFolder
-
-        UIListLayout1.Padding = UDim.new(0, 3)
-        UIListLayout1.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout1.Parent = ScrolLayers
-
-        local Tab = Instance.new("Frame")
-        local UICorner3 = Instance.new("UICorner")
-        local TabButton = Instance.new("TextButton")
-        local TabName = Instance.new("TextLabel")
-        local FeatureImg = Instance.new("ImageLabel")
-        local UIStroke2 = Instance.new("UIStroke")
-        local UICorner4 = Instance.new("UICorner")
-
-        Tab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        if CountTab == 0 then
-            Tab.BackgroundTransparency = 0.9200000166893005
-        else
-            Tab.BackgroundTransparency = 0.9990000128746033
-        end
-        Tab.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        Tab.BorderSizePixel = 0
-        Tab.LayoutOrder = CountTab
-        Tab.Size = UDim2.new(1, 0, 0, 30)
-        Tab.Name = "Tab"
-        Tab.Parent = ScrollTab
-
-        UICorner3.CornerRadius = UDim.new(0, 4)
-        UICorner3.Parent = Tab
-
-        TabButton.Font = Enum.Font.GothamBold
-        TabButton.Text = ""
-        TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabButton.TextSize = 13
-        TabButton.TextXAlignment = Enum.TextXAlignment.Left
-        TabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabButton.BackgroundTransparency = 0.9990000128746033
-        TabButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        TabButton.BorderSizePixel = 0
-        TabButton.Size = UDim2.new(1, 0, 1, 0)
-        TabButton.Name = "TabButton"
-        TabButton.Parent = Tab
-
-        TabName.Font = Enum.Font.GothamBold
-        TabName.Text = "| " .. tostring(TabConfig.Name)
-        TabName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabName.TextSize = 13
-        TabName.TextXAlignment = Enum.TextXAlignment.Left
-        TabName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabName.BackgroundTransparency = 0.9990000128746033
-        TabName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        TabName.BorderSizePixel = 0
-        TabName.Size = UDim2.new(1, 0, 1, 0)
-        TabName.Position = UDim2.new(0, 30, 0, 0)
-        TabName.Name = "TabName"
-        TabName.Parent = Tab
-
-        FeatureImg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        FeatureImg.BackgroundTransparency = 0.9990000128746033
-        FeatureImg.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        FeatureImg.BorderSizePixel = 0
-        FeatureImg.Position = UDim2.new(0, 9, 0, 7)
-        FeatureImg.Size = UDim2.new(0, 16, 0, 16)
-        FeatureImg.Name = "FeatureImg"
-        FeatureImg.Parent = Tab
+    -- Tab scroller
+    local tabScroller = Instance.new("ScrollingFrame")
+    tabScroller.Name = "TabScroller"
+    tabScroller.Size = UDim2.new(1, 0, 1, 0)
+    tabScroller.BackgroundTransparency = 1
+    tabScroller.BorderSizePixel = 0
+    tabScroller.ScrollBarThickness = 4
+    tabScroller.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    tabScroller.Parent = tabContainer
+    
+    local tabLayout = Instance.new("UIListLayout")
+    tabLayout.Padding = UDim.new(0, 5)
+    tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    tabLayout.Parent = tabScroller
+    
+    -- Selection indicator
+    local selectionIndicator = Instance.new("Frame")
+    selectionIndicator.Name = "SelectionIndicator"
+    selectionIndicator.BackgroundColor3 = themeColor
+    selectionIndicator.BackgroundTransparency = 0.3
+    selectionIndicator.BorderSizePixel = 0
+    selectionIndicator.Size = UDim2.new(0, 3, 0, 20)
+    selectionIndicator.Position = UDim2.new(0, 5, 0, 0)
+    selectionIndicator.Visible = false
+    selectionIndicator.Parent = tabScroller
+    
+    local selectionCorner = Instance.new("UICorner")
+    selectionCorner.CornerRadius = UDim.new(1, 0)
+    selectionCorner.Parent = selectionIndicator
+    
+    -- Content scroller
+    local contentScroller = Instance.new("ScrollingFrame")
+    contentScroller.Name = "ContentScroller"
+    contentScroller.Size = UDim2.new(1, 0, 1, 0)
+    contentScroller.BackgroundTransparency = 1
+    contentScroller.BorderSizePixel = 0
+    contentScroller.ScrollBarThickness = 4
+    contentScroller.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+    contentScroller.Parent = contentContainer
+    
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.Padding = UDim.new(0, 10)
+    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentLayout.Parent = contentScroller
+    
+    -- Auto-size content
+    contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        contentScroller.CanvasSize = UDim2.new(0, 0, 0, contentLayout.AbsoluteContentSize.Y + 10)
+    end)
+    
+    -- Function to create a tab
+    function tabSystem:AddTab(tabConfig)
+        tabConfig = tabConfig or {}
+        tabConfig.Name = tabConfig.Name or "Tab " .. (self.TabCount + 1)
+        tabConfig.Icon = tabConfig.Icon
+        tabConfig.Color = tabConfig.Color or themeColor
         
-        if CountTab == 0 then
-            LayersPageLayout:JumpToIndex(0)
-            NameTab.Text = TabConfig.Name
-            local ChooseFrame = Instance.new("Frame")
-            ChooseFrame.BackgroundColor3 = GuiConfig.Color
-            ChooseFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            ChooseFrame.BorderSizePixel = 0
-            ChooseFrame.Position = UDim2.new(0, 2, 0, 9)
-            ChooseFrame.Size = UDim2.new(0, 1, 0, 12)
-            ChooseFrame.Name = "ChooseFrame"
-            ChooseFrame.Parent = Tab
-
-            UIStroke2.Color = GuiConfig.Color
-            UIStroke2.Thickness = 1.600000023841858
-            UIStroke2.Parent = ChooseFrame
-
-            UICorner4.Parent = ChooseFrame
+        local tabId = HttpService:GenerateGUID(false)
+        local tabIndex = self.TabCount
+        
+        -- Create tab button
+        local tabButton = Instance.new("TextButton")
+        tabButton.Name = "Tab_" .. tabId
+        tabButton.Text = ""
+        tabButton.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+        tabButton.BackgroundTransparency = 0.9
+        tabButton.Size = UDim2.new(1, -10, 0, TAB_HEIGHT)
+        tabButton.LayoutOrder = tabIndex
+        tabButton.Parent = tabScroller
+        
+        local buttonCorner = Instance.new("UICorner")
+        buttonCorner.CornerRadius = UDim.new(0, 6)
+        buttonCorner.Parent = tabButton
+        
+        -- Tab icon
+        local iconOffset = 10
+        if tabConfig.Icon then
+            local icon = Instance.new("ImageLabel")
+            icon.Name = "Icon"
+            icon.Size = UDim2.new(0, 20, 0, 20)
+            icon.Position = UDim2.new(0, 10, 0.5, -10)
+            icon.Image = tabConfig.Icon
+            icon.ImageColor3 = Color3.fromRGB(180, 180, 180)
+            icon.BackgroundTransparency = 1
+            icon.Parent = tabButton
+            iconOffset = 40
         end
-
-        if TabConfig.Icon ~= "" then
-            if Icons[TabConfig.Icon] then
-                FeatureImg.Image = Icons[TabConfig.Icon]
-            else
-                FeatureImg.Image = TabConfig.Icon
-            end
-        end
-
-        TabButton.Activated:Connect(function()
-            CircleClick(TabButton, Mouse.X, Mouse.Y)
-            local FrameChoose
-            for a, s in ScrollTab:GetChildren() do
-                for i, v in s:GetChildren() do
-                    if v.Name == "ChooseFrame" then
-                        FrameChoose = v
-                        break
-                    end
-                end
-            end
-            if FrameChoose ~= nil and Tab.LayoutOrder ~= LayersPageLayout.CurrentPage.LayoutOrder then
-                for _, TabFrame in ScrollTab:GetChildren() do
-                    if TabFrame.Name == "Tab" then
-                        TweenService:Create(
-                            TabFrame,
-                            TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
-                            { BackgroundTransparency = 0.9990000128746033 }
-                        ):Play()
-                    end
-                end
-                TweenService:Create(
-                    Tab,
-                    TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
-                    { BackgroundTransparency = 0.9200000166893005 }
-                ):Play()
-                TweenService:Create(
-                    FrameChoose,
-                    TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                    { Position = UDim2.new(0, 2, 0, 9 + (33 * Tab.LayoutOrder)) }
-                ):Play()
-                LayersPageLayout:JumpToIndex(Tab.LayoutOrder)
-                task.wait(0.05)
-                NameTab.Text = TabConfig.Name
-                TweenService:Create(
-                    FrameChoose,
-                    TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                    { Size = UDim2.new(0, 1, 0, 20) }
-                ):Play()
-                task.wait(0.2)
-                TweenService:Create(
-                    FrameChoose,
-                    TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                    { Size = UDim2.new(0, 1, 0, 12) }
-                ):Play()
-            end
+        
+        -- Tab label
+        local label = Instance.new("TextLabel")
+        label.Name = "Label"
+        label.Size = UDim2.new(1, -iconOffset - 5, 1, 0)
+        label.Position = UDim2.new(0, iconOffset, 0, 0)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.GothamBold
+        label.Text = tabConfig.Name
+        label.TextColor3 = Color3.fromRGB(180, 180, 180)
+        label.TextSize = 13
+        label.TextXAlignment = Enum.TextXAlignment.Left
+        label.Parent = tabButton
+        
+        -- Create content frame
+        local contentFrame = Instance.new("ScrollingFrame")
+        contentFrame.Name = "Content_" .. tabId
+        contentFrame.Size = UDim2.new(1, 0, 1, 0)
+        contentFrame.BackgroundTransparency = 1
+        contentFrame.BorderSizePixel = 0
+        contentFrame.ScrollBarThickness = 4
+        contentFrame.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+        contentFrame.Visible = false
+        contentFrame.Parent = contentScroller
+        
+        local frameLayout = Instance.new("UIListLayout")
+        frameLayout.Padding = UDim.new(0, 10)
+        frameLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        frameLayout.Parent = contentFrame
+        
+        frameLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            contentFrame.CanvasSize = UDim2.new(0, 0, 0, frameLayout.AbsoluteContentSize.Y + 10)
         end)
         
-        -- Create Sections system
-        local Sections = {}
-        local CountSection = 0
-        
-        function Sections:AddSection(Title, AlwaysOpen)
-            local Title = Title or "Title"
-            local Section = Instance.new("Frame")
-            local SectionDecideFrame = Instance.new("Frame")
-            local UICorner1 = Instance.new("UICorner")
-            local UIGradient = Instance.new("UIGradient")
-
-            Section.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Section.BackgroundTransparency = 0.9990000128746033
-            Section.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            Section.BorderSizePixel = 0
-            Section.LayoutOrder = CountSection
-            Section.ClipsDescendants = true
-            Section.LayoutOrder = 1
-            Section.Size = UDim2.new(1, 0, 0, 30)
-            Section.Name = "Section"
-            Section.Parent = ScrolLayers
-
-            local SectionReal = Instance.new("Frame")
-            local UICorner = Instance.new("UICorner")
-            local UIStroke = Instance.new("UIStroke")
-            local SectionButton = Instance.new("TextButton")
-            local FeatureFrame = Instance.new("Frame")
-            local FeatureImg = Instance.new("ImageLabel")
-            local SectionTitle = Instance.new("TextLabel")
-
-            SectionReal.AnchorPoint = Vector2.new(0.5, 0)
-            SectionReal.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionReal.BackgroundTransparency = 0.9350000023841858
-            SectionReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            SectionReal.BorderSizePixel = 0
-            SectionReal.LayoutOrder = 1
-            SectionReal.Position = UDim2.new(0.5, 0, 0, 0)
-            SectionReal.Size = UDim2.new(1, 1, 0, 30)
-            SectionReal.Name = "SectionReal"
-            SectionReal.Parent = Section
-
-            UICorner.CornerRadius = UDim.new(0, 4)
-            UICorner.Parent = SectionReal
-
-            SectionButton.Font = Enum.Font.SourceSans
-            SectionButton.Text = ""
-            SectionButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-            SectionButton.TextSize = 14
-            SectionButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionButton.BackgroundTransparency = 0.9990000128746033
-            SectionButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            SectionButton.BorderSizePixel = 0
-            SectionButton.Size = UDim2.new(1, 0, 1, 0)
-            SectionButton.Name = "SectionButton"
-            SectionButton.Parent = SectionReal
-
-            FeatureFrame.AnchorPoint = Vector2.new(1, 0.5)
-            FeatureFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            FeatureFrame.BackgroundTransparency = 0.9990000128746033
-            FeatureFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            FeatureFrame.BorderSizePixel = 0
-            FeatureFrame.Position = UDim2.new(1, -5, 0.5, 0)
-            FeatureFrame.Size = UDim2.new(0, 20, 0, 20)
-            FeatureFrame.Name = "FeatureFrame"
-            FeatureFrame.Parent = SectionReal
-
-            FeatureImg.Image = "rbxassetid://16851841101"
-            FeatureImg.AnchorPoint = Vector2.new(0.5, 0.5)
-            FeatureImg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            FeatureImg.BackgroundTransparency = 0.9990000128746033
-            FeatureImg.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            FeatureImg.BorderSizePixel = 0
-            FeatureImg.Position = UDim2.new(0.5, 0, 0.5, 0)
-            FeatureImg.Rotation = -90
-            FeatureImg.Size = UDim2.new(1, 6, 1, 6)
-            FeatureImg.Name = "FeatureImg"
-            FeatureImg.Parent = FeatureFrame
-
-            SectionTitle.Font = Enum.Font.GothamBold
-            SectionTitle.Text = Title
-            SectionTitle.TextColor3 = Color3.fromRGB(230.77499270439148, 230.77499270439148, 230.77499270439148)
-            SectionTitle.TextSize = 13
-            SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
-            SectionTitle.TextYAlignment = Enum.TextYAlignment.Top
-            SectionTitle.AnchorPoint = Vector2.new(0, 0.5)
-            SectionTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionTitle.BackgroundTransparency = 0.9990000128746033
-            SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            SectionTitle.BorderSizePixel = 0
-            SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
-            SectionTitle.Size = UDim2.new(1, -50, 0, 13)
-            SectionTitle.Name = "SectionTitle"
-            SectionTitle.Parent = SectionReal
-
-            SectionDecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionDecideFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            SectionDecideFrame.AnchorPoint = Vector2.new(0.5, 0)
-            SectionDecideFrame.BorderSizePixel = 0
-            SectionDecideFrame.Position = UDim2.new(0.5, 0, 0, 33)
-            SectionDecideFrame.Size = UDim2.new(0, 0, 0, 2)
-            SectionDecideFrame.Name = "SectionDecideFrame"
-            SectionDecideFrame.Parent = Section
-
-            UICorner1.Parent = SectionDecideFrame
-
-            UIGradient.Color = ColorSequence.new {
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
-                ColorSequenceKeypoint.new(0.5, GuiConfig.Color),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
-            }
-            UIGradient.Parent = SectionDecideFrame
-
-            local SectionAdd = Instance.new("Frame")
-            local UICorner8 = Instance.new("UICorner")
-            local UIListLayout2 = Instance.new("UIListLayout")
-
-            SectionAdd.AnchorPoint = Vector2.new(0.5, 0)
-            SectionAdd.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionAdd.BackgroundTransparency = 0.9990000128746033
-            SectionAdd.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            SectionAdd.BorderSizePixel = 0
-            SectionAdd.ClipsDescendants = true
-            SectionAdd.LayoutOrder = 1
-            SectionAdd.Position = UDim2.new(0.5, 0, 0, 38)
-            SectionAdd.Size = UDim2.new(1, 0, 0, 100)
-            SectionAdd.Name = "SectionAdd"
-            SectionAdd.Parent = Section
-
-            UICorner8.CornerRadius = UDim.new(0, 2)
-            UICorner8.Parent = SectionAdd
-
-            UIListLayout2.Padding = UDim.new(0, 3)
-            UIListLayout2.SortOrder = Enum.SortOrder.LayoutOrder
-            UIListLayout2.Parent = SectionAdd
-
-            local OpenSection = false
-
-            local function UpdateSizeScroll()
-                local OffsetY = 0
-                for _, child in ScrolLayers:GetChildren() do
-                    if child.Name ~= "UIListLayout" then
-                        OffsetY = OffsetY + 3 + child.Size.Y.Offset
+        -- Tab activation function
+        local function ActivateTab()
+            -- Deactivate all tabs
+            for _, tabData in pairs(self.Tabs) do
+                if tabData.Button and tabData.Content then
+                    TweenService:Create(tabData.Button, TweenInfo.new(ANIMATION_DURATION), {
+                        BackgroundTransparency = 0.9
+                    }):Play()
+                    
+                    TweenService:Create(tabData.Button.Label, TweenInfo.new(ANIMATION_DURATION), {
+                        TextColor3 = Color3.fromRGB(180, 180, 180)
+                    }):Play()
+                    
+                    if tabData.Button:FindFirstChild("Icon") then
+                        TweenService:Create(tabData.Button.Icon, TweenInfo.new(ANIMATION_DURATION), {
+                            ImageColor3 = Color3.fromRGB(180, 180, 180)
+                        }):Play()
                     end
-                end
-                ScrolLayers.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
-            end
-
-            local function UpdateSizeSection()
-                if OpenSection then
-                    local SectionSizeYWitdh = 38
-                    for _, v in SectionAdd:GetChildren() do
-                        if v.Name ~= "UIListLayout" and v.Name ~= "UICorner" then
-                            SectionSizeYWitdh = SectionSizeYWitdh + v.Size.Y.Offset + 3
-                        end
-                    end
-                    TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 90 }):Play()
-                    TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, SectionSizeYWitdh) }):Play()
-                    TweenService:Create(SectionAdd, TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38) }):Play()
-                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, 2) }):Play()
-                    task.wait(0.5)
-                    UpdateSizeScroll()
+                    
+                    tabData.Content.Visible = false
+                    tabData.Active = false
                 end
             end
-
-            if AlwaysOpen == true then
-                SectionButton:Destroy()
-                FeatureFrame:Destroy()
-                OpenSection = true
-                UpdateSizeSection()
-            elseif AlwaysOpen == false then
-                OpenSection = true
-                UpdateSizeSection()
-            else
-                OpenSection = false
-            end
-
-            if AlwaysOpen ~= true then
-                SectionButton.Activated:Connect(function()
-                    CircleClick(SectionButton, Mouse.X, Mouse.Y)
-                    if OpenSection then
-                        TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 0 }):Play()
-                        TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, 30) }):Play()
-                        TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(0, 0, 0, 2) }):Play()
-                        OpenSection = false
-                        task.wait(0.5)
-                        UpdateSizeScroll()
-                    else
-                        OpenSection = true
-                        UpdateSizeSection()
-                    end
-                end)
-            end
-
-            if AlwaysOpen == true or AlwaysOpen == false then
-                OpenSection = true
-                local SectionSizeYWitdh = 38
-                for _, v in SectionAdd:GetChildren() do
-                    if v.Name ~= "UIListLayout" and v.Name ~= "UICorner" then
-                        SectionSizeYWitdh = SectionSizeYWitdh + v.Size.Y.Offset + 3
-                    end
-                end
-                FeatureFrame.Rotation = 90
-                Section.Size = UDim2.new(1, 1, 0, SectionSizeYWitdh)
-                SectionAdd.Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38)
-                SectionDecideFrame.Size = UDim2.new(1, 0, 0, 2)
-                UpdateSizeScroll()
-            end
-
-            SectionAdd.ChildAdded:Connect(UpdateSizeSection)
-            SectionAdd.ChildRemoved:Connect(UpdateSizeSection)
-
-            local layout = ScrolLayers:FindFirstChildOfClass("UIListLayout")
-            if layout then
-                layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    ScrolLayers.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-                end)
-            end
-
-            -- Load UI Elements module
-            local UIElements = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/main/Chloe/UIElements.lua"))()
             
-            -- Create UI elements
-            local Items = UIElements:CreateItems(
-                SectionAdd, 
-                CountSection, 
-                GuiConfig, 
-                Icons, 
-                Elements, 
-                ConfigData, 
-                SaveConfig, 
-                TweenService, 
-                UpdateSizeSection
-            )
-
-            CountSection = CountSection + 1
-            return Items
+            -- Activate this tab
+            TweenService:Create(tabButton, TweenInfo.new(ANIMATION_DURATION), {
+                BackgroundTransparency = 0.85
+            }):Play()
+            
+            TweenService:Create(label, TweenInfo.new(ANIMATION_DURATION), {
+                TextColor3 = Color3.fromRGB(255, 255, 255)
+            }):Play()
+            
+            if tabButton:FindFirstChild("Icon") then
+                TweenService:Create(tabButton.Icon, TweenInfo.new(ANIMATION_DURATION), {
+                    ImageColor3 = tabConfig.Color
+                }):Play()
+            end
+            
+            -- Update selection indicator
+            selectionIndicator.Visible = true
+            TweenService:Create(selectionIndicator, TweenInfo.new(ANIMATION_DURATION), {
+                Position = UDim2.new(0, 5, 0, tabButton.AbsolutePosition.Y - tabScroller.AbsolutePosition.Y + 8)
+            }):Play()
+            
+            contentFrame.Visible = true
+            tabTitle.Text = tabConfig.Name
+            
+            self.ActiveTab = tabId
+            TabManager.CurrentTab = tabId
         end
-
-        CountTab = CountTab + 1
-        local safeName = TabConfig.Name:gsub("%s+", "_")
-        _G[safeName] = Sections
-        return Sections
+        
+        -- Tab click handler
+        tabButton.Activated:Connect(function(input)
+            CreateRipple(tabButton, input.Position, tabConfig.Color)
+            ActivateTab()
+        end)
+        
+        -- Hover effects
+        local function UpdateHoverState(hovering)
+            if self.ActiveTab ~= tabId then
+                TweenService:Create(tabButton, TweenInfo.new(0.1), {
+                    BackgroundTransparency = hovering and 0.87 or 0.9
+                }):Play()
+            end
+        end
+        
+        tabButton.MouseEnter:Connect(function()
+            UpdateHoverState(true)
+        end)
+        
+        tabButton.MouseLeave:Connect(function()
+            UpdateHoverState(false)
+        end)
+        
+        -- Section system for this tab
+        local sectionSystem = {
+            Sections = {},
+            ActiveSections = {},
+            SectionCount = 0
+        }
+        
+        function sectionSystem:AddSection(sectionConfig)
+            sectionConfig = sectionConfig or {}
+            sectionConfig.Title = sectionConfig.Title or "Section"
+            sectionConfig.AlwaysOpen = sectionConfig.AlwaysOpen or false
+            sectionConfig.Color = sectionConfig.Color or tabConfig.Color
+            
+            local sectionId = HttpService:GenerateGUID(false)
+            local sectionIndex = self.SectionCount
+            
+            -- Create section container
+            local sectionContainer = Instance.new("Frame")
+            sectionContainer.Name = "Section_" .. sectionId
+            sectionContainer.BackgroundTransparency = 1
+            sectionContainer.Size = UDim2.new(1, 0, 0, SECTION_HEIGHT)
+            sectionContainer.LayoutOrder = sectionIndex
+            sectionContainer.ClipsDescendants = true
+            sectionContainer.Parent = contentFrame
+            
+            -- Section header
+            local sectionHeader = Instance.new("Frame")
+            sectionHeader.Name = "Header"
+            sectionHeader.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+            sectionHeader.BackgroundTransparency = 0.1
+            sectionHeader.Size = UDim2.new(1, 0, 0, SECTION_HEIGHT)
+            sectionHeader.Parent = sectionContainer
+            
+            local headerCorner = Instance.new("UICorner")
+            headerCorner.CornerRadius = UDim.new(0, 6)
+            headerCorner.Parent = sectionHeader
+            
+            -- Shadow effect
+            local shadow = Instance.new("ImageLabel")
+            shadow.Name = "Shadow"
+            shadow.Image = "rbxassetid://6015897843"
+            shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+            shadow.ImageTransparency = 0.7
+            shadow.ScaleType = Enum.ScaleType.Slice
+            shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+            shadow.BackgroundTransparency = 1
+            shadow.Size = UDim2.new(1, 47, 1, 47)
+            shadow.Position = UDim2.new(-0.1, -23.5, -0.1, -23.5)
+            shadow.ZIndex = -1
+            shadow.Parent = sectionHeader
+            
+            -- Section toggle button
+            local toggleButton = Instance.new("TextButton")
+            toggleButton.Name = "ToggleButton"
+            toggleButton.Text = ""
+            toggleButton.BackgroundTransparency = 1
+            toggleButton.Size = UDim2.new(1, 0, 1, 0)
+            toggleButton.Parent = sectionHeader
+            
+            -- Section title
+            local titleLabel = Instance.new("TextLabel")
+            titleLabel.Name = "Title"
+            titleLabel.Font = Enum.Font.GothamBold
+            titleLabel.Text = sectionConfig.Title
+            titleLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+            titleLabel.TextSize = 13
+            titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+            titleLabel.BackgroundTransparency = 1
+            titleLabel.Position = UDim2.new(0, 15, 0, 0)
+            titleLabel.Size = UDim2.new(1, -50, 1, 0)
+            titleLabel.Parent = sectionHeader
+            
+            -- Expand/collapse icon
+            local expandIcon = Instance.new("ImageLabel")
+            expandIcon.Name = "ExpandIcon"
+            expandIcon.Image = "rbxassetid://6031091004"
+            expandIcon.ImageColor3 = sectionConfig.Color
+            expandIcon.BackgroundTransparency = 1
+            expandIcon.Size = UDim2.new(0, 16, 0, 16)
+            expandIcon.Position = UDim2.new(1, -30, 0.5, -8)
+            expandIcon.Parent = sectionHeader
+            
+            -- Content area
+            local contentArea = Instance.new("Frame")
+            contentArea.Name = "ContentArea"
+            contentArea.BackgroundTransparency = 1
+            contentArea.Position = UDim2.new(0, 0, 0, SECTION_HEIGHT + 5)
+            contentArea.Size = UDim2.new(1, 0, 0, 0)
+            contentArea.ClipsDescendants = true
+            contentArea.Parent = sectionContainer
+            
+            local contentLayout = Instance.new("UIListLayout")
+            contentLayout.Padding = UDim.new(0, 8)
+            contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            contentLayout.Parent = contentArea
+            
+            contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                if self.ActiveSections[sectionId] then
+                    contentArea.Size = UDim2.new(1, 0, 0, contentLayout.AbsoluteContentSize.Y)
+                    sectionContainer.Size = UDim2.new(1, 0, 0, SECTION_HEIGHT + 5 + contentLayout.AbsoluteContentSize.Y)
+                end
+            end)
+            
+            -- State
+            local isExpanded = sectionConfig.AlwaysOpen
+            
+            -- Toggle function
+            local function ToggleSection()
+                isExpanded = not isExpanded
+                self.ActiveSections[sectionId] = isExpanded
+                
+                if isExpanded then
+                    -- Expand
+                    TweenService:Create(expandIcon, TweenInfo.new(ANIMATION_DURATION), {
+                        Rotation = 180
+                    }):Play()
+                    
+                    TweenService:Create(contentArea, TweenInfo.new(ANIMATION_DURATION), {
+                        Size = UDim2.new(1, 0, 0, contentLayout.AbsoluteContentSize.Y)
+                    }):Play()
+                    
+                    TweenService:Create(sectionContainer, TweenInfo.new(ANIMATION_DURATION), {
+                        Size = UDim2.new(1, 0, 0, SECTION_HEIGHT + 5 + contentLayout.AbsoluteContentSize.Y)
+                    }):Play()
+                else
+                    -- Collapse
+                    TweenService:Create(expandIcon, TweenInfo.new(ANIMATION_DURATION), {
+                        Rotation = 0
+                    }):Play()
+                    
+                    TweenService:Create(contentArea, TweenInfo.new(ANIMATION_DURATION), {
+                        Size = UDim2.new(1, 0, 0, 0)
+                    }):Play()
+                    
+                    TweenService:Create(sectionContainer, TweenInfo.new(ANIMATION_DURATION), {
+                        Size = UDim2.new(1, 0, 0, SECTION_HEIGHT)
+                    }):Play()
+                end
+            end
+            
+            -- Click handler
+            toggleButton.Activated:Connect(function(input)
+                if not sectionConfig.AlwaysOpen then
+                    CreateRipple(toggleButton, input.Position, sectionConfig.Color)
+                    ToggleSection()
+                end
+            end)
+            
+            -- Initialize based on AlwaysOpen
+            if sectionConfig.AlwaysOpen then
+                expandIcon.Rotation = 180
+                isExpanded = true
+                self.ActiveSections[sectionId] = true
+                contentArea.Size = UDim2.new(1, 0, 0, contentLayout.AbsoluteContentSize.Y)
+                sectionContainer.Size = UDim2.new(1, 0, 0, SECTION_HEIGHT + 5 + contentLayout.AbsoluteContentSize.Y)
+            end
+            
+            -- Element creation functions
+            local sectionElements = {
+                AddParagraph = function(paragraphConfig)
+                    return uiElements:CreateParagraph(contentArea, paragraphConfig, sectionConfig.Color, elementManager, configManager)
+                end,
+                
+                AddPanel = function(panelConfig)
+                    return uiElements:CreatePanel(contentArea, panelConfig, sectionConfig.Color, elementManager, configManager)
+                end,
+                
+                AddToggle = function(toggleConfig)
+                    return uiElements:CreateToggle(contentArea, toggleConfig, sectionConfig.Color, elementManager, configManager)
+                end,
+                
+                AddSlider = function(sliderConfig)
+                    return uiElements:CreateSlider(contentArea, sliderConfig, sectionConfig.Color, elementManager, configManager)
+                end,
+                
+                AddInput = function(inputConfig)
+                    return uiElements:CreateInput(contentArea, inputConfig, sectionConfig.Color, elementManager, configManager)
+                end,
+                
+                AddButton = function(buttonConfig)
+                    return uiElements:CreateButton(contentArea, buttonConfig, sectionConfig.Color, elementManager, configManager)
+                end,
+                
+                AddDropdown = function(dropdownConfig)
+                    return uiElements:CreateDropdown(contentArea, dropdownConfig, sectionConfig.Color, elementManager, configManager)
+                end,
+                
+                AddDivider = function(dividerConfig)
+                    return uiElements:CreateDivider(contentArea, dividerConfig, sectionConfig.Color)
+                end,
+                
+                AddLabel = function(labelConfig)
+                    return uiElements:CreateLabel(contentArea, labelConfig, sectionConfig.Color)
+                end,
+                
+                -- Compatibility functions
+                AddParagraph = function(paragraphConfig)
+                    return self.AddParagraph(paragraphConfig)
+                end,
+                
+                AddPanel = function(panelConfig)
+                    return self.AddPanel(panelConfig)
+                end,
+                
+                AddToggle = function(toggleConfig)
+                    return self.AddToggle(toggleConfig)
+                end,
+                
+                AddSlider = function(sliderConfig)
+                    return self.AddSlider(sliderConfig)
+                end,
+                
+                AddInput = function(inputConfig)
+                    return self.AddInput(inputConfig)
+                end,
+                
+                AddButton = function(buttonConfig)
+                    return self.AddButton(buttonConfig)
+                end,
+                
+                AddDivider = function()
+                    return self.AddDivider()
+                end
+            }
+            
+            -- Store section
+            self.Sections[sectionId] = {
+                Container = sectionContainer,
+                Content = contentArea,
+                Elements = sectionElements,
+                IsExpanded = isExpanded,
+                Config = sectionConfig
+            }
+            
+            self.SectionCount = self.SectionCount + 1
+            
+            -- Auto-expand if first section
+            if sectionIndex == 0 and not sectionConfig.AlwaysOpen then
+                task.wait(0.1)
+                ToggleSection()
+            end
+            
+            return sectionElements
+        end
+        
+        -- Store tab
+        self.Tabs[tabId] = {
+            Button = tabButton,
+            Content = contentFrame,
+            Sections = sectionSystem,
+            Active = false,
+            Config = tabConfig
+        }
+        
+        self.TabCount = self.TabCount + 1
+        
+        -- Auto-activate first tab
+        if tabIndex == 0 then
+            task.spawn(function()
+                task.wait(0.1)
+                ActivateTab()
+            end)
+        end
+        
+        -- Update scroller size
+        local function UpdateTabScrollerSize()
+            local totalHeight = 0
+            for _, child in pairs(tabScroller:GetChildren()) do
+                if child:IsA("GuiObject") and child.Name:find("Tab_") then
+                    totalHeight = totalHeight + child.Size.Y.Offset + 5
+                end
+            end
+            tabScroller.CanvasSize = UDim2.new(0, 0, 0, totalHeight)
+        end
+        
+        UpdateTabScrollerSize()
+        tabScroller.ChildAdded:Connect(UpdateTabScrollerSize)
+        tabScroller.ChildRemoved:Connect(UpdateTabScrollerSize)
+        
+        return sectionSystem
     end
-
-    return Tabs
+    
+    -- Tab system API
+    function tabSystem:SwitchToTab(tabName)
+        for tabId, tabData in pairs(self.Tabs) do
+            if tabData.Config.Name == tabName then
+                if tabData.Button then
+                    tabData.Button.Activated:Connect()
+                end
+                return true
+            end
+        end
+        return false
+    end
+    
+    function tabSystem:GetTab(tabName)
+        for tabId, tabData in pairs(self.Tabs) do
+            if tabData.Config.Name == tabName then
+                return tabData.Sections
+            end
+        end
+        return nil
+    end
+    
+    function tabSystem:GetActiveTab()
+        if self.ActiveTab and self.Tabs[self.ActiveTab] then
+            return self.Tabs[self.ActiveTab].Sections
+        end
+        return nil
+    end
+    
+    function tabSystem:Destroy()
+        for tabId, tabData in pairs(self.Tabs) do
+            if tabData.Button then
+                tabData.Button:Destroy()
+            end
+            if tabData.Content then
+                tabData.Content:Destroy()
+            end
+        end
+        
+        tabScroller:Destroy()
+        contentScroller:Destroy()
+        selectionIndicator:Destroy()
+    end
+    
+    -- Register with manager
+    TabManager.ActiveTabs[tostring(tabContainer)] = tabSystem
+    
+    return tabSystem
 end
 
-return UIComponents
+-- Global tab management
+function TabSystem:SwitchToTab(containerName, tabName)
+    local tabSystem = TabManager.ActiveTabs[containerName]
+    if tabSystem then
+        return tabSystem:SwitchToTab(tabName)
+    end
+    return false
+end
+
+function TabSystem:GetTab(containerName, tabName)
+    local tabSystem = TabManager.ActiveTabs[containerName]
+    if tabSystem then
+        return tabSystem:GetTab(tabName)
+    end
+    return nil
+end
+
+function TabSystem:GetActiveTab(containerName)
+    local tabSystem = TabManager.ActiveTabs[containerName]
+    if tabSystem then
+        return tabSystem:GetActiveTab()
+    end
+    return nil
+end
+
+function TabSystem:Cleanup()
+    for containerName, tabSystem in pairs(TabManager.ActiveTabs) do
+        if not tabSystem or not tabSystem.Destroy then
+            TabManager.ActiveTabs[containerName] = nil
+        end
+    end
+end
+
+return TabSystem
