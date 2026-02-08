@@ -1,7 +1,7 @@
 ![ChloeXUi](https://i.imgur.com/8KqTL0X.jpeg)
 
 
-loadstring
+##loadstring
 ```lua
 -- Pilih salah satu
 
