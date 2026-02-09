@@ -9,14 +9,9 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 > **Catatan:** Dokumentasi ini hanya menjelaskan cara pakai.
 > **Tidak ada satu pun kode yang dihapus atau diubah** dari source contoh.
 
-# New Update
+# New Update v1
 ```
-Added Icon Section
-Added Icon Lucide, Solar
-Added ShowUser
-Added Beta Tester Loader
-Added Costum Config, Notify
-Added Ui transparent
+Added Profile Type
 ```
 # 📥 Load UI
 
@@ -43,6 +38,7 @@ local Window = Chloex:Window({
    -- Configname = "MyCustomConfig"  -- Nama folder config
    -- Uitransparent = 0.15,  -- 15% transparan (Beta Tester Only)
    -- ShowUser = true,  -- Tampilkan user profile (Beta Tester Only)
+   -- UserProfileType = "full" -- atau "simple"
 })
 ```
 
