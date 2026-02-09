@@ -15,6 +15,10 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 ```
 
+# loadstring Beta Tester
+```lua
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeXBetaTester"))()
+```
 # Support Icon
 ```Lucide, Solar```
 # Window v1
@@ -42,6 +46,7 @@ local Window = Chloex:Window({
 ```
 
 tamabhan ``Uitransparent = 0.15  -- 15% transparan``
+Beta Tester
 ```lua
 local Window = Chloex:Window({
     Title = "Title",
