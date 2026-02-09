@@ -640,6 +640,7 @@ function Chloex:Window(GuiConfig)
     Main.Parent = DropShadow
 
     UICorner.Parent = Main
+    UICorner.CornerRadius = UDim.new(0, 8)
 
     Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Top.BackgroundTransparency = 0.9990000128746033
@@ -726,12 +727,18 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
+    -- MODIFIKASI: Sesuaikan ukuran Main jika ShowUser = true
+    local userProfileHeight = 0
+    if GuiConfig.ShowUser then
+        userProfileHeight = 60 -- Tinggi untuk user profile
+    end
+
     LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     LayersTab.BackgroundTransparency = 0.9990000128746033
     LayersTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
     LayersTab.BorderSizePixel = 0
     LayersTab.Position = UDim2.new(0, 9, 0, 50)
-    LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59)
+    LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59 - userProfileHeight)
     LayersTab.Name = "LayersTab"
     LayersTab.Parent = Main
 
@@ -753,7 +760,7 @@ function Chloex:Window(GuiConfig)
     Layers.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Layers.BorderSizePixel = 0
     Layers.Position = UDim2.new(0, GuiConfig["Tab Width"] + 18, 0, 50)
-    Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -59)
+    Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -59 - userProfileHeight)
     Layers.Name = "Layers"
     Layers.Parent = Main
 
@@ -1133,51 +1140,61 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
 
-    -- MODIFIKASI: Tambah User Profile di BOTTOM jika ShowUser = true
+    -- MODIFIKASI: Tambah User Profile di BAGIAN DALAM Main (bukan frame terpisah)
     if GuiConfig.ShowUser then
-        -- Frame untuk user profile di bagian bawah
-        local BottomUserProfile = Instance.new("Frame")
-        BottomUserProfile.Name = "BottomUserProfile"
-        BottomUserProfile.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-        BottomUserProfile.BackgroundTransparency = 0.7
-        BottomUserProfile.BorderSizePixel = 0
-        BottomUserProfile.Size = UDim2.new(1, 0, 0, 50)
-        BottomUserProfile.Position = UDim2.new(0, 0, 1, 0)
-        BottomUserProfile.Parent = Main
+        -- Frame untuk user profile di bagian bawah Main
+        local UserProfileContainer = Instance.new("Frame")
+        UserProfileContainer.Name = "UserProfileContainer"
+        UserProfileContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+        UserProfileContainer.BackgroundTransparency = 0.3
+        UserProfileContainer.BorderSizePixel = 0
+        UserProfileContainer.Size = UDim2.new(1, 0, 0, 60)
+        UserProfileContainer.Position = UDim2.new(0, 0, 1, 0)
+        UserProfileContainer.Parent = Main
         
         local UserProfileCorner = Instance.new("UICorner")
-        UserProfileCorner.CornerRadius = UDim.new(0, 4)
-        UserProfileCorner.Parent = BottomUserProfile
+        UserProfileCorner.CornerRadius = UDim.new(0, 0, 0, 8)
+        UserProfileCorner.Parent = UserProfileContainer
+        
+        -- Garis pemisah atas
+        local DividerLine = Instance.new("Frame")
+        DividerLine.Name = "DividerLine"
+        DividerLine.BackgroundColor3 = GuiConfig.Color
+        DividerLine.BackgroundTransparency = 0.5
+        DividerLine.BorderSizePixel = 0
+        DividerLine.Size = UDim2.new(1, -20, 0, 1)
+        DividerLine.Position = UDim2.new(0, 10, 0, 0)
+        DividerLine.Parent = UserProfileContainer
         
         -- Avatar frame
-        local BottomAvatarFrame = Instance.new("Frame")
-        BottomAvatarFrame.Name = "BottomAvatarFrame"
-        BottomAvatarFrame.AnchorPoint = Vector2.new(0, 0.5)
-        BottomAvatarFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        BottomAvatarFrame.Size = UDim2.new(0, 36, 0, 36)
-        BottomAvatarFrame.Position = UDim2.new(0, 10, 0.5, 0)
-        BottomAvatarFrame.Parent = BottomUserProfile
+        local AvatarFrame = Instance.new("Frame")
+        AvatarFrame.Name = "AvatarFrame"
+        AvatarFrame.AnchorPoint = Vector2.new(0, 0.5)
+        AvatarFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        AvatarFrame.Size = UDim2.new(0, 40, 0, 40)
+        AvatarFrame.Position = UDim2.new(0, 15, 0.5, 0)
+        AvatarFrame.Parent = UserProfileContainer
         
-        local BottomAvatarCorner = Instance.new("UICorner")
-        BottomAvatarCorner.CornerRadius = UDim.new(1, 0) -- Lingkaran sempurna
-        BottomAvatarCorner.Parent = BottomAvatarFrame
+        local AvatarCorner = Instance.new("UICorner")
+        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Lingkaran sempurna
+        AvatarCorner.Parent = AvatarFrame
         
-        local BottomAvatarImage = Instance.new("ImageLabel")
-        BottomAvatarImage.Name = "BottomAvatarImage"
-        BottomAvatarImage.AnchorPoint = Vector2.new(0.5, 0.5)
-        BottomAvatarImage.BackgroundTransparency = 1
-        BottomAvatarImage.Size = UDim2.new(1, -4, 1, -4)
-        BottomAvatarImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-        BottomAvatarImage.Parent = BottomAvatarFrame
+        local AvatarImage = Instance.new("ImageLabel")
+        AvatarImage.Name = "AvatarImage"
+        AvatarImage.AnchorPoint = Vector2.new(0.5, 0.5)
+        AvatarImage.BackgroundTransparency = 1
+        AvatarImage.Size = UDim2.new(1, -4, 1, -4)
+        AvatarImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+        AvatarImage.Parent = AvatarFrame
         
         -- User info frame
         local UserInfoFrame = Instance.new("Frame")
         UserInfoFrame.Name = "UserInfoFrame"
         UserInfoFrame.AnchorPoint = Vector2.new(0, 0.5)
         UserInfoFrame.BackgroundTransparency = 1
-        UserInfoFrame.Size = UDim2.new(1, -60, 0, 36)
-        UserInfoFrame.Position = UDim2.new(0, 56, 0.5, 0)
-        UserInfoFrame.Parent = BottomUserProfile
+        UserInfoFrame.Size = UDim2.new(1, -70, 0, 40)
+        UserInfoFrame.Position = UDim2.new(0, 70, 0.5, 0)
+        UserInfoFrame.Parent = UserProfileContainer
         
         local DisplayNameLabel = Instance.new("TextLabel")
         DisplayNameLabel.Name = "DisplayNameLabel"
@@ -1205,6 +1222,19 @@ function Chloex:Window(GuiConfig)
         UsernameLabel.Position = UDim2.new(0, 0, 0.6, 0)
         UsernameLabel.Parent = UserInfoFrame
         
+        -- Status indicator (online)
+        local StatusIndicator = Instance.new("Frame")
+        StatusIndicator.Name = "StatusIndicator"
+        StatusIndicator.AnchorPoint = Vector2.new(1, 0)
+        StatusIndicator.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
+        StatusIndicator.Size = UDim2.new(0, 8, 0, 8)
+        StatusIndicator.Position = UDim2.new(1, -15, 0, 5)
+        StatusIndicator.Parent = AvatarFrame
+        
+        local StatusCorner = Instance.new("UICorner")
+        StatusCorner.CornerRadius = UDim.new(1, 0)
+        StatusCorner.Parent = StatusIndicator
+        
         -- Update user profile data
         spawn(function()
             local localPlayer = Players.LocalPlayer
@@ -1216,16 +1246,8 @@ function Chloex:Window(GuiConfig)
             
             -- Get avatar thumbnail
             local avatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
-            BottomAvatarImage.Image = avatarUrl
+            AvatarImage.Image = avatarUrl
         end)
-        
-        -- Sesuaikan ukuran Main untuk memberi ruang user profile
-        Main.Size = UDim2.new(1, -47, 1, -97) -- Kurangi 50 pixel untuk ruang user profile
-        Main.Position = UDim2.new(0.5, 0, 0.5, -25) -- Naikkan sedikit
-        
-        -- Sesuaikan posisi LayersTab dan Layers
-        LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -109) -- Kurangi 50 pixel
-        Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -109) -- Kurangi 50 pixel
     end
 
     --// Tabs
