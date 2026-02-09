@@ -1,4 +1,4 @@
-local SolarIcons = {
+local solarIcons = {
     ["4-k-bold"] = "rbxassetid://101120062438598",
 	["4-k-bold-duotone"] = "rbxassetid://126989059970515",
 	["4-k-broken"] = "rbxassetid://92249598853910",
@@ -7331,4 +7331,4 @@ local SolarIcons = {
 	["zip-file-outline"] = "rbxassetid://134842241804608",
 }
 
-return SolarIcons
+return solarIcons
