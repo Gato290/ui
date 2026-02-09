@@ -1,26 +1,4 @@
-[file name]: image.png
-[file content begin]
-Chloe X [v0.0.1] [discord.gg/chloex] [top up rgd.gg]
-
-Info  
-Fishing  
-Automatically  
-Misc  
-Config  
-
-Oxygen Refill Value  
-132  
-
-Start Farm  
-Auto Respawn  
-Brute Auto Catching  
-Auto Catch  
-Selling Features  
-
-Welcome, KEL...
-[file content end]
-
-local HttpService = game:GetService("HttpService") -- V0.0.7
+local HttpService = game:GetService("HttpService") -- V0.0.7 
 local Players = game:GetService("Players")
 
 -- Load Elements dari file eksternal
