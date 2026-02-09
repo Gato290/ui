@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.5
+local HttpService = game:GetService("HttpService") -- V0.0.6
 
 -- Load Elements dari file eksternal
 local success, ElementsModule = pcall(function()
@@ -495,6 +495,24 @@ function Notify(msg, delay, color, title, desc)
     })
 end
 
+-- MODIFIKASI: Tambah fungsi untuk mengatur transparency UI
+local function applyUITransparency(mainObject, transparency)
+    if not mainObject then return end
+    
+    if transparency and transparency >= 0 and transparency <= 1 then
+        if mainObject:IsA("ImageLabel") then
+            mainObject.ImageTransparency = transparency
+        else
+            mainObject.BackgroundTransparency = transparency
+        end
+        
+        -- Simpan ke config data
+        if ConfigData then
+            ConfigData.UITransparency = transparency
+        end
+    end
+end
+
 function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
@@ -504,6 +522,8 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Version      = GuiConfig.Version or 1
     GuiConfig.Configname   = GuiConfig.Configname or "NexaHub" -- Parameter baru
     GuiConfig.Image        = GuiConfig.Image or "71947103252559"
+    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- MODIFIKASI: Parameter transparency baru (0 = solid, 1 = transparan)
+    GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0 -- Untuk kompatibilitas dengan Theme
 
     -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
@@ -528,6 +548,13 @@ function Chloex:Window(GuiConfig)
     
     -- Panggil fungsi LoadConfigFromFile
     LoadConfigFromFile()
+    
+    -- MODIFIKASI: Load transparency dari config jika ada
+    if ConfigData and ConfigData.UITransparency then
+        GuiConfig.Uitransparent = ConfigData.UITransparency
+        GuiConfig.ThemeTransparency = ConfigData.UITransparency
+    end
+    
     Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
 
     local GuiFunc = {}
@@ -595,10 +622,11 @@ function Chloex:Window(GuiConfig)
         Main.Image = "rbxassetid://" .. GuiConfig.Theme
         Main.ScaleType = Enum.ScaleType.Crop
         Main.BackgroundTransparency = 1
+        -- MODIFIKASI: Gunakan ThemeTransparency yang sudah diisi dari Uitransparent
         Main.ImageTransparency = GuiConfig.ThemeTransparency or 0.15
     else
         Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Main.BackgroundTransparency = 0
+        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0 -- MODIFIKASI: Terapkan transparency
     end
 
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -800,6 +828,22 @@ function Chloex:Window(GuiConfig)
         if CoreGui:FindFirstChild("Chloeex") then
             Chloeex:Destroy()
         end
+    end
+    
+    -- MODIFIKASI: Tambah fungsi untuk mengubah transparency UI secara dinamis
+    function GuiFunc:SetTransparency(transparency)
+        if transparency and transparency >= 0 and transparency <= 1 then
+            -- Simpan ke config
+            ConfigData.UITransparency = transparency
+            
+            -- Terapkan ke UI
+            applyUITransparency(Main, transparency)
+            
+            -- Simpan config
+            SaveConfig()
+            return true
+        end
+        return false
     end
 
     Min.Activated:Connect(function()
