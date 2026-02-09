@@ -54,7 +54,7 @@ local Window = Chloex:Window({
 
 # 🗂 Tabs
 Contoh membuat tab UI.
-## Default
+## Default Icon
 ```lua
 local Tabs = {
     Home = Window:AddTab({
