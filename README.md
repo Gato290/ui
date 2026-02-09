@@ -41,7 +41,7 @@ local Window = Chloex:Window({
     ["Tab Width"] = 120,          -- Lebar sidebar tab
     Image = "70884221600423", -- Icon untuk toggle button
    -- Configname = "MyCustomConfig"  -- Nama folder config
-   -- Uitransparent = 0.15  -- 15% transparan (Beta Tester Only)
+   -- Uitransparent = 0.15,  -- 15% transparan (Beta Tester Only)
    -- ShowUser = true,  -- Tampilkan user profile (Beta Tester Only)
 })
 ```
