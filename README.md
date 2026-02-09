@@ -28,20 +28,32 @@ local Window = Chloex:Window({
     Image = "70884221600423", -- Icon untuk toggle button
 })
 ```
-## Window v2
 tambahan ``Configname = "MyCustomConfig"``
 ```lua
 local Window = Chloex:Window({
-    Title = "Title",           -- Judul window
-    Footer = "Footer",          -- Footer text
-    Color = Color3.fromRGB(0, 208, 255),  -- Warna utama
-    Version = 1.0,                -- Versi config
-    ["Tab Width"] = 120,          -- Lebar sidebar tab
-    Image = "70884221600423", -- Icon untuk toggle button
+    Title = "Title",
+    Footer = "Footer",
+    Color = Color3.fromRGB(0, 208, 255),
+    Version = 1.0,
+    ["Tab Width"] = 120,
+    Image = "70884221600423",
     Configname = "MyCustomConfig"  -- Nama folder config
 })
 ```
 
+tamabhan ``Uitransparent = 0.15  -- 15% transparan``
+```lua
+local Window = Chloex:Window({
+    Title = "Title",
+    Footer = "Footer",
+    Color = Color3.fromRGB(0, 208, 255),
+    Version = 1.0,
+    ["Tab Width"] = 120,
+    Image = "70884221600423",
+    Configname = "MyCustomConfig",
+    Uitransparent = 0.15  -- 15% transparan
+})
+```
 # 🗂 Tabs
 Contoh membuat tab UI.
 ## Default Icon
