@@ -3,6 +3,8 @@
 
 local Icons = {
 -- Default Icons
+    nexa     = "rbxassetid://0",
+    vikai     = "rbxassetid://0",
     alert     = "rbxassetid://73186275216515",
     bag       = "rbxassetid://8601111810",
     boss      = "rbxassetid://13132186360",
@@ -16,7 +18,6 @@ local Icons = {
     folder    = "rbxassetid://111411260968321",
     gamepad   = "rbxassetid://84173963561612",
     gps       = "rbxassetid://17824309485",
-    home      = "rbxassetid://70416927963252",
     idea      = "rbxassetid://16833255748",
     lexshub   = "rbxassetid://71947103252559",
     loop      = "rbxassetid://122032243989747",
