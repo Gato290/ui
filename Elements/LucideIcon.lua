@@ -1,4 +1,4 @@
-local LucideIcons = {
+local lucideIcons = {
     ["a-arrow-down"] = "rbxassetid://92867583610071",
 	["a-arrow-up"] = "rbxassetid://132318504999733",
 	["a-large-small"] = "rbxassetid://111491496660216",
@@ -1646,4 +1646,4 @@ local LucideIcons = {
 	["zoom-out"] = "rbxassetid://108334162607319",
 }
 
-return LucideIcons
+return lucideIcons
