@@ -13,9 +13,10 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 ```
 Added Icon Section
 Added Icon Lucide, Solar
-Added User Info
+Added ShowUser
 Added Beta Tester Loader
 Added Costum Config, Notify
+Added Ui transparent
 ```
 # 📥 Load UI
 
