@@ -1,4 +1,5 @@
-local HttpService = game:GetService("HttpService") -- V0.0.6
+local HttpService = game:GetService("HttpService") -- V0.0.7
+local Players = game:GetService("Players")
 
 -- Load Elements dari file eksternal
 local success, ElementsModule = pcall(function()
@@ -120,6 +121,17 @@ local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local CoreGui = game:GetService("CoreGui")
 local viewport = workspace.CurrentCamera.ViewportSize
+
+-- MODIFIKASI: Tambah fungsi untuk mendapatkan thumbnail user
+local function getUserThumbnail(userId, thumbnailType)
+    local success, result = pcall(function()
+        return Players:GetUserThumbnailAsync(userId, thumbnailType, Enum.ThumbnailSize.Size420x420)
+    end)
+    if success then
+        return result
+    end
+    return "rbxassetid://0" -- Default jika gagal
+end
 
 local function isMobileDevice()
     return UserInputService.TouchEnabled
@@ -377,7 +389,7 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.BorderSizePixel = 0
         Top.Size = UDim2.new(1, 0, 0, 36)
         Top.Name = "Top"
-        Top.Parent = Top
+        Top.Parent = NotifyFrameReal
 
         TextLabel.Font = Enum.Font.GothamBold
         TextLabel.Text = NotifyConfig.Title
@@ -505,7 +517,6 @@ local function applyUITransparency(mainObject, transparency)
         else
             mainObject.BackgroundTransparency = transparency
         end
-        -- DIHAPUS: Tidak menyimpan ke ConfigData
     end
 end
 
@@ -518,8 +529,9 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Version      = GuiConfig.Version or 1
     GuiConfig.Configname   = GuiConfig.Configname or "NexaHub" -- Parameter baru
     GuiConfig.Image        = GuiConfig.Image or "71947103252559"
-    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- MODIFIKASI: Parameter transparency baru (0 = solid, 1 = transparan)
+    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- Parameter transparency baru (0 = solid, 1 = transparan)
     GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0 -- Untuk kompatibilitas dengan Theme
+    GuiConfig.ShowUser     = GuiConfig.ShowUser or false -- MODIFIKASI: Parameter baru untuk menampilkan user profile
 
     -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
@@ -544,9 +556,6 @@ function Chloex:Window(GuiConfig)
     
     -- Panggil fungsi LoadConfigFromFile
     LoadConfigFromFile()
-    
-    -- DIHAPUS: Load transparency dari config (karena tidak disimpan)
-    -- GuiConfig.Uitransparent tetap menggunakan nilai dari parameter
     
     Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
 
@@ -649,9 +658,15 @@ function Chloex:Window(GuiConfig)
     TextLabel.BackgroundTransparency = 0.9990000128746033
     TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
     TextLabel.BorderSizePixel = 0
-    TextLabel.Size = UDim2.new(1, -100, 1, 0)
     TextLabel.Position = UDim2.new(0, 10, 0, 0)
     TextLabel.Parent = Top
+    
+    -- MODIFIKASI: Adjust ukuran TextLabel berdasarkan ShowUser
+    if GuiConfig.ShowUser then
+        TextLabel.Size = UDim2.new(1, -160, 1, 0) -- Kurangi space untuk user profile
+    else
+        TextLabel.Size = UDim2.new(1, -100, 1, 0)
+    end
 
     UICorner1.Parent = Top
 
@@ -668,6 +683,73 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
 
+    -- MODIFIKASI: Tambah User Profile jika ShowUser = true
+    if GuiConfig.ShowUser then
+        -- Frame untuk user profile
+        local UserProfileFrame = Instance.new("Frame")
+        UserProfileFrame.Name = "UserProfileFrame"
+        UserProfileFrame.AnchorPoint = Vector2.new(1, 0.5)
+        UserProfileFrame.BackgroundTransparency = 1
+        UserProfileFrame.Size = UDim2.new(0, 140, 1, 0)
+        UserProfileFrame.Position = UDim2.new(1, -10, 0.5, 0)
+        UserProfileFrame.Parent = Top
+        
+        -- Frame untuk avatar
+        local AvatarFrame = Instance.new("Frame")
+        AvatarFrame.Name = "AvatarFrame"
+        AvatarFrame.AnchorPoint = Vector2.new(1, 0.5)
+        AvatarFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        AvatarFrame.Size = UDim2.new(0, 32, 0, 32)
+        AvatarFrame.Position = UDim2.new(1, 0, 0.5, 0)
+        AvatarFrame.Parent = UserProfileFrame
+        
+        local AvatarCorner = Instance.new("UICorner")
+        AvatarCorner.CornerRadius = UDim.new(0, 16)
+        AvatarCorner.Parent = AvatarFrame
+        
+        local AvatarImage = Instance.new("ImageLabel")
+        AvatarImage.Name = "AvatarImage"
+        AvatarImage.AnchorPoint = Vector2.new(0.5, 0.5)
+        AvatarImage.BackgroundTransparency = 1
+        AvatarImage.Size = UDim2.new(1, -4, 1, -4)
+        AvatarImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+        AvatarImage.Parent = AvatarFrame
+        
+        -- Frame untuk display name
+        local DisplayNameFrame = Instance.new("Frame")
+        DisplayNameFrame.Name = "DisplayNameFrame"
+        DisplayNameFrame.AnchorPoint = Vector2.new(1, 0.5)
+        DisplayNameFrame.BackgroundTransparency = 1
+        DisplayNameFrame.Size = UDim2.new(1, -40, 1, 0)
+        DisplayNameFrame.Position = UDim2.new(1, -40, 0.5, 0)
+        DisplayNameFrame.Parent = UserProfileFrame
+        
+        local DisplayName = Instance.new("TextLabel")
+        DisplayName.Name = "DisplayName"
+        DisplayName.Font = Enum.Font.GothamBold
+        DisplayName.Text = "Loading..."
+        DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
+        DisplayName.TextSize = 12
+        DisplayName.TextXAlignment = Enum.TextXAlignment.Right
+        DisplayName.TextYAlignment = Enum.TextYAlignment.Center
+        DisplayName.BackgroundTransparency = 1
+        DisplayName.Size = UDim2.new(1, 0, 1, 0)
+        DisplayName.Parent = DisplayNameFrame
+        
+        -- Update user profile data
+        spawn(function()
+            local localPlayer = Players.LocalPlayer
+            local userId = localPlayer.UserId
+            
+            -- Get display name
+            DisplayName.Text = localPlayer.DisplayName
+            
+            -- Get avatar thumbnail
+            local avatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+            AvatarImage.Image = avatarUrl
+        end)
+    end
+
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
     Close.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -677,7 +759,14 @@ function Chloex:Window(GuiConfig)
     Close.BackgroundTransparency = 0.9990000128746033
     Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Close.BorderSizePixel = 0
-    Close.Position = UDim2.new(1, -8, 0.5, 0)
+    
+    -- MODIFIKASI: Adjust posisi Close berdasarkan ShowUser
+    if GuiConfig.ShowUser then
+        Close.Position = UDim2.new(1, -160, 0.5, 0) -- Geser ke kiri untuk memberi ruang user profile
+    else
+        Close.Position = UDim2.new(1, -8, 0.5, 0)
+    end
+    
     Close.Size = UDim2.new(0, 25, 0, 25)
     Close.Name = "Close"
     Close.Parent = Top
@@ -701,7 +790,14 @@ function Chloex:Window(GuiConfig)
     Min.BackgroundTransparency = 0.9990000128746033
     Min.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Min.BorderSizePixel = 0
-    Min.Position = UDim2.new(1, -38, 0.5, 0)
+    
+    -- MODIFIKASI: Adjust posisi Min berdasarkan ShowUser
+    if GuiConfig.ShowUser then
+        Min.Position = UDim2.new(1, -190, 0.5, 0) -- Geser ke kiri untuk memberi ruang user profile
+    else
+        Min.Position = UDim2.new(1, -38, 0.5, 0)
+    end
+    
     Min.Size = UDim2.new(0, 25, 0, 25)
     Min.Name = "Min"
     Min.Parent = Top
@@ -826,12 +922,7 @@ function Chloex:Window(GuiConfig)
     -- MODIFIKASI: Tambah fungsi untuk mengubah transparency UI secara dinamis (tanpa save ke config)
     function GuiFunc:SetTransparency(transparency)
         if transparency and transparency >= 0 and transparency <= 1 then
-            -- DIHAPUS: Tidak menyimpan ke ConfigData
-            
-            -- Terapkan ke UI
             applyUITransparency(Main, transparency)
-            
-            -- DIHAPUS: Tidak memanggil SaveConfig()
             return true
         end
         return false
