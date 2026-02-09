@@ -21,7 +21,7 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 ```
 # Support Icon
 ```Lucide, Solar```
-# Window v1
+# Window
 ```lua
 local Window = Chloex:Window({
     Title = "Title",           -- Judul window
