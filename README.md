@@ -8,6 +8,14 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 
 > **Catatan:** Dokumentasi ini hanya menjelaskan cara pakai.
 > **Tidak ada satu pun kode yang dihapus atau diubah** dari source contoh.
+
+# New Update
+```
+Added Icon Section
+Added Icon Lucide, Solar
+Added User Info
+Added Beta Tester Loader
+```
 # 📥 Load UI
 
 # loadstring
