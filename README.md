@@ -91,14 +91,14 @@ Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara defa
 -- (Beta Tester Only)
 -- Icon
 --[[
-local PlayerSection = MainTab:AddSection({
+Sec.Player = Tabs.Main:AddSection({
     Title = "Player",
     Icon = "lucide:user",
     AlwaysOpen = true
 })
 
 -- Section dengan icon Solar
-local WeaponsSection = MainTab:AddSection({
+Sec.Weapon = Tabs.Main:AddSection({
     Title = "Weapons",
     Icon = "solar:home",
     AlwaysOpen = false
