@@ -15,6 +15,7 @@ Added Icon Section
 Added Icon Lucide, Solar
 Added User Info
 Added Beta Tester Loader
+Added Costum Config, Notify
 ```
 # 📥 Load UI
 
