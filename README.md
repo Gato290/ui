@@ -87,7 +87,22 @@ Section adalah container untuk button/toggle dll.
 local Sec = {}
 
 Sec.Section1 = Tabs.Main:AddSection("Section Example 1", true) -- true = selalu terbuka tidak bisa di tutup
-Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara default 
+Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara default
+-- (Beta Tester Only)
+--[[
+local PlayerSection = MainTab:AddSection({
+    Title = "Player",
+    Icon = "lucide:user",
+    AlwaysOpen = true
+})
+
+-- Section dengan icon Solar
+local WeaponsSection = MainTab:AddSection({
+    Title = "Weapons",
+    Icon = "solar:home",
+    AlwaysOpen = false
+})
+]]
 ```
 
 # 🔘 Button
