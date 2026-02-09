@@ -89,6 +89,7 @@ local Sec = {}
 Sec.Section1 = Tabs.Main:AddSection("Section Example 1", true) -- true = selalu terbuka tidak bisa di tutup
 Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara default
 -- (Beta Tester Only)
+-- Icon
 --[[
 local PlayerSection = MainTab:AddSection({
     Title = "Player",
