@@ -10,21 +10,11 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 > **Tidak ada satu pun kode yang dihapus atau diubah** dari source contoh.
 # 📥 Load UI
 
-Pilih salah satu versi.
-
-## loadstring v1
-```lua
--- Pilih salah satu
-
--- VikaiHub
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Chloe%20X%20VikaiHub"))()
--- NexaHub
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Chloe%20X%20NexaHub"))()
-```
-## loadstring v2
+# loadstring
 ```lua
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 ```
+
 # Support Icon
 ```Lucide, Solar```
 # Window v1
