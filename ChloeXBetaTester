@@ -47,6 +47,18 @@ else
     SolarIcons = SolarIconsModule
 end
 
+-- Load User Info module dari file eksternal
+local successUserInfo, UserInfoModule = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/showuser.lua"))()
+end)
+
+if not successUserInfo then
+    warn("Failed to load User Info module: " .. tostring(UserInfoModule))
+    UserInfo = {}
+else
+    UserInfo = UserInfoModule
+end
+
 -- Fungsi untuk mendapatkan icon berdasarkan format
 local function getIcon(iconString)
     if not iconString or iconString == "" then
@@ -121,17 +133,6 @@ local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local CoreGui = game:GetService("CoreGui")
 local viewport = workspace.CurrentCamera.ViewportSize
-
--- MODIFIKASI: Tambah fungsi untuk mendapatkan thumbnail user
-local function getUserThumbnail(userId, thumbnailType)
-    local success, result = pcall(function()
-        return Players:GetUserThumbnailAsync(userId, thumbnailType, Enum.ThumbnailSize.Size420x420)
-    end)
-    if success then
-        return result
-    end
-    return "rbxassetid://0" -- Default jika gagal
-end
 
 local function isMobileDevice()
     return UserInputService.TouchEnabled
@@ -531,7 +532,8 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Image        = GuiConfig.Image or "71947103252559"
     GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- Parameter transparency baru (0 = solid, 1 = transparan)
     GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0 -- Untuk kompatibilitas dengan Theme
-    GuiConfig.ShowUser     = GuiConfig.ShowUser or false -- MODIFIKASI: Parameter baru untuk menampilkan user profile
+    GuiConfig.ShowUser     = GuiConfig.ShowUser or false -- Parameter untuk menampilkan user profile
+    GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple" -- "full" atau "simple"
 
     -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
@@ -574,8 +576,6 @@ function Chloex:Window(GuiConfig)
     local ImageLabel1 = Instance.new("ImageLabel");
     local Min = Instance.new("TextButton");
     local ImageLabel2 = Instance.new("ImageLabel");
-    local LayersTab = Instance.new("Frame");
-    local UICorner2 = Instance.new("UICorner");
     local DecideFrame = Instance.new("Frame");
     local Layers = Instance.new("Frame");
     local UICorner6 = Instance.new("UICorner");
@@ -624,11 +624,11 @@ function Chloex:Window(GuiConfig)
         Main.Image = "rbxassetid://" .. GuiConfig.Theme
         Main.ScaleType = Enum.ScaleType.Crop
         Main.BackgroundTransparency = 1
-        -- MODIFIKASI: Gunakan ThemeTransparency yang sudah diisi dari Uitransparent
+        -- Gunakan ThemeTransparency yang sudah diisi dari Uitransparent
         Main.ImageTransparency = GuiConfig.ThemeTransparency or 0.15
     else
         Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0 -- MODIFIKASI: Terapkan transparency
+        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0 -- Terapkan transparency
     end
 
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -783,7 +783,7 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
-    -- MODIFIKASI: Gabungkan User Profile dengan LayersTab
+    -- Gabungkan User Profile dengan LayersTab
     local CombinedLayersTab = Instance.new("Frame")
     CombinedLayersTab.Name = "CombinedLayersTab"
     CombinedLayersTab.BackgroundTransparency = 1
@@ -801,7 +801,7 @@ function Chloex:Window(GuiConfig)
     TabListSection.Name = "TabListSection"
     TabListSection.BackgroundTransparency = 1
     TabListSection.BorderSizePixel = 0
-    TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
+    TabListSection.Size = UDim2.new(1, 0, 1, 0)
     TabListSection.Position = UDim2.new(0, 0, 0, 0)
     TabListSection.Parent = CombinedLayersTab
 
@@ -836,109 +836,40 @@ function Chloex:Window(GuiConfig)
     ScrollTab.ChildAdded:Connect(UpdateSize1)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
-    -- Bagian bawah: User Profile
-    local UserProfileSection = Instance.new("Frame")
-    UserProfileSection.Name = "UserProfileSection"
-    UserProfileSection.BackgroundTransparency = 1
-    UserProfileSection.BorderSizePixel = 0
-    UserProfileSection.Size = UDim2.new(1, 0, 0.3, 0)
-    UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
-    UserProfileSection.Parent = CombinedLayersTab
-
-    -- Frame pembatas
-    local Divider = Instance.new("Frame")
-    Divider.Name = "Divider"
-    Divider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
-    Divider.BackgroundTransparency = 0.5
-    Divider.BorderSizePixel = 0
-    Divider.Size = UDim2.new(1, -10, 0, 1)
-    Divider.Position = UDim2.new(0, 5, 0, 0)
-    Divider.Parent = UserProfileSection
-
-    -- Container untuk user profile
-    local UserProfileContainer = Instance.new("Frame")
-    UserProfileContainer.Name = "UserProfileContainer"
-    UserProfileContainer.BackgroundTransparency = 1
-    UserProfileContainer.BorderSizePixel = 0
-    UserProfileContainer.Size = UDim2.new(1, 0, 1, -5)
-    UserProfileContainer.Position = UDim2.new(0, 0, 0, 5)
-    UserProfileContainer.Parent = UserProfileSection
-
-    -- Update UserProfileContainer hanya jika ShowUser = true
+    -- MODIFIKASI: Buat user profile menggunakan module terpisah
     if GuiConfig.ShowUser then
-        -- Avatar frame
-        local AvatarFrame = Instance.new("Frame")
-        AvatarFrame.Name = "AvatarFrame"
-        AvatarFrame.AnchorPoint = Vector2.new(0, 0.5)
-        AvatarFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        AvatarFrame.Size = UDim2.new(0, 32, 0, 32)
-        AvatarFrame.Position = UDim2.new(0, 8, 0.5, 0)
-        AvatarFrame.Parent = UserProfileContainer
+        -- Atur ukuran TabListSection untuk memberi ruang untuk user profile
+        TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
         
-        local AvatarCorner = Instance.new("UICorner")
-        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Lingkaran sempurna
-        AvatarCorner.Parent = AvatarFrame
+        -- Buat UserProfileSection
+        local UserProfileSection = Instance.new("Frame")
+        UserProfileSection.Name = "UserProfileSection"
+        UserProfileSection.BackgroundTransparency = 1
+        UserProfileSection.BorderSizePixel = 0
+        UserProfileSection.Size = UDim2.new(1, 0, 0.3, 0)
+        UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
+        UserProfileSection.Parent = CombinedLayersTab
+
+        -- Frame pembatas
+        local Divider = Instance.new("Frame")
+        Divider.Name = "Divider"
+        Divider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        Divider.BackgroundTransparency = 0.5
+        Divider.BorderSizePixel = 0
+        Divider.Size = UDim2.new(1, -10, 0, 1)
+        Divider.Position = UDim2.new(0, 5, 0, 0)
+        Divider.Parent = UserProfileSection
+
+        -- Buat user profile berdasarkan tipe yang dipilih
+        local userProfile
+        if GuiConfig.UserProfileType == "full" then
+            userProfile = UserInfo.CreateUserProfile(UserProfileSection, true, GuiConfig.Uitransparent, GuiConfig.Color)
+        else
+            userProfile = UserInfo.CreateSimpleUserProfile(UserProfileSection, true, GuiConfig.Uitransparent, GuiConfig.Color)
+        end
         
-        local AvatarImage = Instance.new("ImageLabel")
-        AvatarImage.Name = "AvatarImage"
-        AvatarImage.AnchorPoint = Vector2.new(0.5, 0.5)
-        AvatarImage.BackgroundTransparency = 1
-        AvatarImage.Size = UDim2.new(1, -4, 1, -4)
-        AvatarImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-        AvatarImage.Parent = AvatarFrame
-        
-        -- User info frame
-        local UserInfoFrame = Instance.new("Frame")
-        UserInfoFrame.Name = "UserInfoFrame"
-        UserInfoFrame.AnchorPoint = Vector2.new(0, 0.5)
-        UserInfoFrame.BackgroundTransparency = 1
-        UserInfoFrame.Size = UDim2.new(1, -48, 0, 32)
-        UserInfoFrame.Position = UDim2.new(0, 48, 0.5, 0)
-        UserInfoFrame.Parent = UserProfileContainer
-        
-        local DisplayNameLabel = Instance.new("TextLabel")
-        DisplayNameLabel.Name = "DisplayNameLabel"
-        DisplayNameLabel.Font = Enum.Font.GothamBold
-        DisplayNameLabel.Text = "Loading..."
-        DisplayNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        DisplayNameLabel.TextSize = 12
-        DisplayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        DisplayNameLabel.TextYAlignment = Enum.TextYAlignment.Bottom
-        DisplayNameLabel.BackgroundTransparency = 1
-        DisplayNameLabel.Size = UDim2.new(1, 0, 0.6, 0)
-        DisplayNameLabel.Position = UDim2.new(0, 0, 0, 0)
-        DisplayNameLabel.Parent = UserInfoFrame
-        
-        local UsernameLabel = Instance.new("TextLabel")
-        UsernameLabel.Name = "UsernameLabel"
-        UsernameLabel.Font = Enum.Font.Gotham
-        UsernameLabel.Text = "@username"
-        UsernameLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-        UsernameLabel.TextSize = 10
-        UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        UsernameLabel.TextYAlignment = Enum.TextYAlignment.Top
-        UsernameLabel.BackgroundTransparency = 1
-        UsernameLabel.Size = UDim2.new(1, 0, 0.4, 0)
-        UsernameLabel.Position = UDim2.new(0, 0, 0.6, 0)
-        UsernameLabel.Parent = UserInfoFrame
-        
-        -- Update user profile data
-        spawn(function()
-            local localPlayer = Players.LocalPlayer
-            local userId = localPlayer.UserId
-            
-            -- Get display name
-            DisplayNameLabel.Text = localPlayer.DisplayName
-            UsernameLabel.Text = "@" .. localPlayer.Name
-            
-            -- Get avatar thumbnail
-            local avatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
-            AvatarImage.Image = avatarUrl
-        end)
-    else
-        -- Jika ShowUser = false, sembunyikan bagian user profile
-        UserProfileSection.Visible = false
-        TabListSection.Size = UDim2.new(1, 0, 1, 0) -- Gunakan seluruh space
+        -- Simpan reference jika diperlukan
+        GuiFunc.UserProfile = userProfile
     end
 
     function GuiFunc:DestroyGui()
