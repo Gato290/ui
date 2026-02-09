@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.7
+local HttpService = game:GetService("HttpService") -- V0.0.7 new
 local Players = game:GetService("Players")
 
 -- Load Elements dari file eksternal
@@ -640,7 +640,6 @@ function Chloex:Window(GuiConfig)
     Main.Parent = DropShadow
 
     UICorner.Parent = Main
-    UICorner.CornerRadius = UDim.new(0, 8)
 
     Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Top.BackgroundTransparency = 0.9990000128746033
@@ -727,24 +726,6 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
-    -- MODIFIKASI: Sesuaikan ukuran Main jika ShowUser = true
-    local userProfileHeight = 0
-    if GuiConfig.ShowUser then
-        userProfileHeight = 60 -- Tinggi untuk user profile
-    end
-
-    LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    LayersTab.BackgroundTransparency = 0.9990000128746033
-    LayersTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    LayersTab.BorderSizePixel = 0
-    LayersTab.Position = UDim2.new(0, 9, 0, 50)
-    LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59 - userProfileHeight)
-    LayersTab.Name = "LayersTab"
-    LayersTab.Parent = Main
-
-    UICorner2.CornerRadius = UDim.new(0, 2)
-    UICorner2.Parent = LayersTab
-
     DecideFrame.AnchorPoint = Vector2.new(0.5, 0)
     DecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DecideFrame.BackgroundTransparency = 0.85
@@ -760,7 +741,7 @@ function Chloex:Window(GuiConfig)
     Layers.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Layers.BorderSizePixel = 0
     Layers.Position = UDim2.new(0, GuiConfig["Tab Width"] + 18, 0, 50)
-    Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -59 - userProfileHeight)
+    Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -59)
     Layers.Name = "Layers"
     Layers.Parent = Main
 
@@ -802,6 +783,28 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
+    -- MODIFIKASI: Gabungkan User Profile dengan LayersTab
+    local CombinedLayersTab = Instance.new("Frame")
+    CombinedLayersTab.Name = "CombinedLayersTab"
+    CombinedLayersTab.BackgroundTransparency = 1
+    CombinedLayersTab.BorderSizePixel = 0
+    CombinedLayersTab.Position = UDim2.new(0, 9, 0, 50)
+    CombinedLayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59)
+    CombinedLayersTab.Parent = Main
+
+    local UICornerCombined = Instance.new("UICorner")
+    UICornerCombined.CornerRadius = UDim.new(0, 2)
+    UICornerCombined.Parent = CombinedLayersTab
+
+    -- Bagian atas: Tab list
+    local TabListSection = Instance.new("Frame")
+    TabListSection.Name = "TabListSection"
+    TabListSection.BackgroundTransparency = 1
+    TabListSection.BorderSizePixel = 0
+    TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
+    TabListSection.Position = UDim2.new(0, 0, 0, 0)
+    TabListSection.Parent = CombinedLayersTab
+
     local ScrollTab = Instance.new("ScrollingFrame");
     local UIListLayout = Instance.new("UIListLayout");
 
@@ -815,7 +818,7 @@ function Chloex:Window(GuiConfig)
     ScrollTab.BorderSizePixel = 0
     ScrollTab.Size = UDim2.new(1, 0, 1, 0)
     ScrollTab.Name = "ScrollTab"
-    ScrollTab.Parent = LayersTab
+    ScrollTab.Parent = TabListSection
 
     UIListLayout.Padding = UDim.new(0, 3)
     UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -832,6 +835,111 @@ function Chloex:Window(GuiConfig)
     end
     ScrollTab.ChildAdded:Connect(UpdateSize1)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
+
+    -- Bagian bawah: User Profile
+    local UserProfileSection = Instance.new("Frame")
+    UserProfileSection.Name = "UserProfileSection"
+    UserProfileSection.BackgroundTransparency = 1
+    UserProfileSection.BorderSizePixel = 0
+    UserProfileSection.Size = UDim2.new(1, 0, 0.3, 0)
+    UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
+    UserProfileSection.Parent = CombinedLayersTab
+
+    -- Frame pembatas
+    local Divider = Instance.new("Frame")
+    Divider.Name = "Divider"
+    Divider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    Divider.BackgroundTransparency = 0.5
+    Divider.BorderSizePixel = 0
+    Divider.Size = UDim2.new(1, -10, 0, 1)
+    Divider.Position = UDim2.new(0, 5, 0, 0)
+    Divider.Parent = UserProfileSection
+
+    -- Container untuk user profile
+    local UserProfileContainer = Instance.new("Frame")
+    UserProfileContainer.Name = "UserProfileContainer"
+    UserProfileContainer.BackgroundTransparency = 1
+    UserProfileContainer.BorderSizePixel = 0
+    UserProfileContainer.Size = UDim2.new(1, 0, 1, -5)
+    UserProfileContainer.Position = UDim2.new(0, 0, 0, 5)
+    UserProfileContainer.Parent = UserProfileSection
+
+    -- Update UserProfileContainer hanya jika ShowUser = true
+    if GuiConfig.ShowUser then
+        -- Avatar frame
+        local AvatarFrame = Instance.new("Frame")
+        AvatarFrame.Name = "AvatarFrame"
+        AvatarFrame.AnchorPoint = Vector2.new(0, 0.5)
+        AvatarFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+        AvatarFrame.Size = UDim2.new(0, 32, 0, 32)
+        AvatarFrame.Position = UDim2.new(0, 8, 0.5, 0)
+        AvatarFrame.Parent = UserProfileContainer
+        
+        local AvatarCorner = Instance.new("UICorner")
+        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Lingkaran sempurna
+        AvatarCorner.Parent = AvatarFrame
+        
+        local AvatarImage = Instance.new("ImageLabel")
+        AvatarImage.Name = "AvatarImage"
+        AvatarImage.AnchorPoint = Vector2.new(0.5, 0.5)
+        AvatarImage.BackgroundTransparency = 1
+        AvatarImage.Size = UDim2.new(1, -4, 1, -4)
+        AvatarImage.Position = UDim2.new(0.5, 0, 0.5, 0)
+        AvatarImage.Parent = AvatarFrame
+        
+        -- User info frame
+        local UserInfoFrame = Instance.new("Frame")
+        UserInfoFrame.Name = "UserInfoFrame"
+        UserInfoFrame.AnchorPoint = Vector2.new(0, 0.5)
+        UserInfoFrame.BackgroundTransparency = 1
+        UserInfoFrame.Size = UDim2.new(1, -48, 0, 32)
+        UserInfoFrame.Position = UDim2.new(0, 48, 0.5, 0)
+        UserInfoFrame.Parent = UserProfileContainer
+        
+        local DisplayNameLabel = Instance.new("TextLabel")
+        DisplayNameLabel.Name = "DisplayNameLabel"
+        DisplayNameLabel.Font = Enum.Font.GothamBold
+        DisplayNameLabel.Text = "Loading..."
+        DisplayNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        DisplayNameLabel.TextSize = 12
+        DisplayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        DisplayNameLabel.TextYAlignment = Enum.TextYAlignment.Bottom
+        DisplayNameLabel.BackgroundTransparency = 1
+        DisplayNameLabel.Size = UDim2.new(1, 0, 0.6, 0)
+        DisplayNameLabel.Position = UDim2.new(0, 0, 0, 0)
+        DisplayNameLabel.Parent = UserInfoFrame
+        
+        local UsernameLabel = Instance.new("TextLabel")
+        UsernameLabel.Name = "UsernameLabel"
+        UsernameLabel.Font = Enum.Font.Gotham
+        UsernameLabel.Text = "@username"
+        UsernameLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
+        UsernameLabel.TextSize = 10
+        UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
+        UsernameLabel.TextYAlignment = Enum.TextYAlignment.Top
+        UsernameLabel.BackgroundTransparency = 1
+        UsernameLabel.Size = UDim2.new(1, 0, 0.4, 0)
+        UsernameLabel.Position = UDim2.new(0, 0, 0.6, 0)
+        UsernameLabel.Parent = UserInfoFrame
+        
+        -- Update user profile data
+        spawn(function()
+            local localPlayer = Players.LocalPlayer
+            local userId = localPlayer.UserId
+            
+            -- Get display name
+            DisplayNameLabel.Text = localPlayer.DisplayName
+            UsernameLabel.Text = "@" .. localPlayer.Name
+            
+            -- Get avatar thumbnail
+            local avatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+            AvatarImage.Image = avatarUrl
+        end)
+    else
+        -- Jika ShowUser = false, sembunyikan bagian user profile
+        UserProfileSection.Visible = false
+        TabListSection.Size = UDim2.new(1, 0, 1, 0) -- Gunakan seluruh space
+    end
 
     function GuiFunc:DestroyGui()
         if CoreGui:FindFirstChild("Chloeex") then
@@ -1139,116 +1247,6 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.Archivable = false
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
-
-    -- MODIFIKASI: Tambah User Profile di BAGIAN DALAM Main (bukan frame terpisah)
-    if GuiConfig.ShowUser then
-        -- Frame untuk user profile di bagian bawah Main
-        local UserProfileContainer = Instance.new("Frame")
-        UserProfileContainer.Name = "UserProfileContainer"
-        UserProfileContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-        UserProfileContainer.BackgroundTransparency = 0.3
-        UserProfileContainer.BorderSizePixel = 0
-        UserProfileContainer.Size = UDim2.new(1, 0, 0, 60)
-        UserProfileContainer.Position = UDim2.new(0, 0, 1, 0)
-        UserProfileContainer.Parent = Main
-        
-        local UserProfileCorner = Instance.new("UICorner")
-        UserProfileCorner.CornerRadius = UDim.new(0, 0, 0, 8)
-        UserProfileCorner.Parent = UserProfileContainer
-        
-        -- Garis pemisah atas
-        local DividerLine = Instance.new("Frame")
-        DividerLine.Name = "DividerLine"
-        DividerLine.BackgroundColor3 = GuiConfig.Color
-        DividerLine.BackgroundTransparency = 0.5
-        DividerLine.BorderSizePixel = 0
-        DividerLine.Size = UDim2.new(1, -20, 0, 1)
-        DividerLine.Position = UDim2.new(0, 10, 0, 0)
-        DividerLine.Parent = UserProfileContainer
-        
-        -- Avatar frame
-        local AvatarFrame = Instance.new("Frame")
-        AvatarFrame.Name = "AvatarFrame"
-        AvatarFrame.AnchorPoint = Vector2.new(0, 0.5)
-        AvatarFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        AvatarFrame.Size = UDim2.new(0, 40, 0, 40)
-        AvatarFrame.Position = UDim2.new(0, 15, 0.5, 0)
-        AvatarFrame.Parent = UserProfileContainer
-        
-        local AvatarCorner = Instance.new("UICorner")
-        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Lingkaran sempurna
-        AvatarCorner.Parent = AvatarFrame
-        
-        local AvatarImage = Instance.new("ImageLabel")
-        AvatarImage.Name = "AvatarImage"
-        AvatarImage.AnchorPoint = Vector2.new(0.5, 0.5)
-        AvatarImage.BackgroundTransparency = 1
-        AvatarImage.Size = UDim2.new(1, -4, 1, -4)
-        AvatarImage.Position = UDim2.new(0.5, 0, 0.5, 0)
-        AvatarImage.Parent = AvatarFrame
-        
-        -- User info frame
-        local UserInfoFrame = Instance.new("Frame")
-        UserInfoFrame.Name = "UserInfoFrame"
-        UserInfoFrame.AnchorPoint = Vector2.new(0, 0.5)
-        UserInfoFrame.BackgroundTransparency = 1
-        UserInfoFrame.Size = UDim2.new(1, -70, 0, 40)
-        UserInfoFrame.Position = UDim2.new(0, 70, 0.5, 0)
-        UserInfoFrame.Parent = UserProfileContainer
-        
-        local DisplayNameLabel = Instance.new("TextLabel")
-        DisplayNameLabel.Name = "DisplayNameLabel"
-        DisplayNameLabel.Font = Enum.Font.GothamBold
-        DisplayNameLabel.Text = "Loading..."
-        DisplayNameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        DisplayNameLabel.TextSize = 14
-        DisplayNameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        DisplayNameLabel.TextYAlignment = Enum.TextYAlignment.Bottom
-        DisplayNameLabel.BackgroundTransparency = 1
-        DisplayNameLabel.Size = UDim2.new(1, 0, 0.6, 0)
-        DisplayNameLabel.Position = UDim2.new(0, 0, 0, 0)
-        DisplayNameLabel.Parent = UserInfoFrame
-        
-        local UsernameLabel = Instance.new("TextLabel")
-        UsernameLabel.Name = "UsernameLabel"
-        UsernameLabel.Font = Enum.Font.Gotham
-        UsernameLabel.Text = "@username"
-        UsernameLabel.TextColor3 = Color3.fromRGB(180, 180, 180)
-        UsernameLabel.TextSize = 12
-        UsernameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        UsernameLabel.TextYAlignment = Enum.TextYAlignment.Top
-        UsernameLabel.BackgroundTransparency = 1
-        UsernameLabel.Size = UDim2.new(1, 0, 0.4, 0)
-        UsernameLabel.Position = UDim2.new(0, 0, 0.6, 0)
-        UsernameLabel.Parent = UserInfoFrame
-        
-        -- Status indicator (online)
-        local StatusIndicator = Instance.new("Frame")
-        StatusIndicator.Name = "StatusIndicator"
-        StatusIndicator.AnchorPoint = Vector2.new(1, 0)
-        StatusIndicator.BackgroundColor3 = Color3.fromRGB(0, 255, 0)
-        StatusIndicator.Size = UDim2.new(0, 8, 0, 8)
-        StatusIndicator.Position = UDim2.new(1, -15, 0, 5)
-        StatusIndicator.Parent = AvatarFrame
-        
-        local StatusCorner = Instance.new("UICorner")
-        StatusCorner.CornerRadius = UDim.new(1, 0)
-        StatusCorner.Parent = StatusIndicator
-        
-        -- Update user profile data
-        spawn(function()
-            local localPlayer = Players.LocalPlayer
-            local userId = localPlayer.UserId
-            
-            -- Get display name
-            DisplayNameLabel.Text = localPlayer.DisplayName
-            UsernameLabel.Text = "@" .. localPlayer.Name
-            
-            -- Get avatar thumbnail
-            local avatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
-            AvatarImage.Image = avatarUrl
-        end)
-    end
 
     --// Tabs
     local Tabs = {}
