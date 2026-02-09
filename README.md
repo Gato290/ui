@@ -26,7 +26,7 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 ```
 # Support Icon
-```lucide, soalar```
+```Lucide, Solar```
 # Window v1
 ```lua
 local Window = Chloex:Window({
