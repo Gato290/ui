@@ -377,7 +377,7 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.BorderSizePixel = 0
         Top.Size = UDim2.new(1, 0, 0, 36)
         Top.Name = "Top"
-        Top.Parent = NotifyFrameReal
+        Top.Parent = Top
 
         TextLabel.Font = Enum.Font.GothamBold
         TextLabel.Text = NotifyConfig.Title
@@ -495,7 +495,7 @@ function Notify(msg, delay, color, title, desc)
     })
 end
 
--- MODIFIKASI: Tambah fungsi untuk mengatur transparency UI
+-- MODIFIKASI: Tambah fungsi untuk mengatur transparency UI (tanpa save ke config)
 local function applyUITransparency(mainObject, transparency)
     if not mainObject then return end
     
@@ -505,11 +505,7 @@ local function applyUITransparency(mainObject, transparency)
         else
             mainObject.BackgroundTransparency = transparency
         end
-        
-        -- Simpan ke config data
-        if ConfigData then
-            ConfigData.UITransparency = transparency
-        end
+        -- DIHAPUS: Tidak menyimpan ke ConfigData
     end
 end
 
@@ -549,11 +545,8 @@ function Chloex:Window(GuiConfig)
     -- Panggil fungsi LoadConfigFromFile
     LoadConfigFromFile()
     
-    -- MODIFIKASI: Load transparency dari config jika ada
-    if ConfigData and ConfigData.UITransparency then
-        GuiConfig.Uitransparent = ConfigData.UITransparency
-        GuiConfig.ThemeTransparency = ConfigData.UITransparency
-    end
+    -- DIHAPUS: Load transparency dari config (karena tidak disimpan)
+    -- GuiConfig.Uitransparent tetap menggunakan nilai dari parameter
     
     Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
 
@@ -830,17 +823,15 @@ function Chloex:Window(GuiConfig)
         end
     end
     
-    -- MODIFIKASI: Tambah fungsi untuk mengubah transparency UI secara dinamis
+    -- MODIFIKASI: Tambah fungsi untuk mengubah transparency UI secara dinamis (tanpa save ke config)
     function GuiFunc:SetTransparency(transparency)
         if transparency and transparency >= 0 and transparency <= 1 then
-            -- Simpan ke config
-            ConfigData.UITransparency = transparency
+            -- DIHAPUS: Tidak menyimpan ke ConfigData
             
             -- Terapkan ke UI
             applyUITransparency(Main, transparency)
             
-            -- Simpan config
-            SaveConfig()
+            -- DIHAPUS: Tidak memanggil SaveConfig()
             return true
         end
         return false
