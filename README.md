@@ -25,15 +25,8 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 ```lua
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 ```
-# 🎨 Icon Name
-List icon yang bisa dipakai di tab / section / paragraph.
-```lua
-alert, bag, boss, cart, compas, crosshair, dcs, discord, eyes, fish, folder,
-gamepad, gps, home, idea, lexshub, loop, menu, next, Notify, payment, player,
-plug, question, rod, scan, scroll, settings, shop, skeleton, star, start,
-stat, strom, sword, user, water, web
-```
-
+# Support Icon
+```lucide, soalar```
 # Window v1
 ```lua
 local Window = Chloex:Window({
@@ -74,7 +67,35 @@ local Tabs = {
     }),
 }
 ```
+## Lucide Icon
+```lua
+local Tabs = {
+    Home = Window:AddTab({
+        Name = "Home",
+        Icon = "lucide:house",
+    }),
 
+    Main = Window:AddTab({
+        Name = "Main",
+        Icon = "lucide:sword",
+    }),
+}
+```
+
+## Solar Icon
+```lua
+local Tabs = {
+    Home = Window:AddTab({
+        Name = "Home",
+        Icon = "solar:home",
+    }),
+
+    Main = Window:AddTab({
+        Name = "Main",
+        Icon = "solar:gamepad",
+    }),
+}
+```
 # 📦 Section
 Section adalah container untuk button/toggle dll.
 ```lua
