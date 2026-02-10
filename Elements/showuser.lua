@@ -116,62 +116,6 @@ local function createStatsContainer(parent, offsetX)
 end
 
 -- ==============================================
--- BLUR EFFECT COMPONENTS
--- ==============================================
-
-local function createBlurEffect(parent)
-    local BlurContainer = Instance.new("Frame")
-    BlurContainer.Name = "BlurContainer"
-    BlurContainer.BackgroundTransparency = 1
-    BlurContainer.Size = UDim2.new(1, 0, 1, 0)
-    BlurContainer.Position = UDim2.new(0, 0, 0, 0)
-    BlurContainer.Visible = false
-    BlurContainer.ZIndex = 10
-    BlurContainer.Parent = parent
-    
-    -- Background blur
-    local BlurBackground = Instance.new("Frame")
-    BlurBackground.Name = "BlurBackground"
-    BlurBackground.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    BlurBackground.BackgroundTransparency = 0.3
-    BlurBackground.Size = UDim2.new(1, 0, 1, 0)
-    BlurBackground.Position = UDim2.new(0, 0, 0, 0)
-    BlurBackground.Parent = BlurContainer
-    
-    local BlurCorner = Instance.new("UICorner")
-    BlurCorner.CornerRadius = UDim.new(0, 6)
-    BlurCorner.Parent = BlurBackground
-    
-    -- Blur text
-    local BlurText = Instance.new("TextLabel")
-    BlurText.Name = "BlurText"
-    BlurText.Font = Enum.Font.GothamMedium
-    BlurText.Text = "User Info Hidden"
-    BlurText.TextColor3 = Color3.fromRGB(200, 200, 200)
-    BlurText.TextSize = 11
-    BlurText.TextTransparency = 0
-    BlurText.BackgroundTransparency = 1
-    BlurText.Size = UDim2.new(1, 0, 1, 0)
-    BlurText.Position = UDim2.new(0, 0, 0, 0)
-    BlurText.ZIndex = 11
-    BlurText.Parent = BlurContainer
-    
-    -- Blur icon
-    local BlurIcon = Instance.new("ImageLabel")
-    BlurIcon.Name = "BlurIcon"
-    BlurIcon.Image = "rbxassetid://3926305904" -- Lock icon
-    BlurIcon.ImageRectOffset = Vector2.new(404, 364)
-    BlurIcon.ImageRectSize = Vector2.new(36, 36)
-    BlurIcon.BackgroundTransparency = 1
-    BlurIcon.Size = UDim2.new(0, 20, 0, 20)
-    BlurIcon.Position = UDim2.new(0.5, -40, 0.5, 0)
-    BlurIcon.ZIndex = 11
-    BlurIcon.Parent = BlurContainer
-    
-    return BlurContainer
-end
-
--- ==============================================
 -- STATS MANAGEMENT
 -- ==============================================
 
@@ -248,6 +192,32 @@ local function updatePlayerStats(localPlayer, statsContainer, color)
 end
 
 -- ==============================================
+-- GLOBAL USER INFO MANAGER
+-- ==============================================
+
+-- Tabel untuk menyimpan semua profile yang dibuat
+local userProfiles = {}
+local showInfoGlobal = true -- Default setting global
+
+-- Fungsi untuk mengatur semua user profile sekaligus
+local function setAllUserInfo(visible)
+    showInfoGlobal = visible
+    
+    for _, profile in pairs(userProfiles) do
+        if profile.SetUserInfo then
+            profile.SetUserInfo(visible)
+        end
+    end
+    
+    return true
+end
+
+-- Fungsi untuk mendapatkan status global
+local function getGlobalUserInfoStatus()
+    return showInfoGlobal
+end
+
+-- ==============================================
 -- USER PROFILE FUNCTIONS (ORIGINAL)
 -- ==============================================
 
@@ -268,17 +238,28 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
     local UserInfoFrame, DisplayNameLabel, UsernameLabel = createUserInfoFrame(UserProfileContainer, 48)
     local StatsContainer = createStatsContainer(UserProfileContainer, 48)
     
-    -- Create blur effect overlay
-    local BlurOverlay = createBlurEffect(UserProfileContainer)
+    -- Store original values for toggle
+    local originalDisplayName = ""
+    local originalUsername = ""
+    local originalAvatarImage = "rbxassetid://0"
+    local showInfo = showInfoGlobal -- Gunakan setting global sebagai default
     
-    -- State management
-    local isUserInfoVisible = true
-    local cachedUserData = {
-        DisplayName = "",
-        Username = "",
-        AvatarUrl = "",
-        StatusColor = Color3.fromRGB(0, 200, 0)
-    }
+    -- Function to update user data visibility
+    local function updateInfoVisibility()
+        if showInfo then
+            -- Show real info
+            DisplayNameLabel.Text = originalDisplayName
+            UsernameLabel.Text = "@" .. originalUsername
+            AvatarImage.Image = originalAvatarImage
+            AvatarImage.ImageTransparency = 0
+        else
+            -- Show blurred info
+            DisplayNameLabel.Text = "******"
+            UsernameLabel.Text = "@******"
+            AvatarImage.Image = "rbxassetid://0" -- Blank/default avatar
+            AvatarImage.ImageTransparency = 0.7 -- Make it semi-transparent
+        end
+    end
     
     -- User data management
     local function updateUserData()
@@ -287,39 +268,28 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
         
         local userId = localPlayer.UserId
         
-        -- Cache user data
-        cachedUserData.DisplayName = localPlayer.DisplayName
-        cachedUserData.Username = "@" .. localPlayer.Name
-        cachedUserData.AvatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+        -- Update basic info
+        originalDisplayName = localPlayer.DisplayName
+        originalUsername = localPlayer.Name
         
-        -- Update UI based on visibility state
-        if isUserInfoVisible then
-            DisplayNameLabel.Text = cachedUserData.DisplayName
-            UsernameLabel.Text = cachedUserData.Username
-            AvatarImage.Image = cachedUserData.AvatarUrl
-            BlurOverlay.Visible = false
-        else
-            DisplayNameLabel.Text = "Hidden User"
-            UsernameLabel.Text = "@hidden"
-            AvatarImage.Image = "rbxassetid://0"
-            BlurOverlay.Visible = true
-        end
+        -- Update avatar
+        originalAvatarImage = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+        
+        -- Apply visibility settings
+        updateInfoVisibility()
         
         -- Update status
         if StatusIndicator then
             local function updateFriendshipStatus()
                 local friendStatus = localPlayer:GetFriendStatus(localPlayer)
-                StatusIndicator.Visible = isUserInfoVisible
+                StatusIndicator.Visible = true
                 
                 if friendStatus == Enum.FriendStatus.Friend then
-                    cachedUserData.StatusColor = Color3.fromRGB(0, 200, 0)
-                    StatusIndicator.BackgroundColor3 = isUserInfoVisible and Color3.fromRGB(0, 200, 0) or Color3.fromRGB(100, 100, 100)
+                    StatusIndicator.BackgroundColor3 = Color3.fromRGB(0, 200, 0)
                 elseif friendStatus == Enum.FriendStatus.NotFriend then
-                    cachedUserData.StatusColor = Color3.fromRGB(200, 200, 0)
-                    StatusIndicator.BackgroundColor3 = isUserInfoVisible and Color3.fromRGB(200, 200, 0) or Color3.fromRGB(100, 100, 100)
+                    StatusIndicator.BackgroundColor3 = Color3.fromRGB(200, 200, 0)
                 else
-                    cachedUserData.StatusColor = Color3.fromRGB(150, 150, 150)
-                    StatusIndicator.BackgroundColor3 = isUserInfoVisible and Color3.fromRGB(150, 150, 150) or Color3.fromRGB(100, 100, 100)
+                    StatusIndicator.BackgroundColor3 = Color3.fromRGB(150, 150, 150)
                 end
             end
             
@@ -327,11 +297,7 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
         end
         
         -- Update stats
-        if isUserInfoVisible then
-            updatePlayerStats(localPlayer, StatsContainer, color)
-        else
-            StatsContainer.Visible = false
-        end
+        updatePlayerStats(localPlayer, StatsContainer, color)
         
         -- Adjust layout based on stats visibility
         if StatsContainer.Visible then
@@ -340,39 +306,6 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
         else
             UserInfoFrame.Size = UDim2.new(1, -48, 0, 32)
             UserInfoFrame.Position = UDim2.new(0, 48, 0.5, 0)
-        end
-    end
-    
-    -- Function to set user info visibility
-    local function setUserInfoVisibility(visible)
-        isUserInfoVisible = visible
-        updateUserData()
-        
-        -- Animation untuk blur effect
-        if visible then
-            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local tween = TweenService:Create(BlurOverlay, tweenInfo, {
-                BackgroundTransparency = 1,
-                TextTransparency = 1
-            })
-            tween:Play()
-            
-            tween.Completed:Connect(function()
-                if visible then
-                    BlurOverlay.Visible = false
-                end
-            end)
-        else
-            BlurOverlay.Visible = true
-            BlurOverlay.BackgroundTransparency = 0.7
-            BlurOverlay.TextTransparency = 0
-            
-            local tweenInfo = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out)
-            local tween = TweenService:Create(BlurOverlay, tweenInfo, {
-                BackgroundTransparency = 0.3,
-                TextTransparency = 0
-            })
-            tween:Play()
         end
     end
     
@@ -388,7 +321,6 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
             if StatusIndicator then
                 StatusIndicator.Visible = false
             end
-            BlurOverlay.Visible = false
         end
     end)
     
@@ -416,8 +348,8 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
     end
     
     local function toggleStats(visible)
-        StatsContainer.Visible = visible and isUserInfoVisible
-        if visible and isUserInfoVisible then
+        StatsContainer.Visible = visible
+        if visible then
             UserInfoFrame.Size = UDim2.new(1, -48, 0, 20)
             UserInfoFrame.Position = UDim2.new(0, 48, 0.5, -4)
         else
@@ -428,22 +360,36 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
     
     local function setStatusColor(color3)
         if StatusIndicator and color3 then
-            cachedUserData.StatusColor = color3
-            StatusIndicator.BackgroundColor3 = isUserInfoVisible and color3 or Color3.fromRGB(100, 100, 100)
+            StatusIndicator.BackgroundColor3 = color3
         end
     end
     
-    return {
+    -- NEW FUNCTION: Set user info visibility
+    local function setUserInfo(visible)
+        showInfo = visible
+        updateInfoVisibility()
+    end
+    
+    -- Create profile object
+    local profileObject = {
         Refresh = refreshUserData,
         SetAvatarSize = setAvatarSize,
         ToggleStats = toggleStats,
         SetStatusColor = setStatusColor,
-        SetUserInfo = setUserInfoVisibility, -- Fungsi baru
+        SetUserInfo = setUserInfo,
         Container = UserProfileContainer,
         Avatar = AvatarImage,
         DisplayName = DisplayNameLabel,
         Username = UsernameLabel
     }
+    
+    -- Store profile in global table
+    table.insert(userProfiles, profileObject)
+    
+    -- Apply global setting
+    setUserInfo(showInfoGlobal)
+    
+    return profileObject
 end
 
 -- ==============================================
@@ -498,9 +444,25 @@ local function createSimpleUserProfile(parentFrame, showUser, uitransparent, col
     UsernameLabel.Position = UDim2.new(0, 0, 0.6, 0)
     UsernameLabel.Parent = UserInfoFrame
     
-    -- Create blur effect for simple profile
-    local BlurOverlay = createBlurEffect(UserProfileContainer)
-    local isUserInfoVisible = true
+    -- Store original values for simple profile too
+    local originalDisplayName = ""
+    local originalUsername = ""
+    local originalAvatarImage = "rbxassetid://0"
+    local showInfo = showInfoGlobal
+    
+    local function updateInfoVisibility()
+        if showInfo then
+            DisplayNameLabel.Text = originalDisplayName
+            UsernameLabel.Text = "@" .. originalUsername
+            AvatarImage.Image = originalAvatarImage
+            AvatarImage.ImageTransparency = 0
+        else
+            DisplayNameLabel.Text = "******"
+            UsernameLabel.Text = "@******"
+            AvatarImage.Image = "rbxassetid://0"
+            AvatarImage.ImageTransparency = 0.7
+        end
+    end
     
     spawn(function()
         local localPlayer = Players.LocalPlayer
@@ -508,46 +470,56 @@ local function createSimpleUserProfile(parentFrame, showUser, uitransparent, col
         
         local userId = localPlayer.UserId
         
-        if isUserInfoVisible then
-            DisplayNameLabel.Text = localPlayer.DisplayName
-            UsernameLabel.Text = "@" .. localPlayer.Name
-            AvatarImage.Image = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
-            BlurOverlay.Visible = false
-        else
-            DisplayNameLabel.Text = "Hidden User"
-            UsernameLabel.Text = "@hidden"
-            AvatarImage.Image = "rbxassetid://0"
-            BlurOverlay.Visible = true
-        end
+        originalDisplayName = localPlayer.DisplayName
+        originalUsername = localPlayer.Name
+        originalAvatarImage = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+        
+        updateInfoVisibility()
     end)
     
-    -- Function to set user info visibility for simple profile
-    local function setUserInfoVisibility(visible)
-        isUserInfoVisible = visible
-        
-        if visible then
-            local localPlayer = Players.LocalPlayer
-            if localPlayer then
-                DisplayNameLabel.Text = localPlayer.DisplayName
-                UsernameLabel.Text = "@" .. localPlayer.Name
-                AvatarImage.Image = getUserThumbnail(localPlayer.UserId, Enum.ThumbnailType.HeadShot)
-            end
-            BlurOverlay.Visible = false
-        else
-            DisplayNameLabel.Text = "Hidden User"
-            UsernameLabel.Text = "@hidden"
-            AvatarImage.Image = "rbxassetid://0"
-            BlurOverlay.Visible = true
-        end
+    -- NEW FUNCTION for simple profile
+    local function setUserInfo(visible)
+        showInfo = visible
+        updateInfoVisibility()
     end
     
-    return {
+    -- Create profile object
+    local profileObject = {
         Container = UserProfileContainer,
         Avatar = AvatarImage,
         DisplayName = DisplayNameLabel,
         Username = UsernameLabel,
-        SetUserInfo = setUserInfoVisibility -- Fungsi baru
+        SetUserInfo = setUserInfo
     }
+    
+    -- Store profile in global table
+    table.insert(userProfiles, profileObject)
+    
+    -- Apply global setting
+    setUserInfo(showInfoGlobal)
+    
+    return profileObject
+end
+
+-- ==============================================
+-- STANDALONE FUNCTIONS (TANPA HARUS BUAT PROFILE)
+-- ==============================================
+
+-- Fungsi untuk mengatur info user secara langsung
+local function setUserInfo(visible)
+    return setAllUserInfo(visible)
+end
+
+-- Fungsi untuk mendapatkan status info user
+local function getUserInfoStatus()
+    return getGlobalUserInfoStatus()
+end
+
+-- Fungsi cepat untuk toggle info user
+local function toggleUserInfo()
+    local newStatus = not showInfoGlobal
+    setAllUserInfo(newStatus)
+    return newStatus
 end
 
 -- ==============================================
@@ -555,7 +527,17 @@ end
 -- ==============================================
 
 return {
+    -- Original exports
     CreateUserProfile = createUserProfile,
     CreateSimpleUserProfile = createSimpleUserProfile,
-    GetUserThumbnail = getUserThumbnail
+    GetUserThumbnail = getUserThumbnail,
+    
+    -- New standalone functions
+    SetUserInfo = setUserInfo,
+    GetUserInfoStatus = getUserInfoStatus,
+    ToggleUserInfo = toggleUserInfo,
+    
+    -- Global control functions
+    SetAllUserInfo = setAllUserInfo,
+    GetGlobalUserInfoStatus = getGlobalUserInfoStatus
 }
