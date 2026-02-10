@@ -192,32 +192,6 @@ local function updatePlayerStats(localPlayer, statsContainer, color)
 end
 
 -- ==============================================
--- GLOBAL USER INFO MANAGER
--- ==============================================
-
--- Tabel untuk menyimpan semua profile yang dibuat
-local userProfiles = {}
-local showInfoGlobal = true -- Default setting global
-
--- Fungsi untuk mengatur semua user profile sekaligus
-local function setAllUserInfo(visible)
-    showInfoGlobal = visible
-    
-    for _, profile in pairs(userProfiles) do
-        if profile.SetUserInfo then
-            profile.SetUserInfo(visible)
-        end
-    end
-    
-    return true
-end
-
--- Fungsi untuk mendapatkan status global
-local function getGlobalUserInfoStatus()
-    return showInfoGlobal
-end
-
--- ==============================================
 -- USER PROFILE FUNCTIONS (ORIGINAL)
 -- ==============================================
 
@@ -238,29 +212,6 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
     local UserInfoFrame, DisplayNameLabel, UsernameLabel = createUserInfoFrame(UserProfileContainer, 48)
     local StatsContainer = createStatsContainer(UserProfileContainer, 48)
     
-    -- Store original values for toggle
-    local originalDisplayName = ""
-    local originalUsername = ""
-    local originalAvatarImage = "rbxassetid://0"
-    local showInfo = showInfoGlobal -- Gunakan setting global sebagai default
-    
-    -- Function to update user data visibility
-    local function updateInfoVisibility()
-        if showInfo then
-            -- Show real info
-            DisplayNameLabel.Text = originalDisplayName
-            UsernameLabel.Text = "@" .. originalUsername
-            AvatarImage.Image = originalAvatarImage
-            AvatarImage.ImageTransparency = 0
-        else
-            -- Show blurred info
-            DisplayNameLabel.Text = "******"
-            UsernameLabel.Text = "@******"
-            AvatarImage.Image = "rbxassetid://0" -- Blank/default avatar
-            AvatarImage.ImageTransparency = 0.7 -- Make it semi-transparent
-        end
-    end
-    
     -- User data management
     local function updateUserData()
         local localPlayer = Players.LocalPlayer
@@ -269,14 +220,12 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
         local userId = localPlayer.UserId
         
         -- Update basic info
-        originalDisplayName = localPlayer.DisplayName
-        originalUsername = localPlayer.Name
+        DisplayNameLabel.Text = localPlayer.DisplayName
+        UsernameLabel.Text = "@" .. localPlayer.Name
         
         -- Update avatar
-        originalAvatarImage = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
-        
-        -- Apply visibility settings
-        updateInfoVisibility()
+        local avatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+        AvatarImage.Image = avatarUrl
         
         -- Update status
         if StatusIndicator then
@@ -364,32 +313,16 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
         end
     end
     
-    -- NEW FUNCTION: Set user info visibility
-    local function setUserInfo(visible)
-        showInfo = visible
-        updateInfoVisibility()
-    end
-    
-    -- Create profile object
-    local profileObject = {
+    return {
         Refresh = refreshUserData,
         SetAvatarSize = setAvatarSize,
         ToggleStats = toggleStats,
         SetStatusColor = setStatusColor,
-        SetUserInfo = setUserInfo,
         Container = UserProfileContainer,
         Avatar = AvatarImage,
         DisplayName = DisplayNameLabel,
         Username = UsernameLabel
     }
-    
-    -- Store profile in global table
-    table.insert(userProfiles, profileObject)
-    
-    -- Apply global setting
-    setUserInfo(showInfoGlobal)
-    
-    return profileObject
 end
 
 -- ==============================================
@@ -444,82 +377,25 @@ local function createSimpleUserProfile(parentFrame, showUser, uitransparent, col
     UsernameLabel.Position = UDim2.new(0, 0, 0.6, 0)
     UsernameLabel.Parent = UserInfoFrame
     
-    -- Store original values for simple profile too
-    local originalDisplayName = ""
-    local originalUsername = ""
-    local originalAvatarImage = "rbxassetid://0"
-    local showInfo = showInfoGlobal
-    
-    local function updateInfoVisibility()
-        if showInfo then
-            DisplayNameLabel.Text = originalDisplayName
-            UsernameLabel.Text = "@" .. originalUsername
-            AvatarImage.Image = originalAvatarImage
-            AvatarImage.ImageTransparency = 0
-        else
-            DisplayNameLabel.Text = "******"
-            UsernameLabel.Text = "@******"
-            AvatarImage.Image = "rbxassetid://0"
-            AvatarImage.ImageTransparency = 0.7
-        end
-    end
-    
     spawn(function()
         local localPlayer = Players.LocalPlayer
         if not localPlayer then return end
         
         local userId = localPlayer.UserId
         
-        originalDisplayName = localPlayer.DisplayName
-        originalUsername = localPlayer.Name
-        originalAvatarImage = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+        DisplayNameLabel.Text = localPlayer.DisplayName
+        UsernameLabel.Text = "@" .. localPlayer.Name
         
-        updateInfoVisibility()
+        local avatarUrl = getUserThumbnail(userId, Enum.ThumbnailType.HeadShot)
+        AvatarImage.Image = avatarUrl
     end)
     
-    -- NEW FUNCTION for simple profile
-    local function setUserInfo(visible)
-        showInfo = visible
-        updateInfoVisibility()
-    end
-    
-    -- Create profile object
-    local profileObject = {
+    return {
         Container = UserProfileContainer,
         Avatar = AvatarImage,
         DisplayName = DisplayNameLabel,
-        Username = UsernameLabel,
-        SetUserInfo = setUserInfo
+        Username = UsernameLabel
     }
-    
-    -- Store profile in global table
-    table.insert(userProfiles, profileObject)
-    
-    -- Apply global setting
-    setUserInfo(showInfoGlobal)
-    
-    return profileObject
-end
-
--- ==============================================
--- STANDALONE FUNCTIONS (TANPA HARUS BUAT PROFILE)
--- ==============================================
-
--- Fungsi untuk mengatur info user secara langsung
-local function setUserInfo(visible)
-    return setAllUserInfo(visible)
-end
-
--- Fungsi untuk mendapatkan status info user
-local function getUserInfoStatus()
-    return getGlobalUserInfoStatus()
-end
-
--- Fungsi cepat untuk toggle info user
-local function toggleUserInfo()
-    local newStatus = not showInfoGlobal
-    setAllUserInfo(newStatus)
-    return newStatus
 end
 
 -- ==============================================
@@ -527,17 +403,7 @@ end
 -- ==============================================
 
 return {
-    -- Original exports
     CreateUserProfile = createUserProfile,
     CreateSimpleUserProfile = createSimpleUserProfile,
-    GetUserThumbnail = getUserThumbnail,
-    
-    -- New standalone functions
-    SetUserInfo = setUserInfo,
-    GetUserInfoStatus = getUserInfoStatus,
-    ToggleUserInfo = toggleUserInfo,
-    
-    -- Global control functions
-    SetAllUserInfo = setAllUserInfo,
-    GetGlobalUserInfoStatus = getGlobalUserInfoStatus
+    GetUserThumbnail = getUserThumbnail
 }
