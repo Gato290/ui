@@ -598,7 +598,7 @@ Chloex:MakeNotify({
     Delay = 3,
     Mini = true, -- Parameter untuk membuat notifikasi mini
 })
-``
+```
 
 ## Funcions Notify
 ```lua
