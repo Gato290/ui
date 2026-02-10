@@ -575,6 +575,31 @@ local exampleCustomNotify = Chloex:MakeNotify({
 })
 ```
 
+## Icon Notification
+```lua
+Chloex:MakeNotify({
+    Title = "Icon",
+    Icon = "lucide:info",
+    Description = "System",
+    Content = "This is a short message.",
+    Color = Color3.fromRGB(0, 150, 255),
+    Delay = 3,
+})
+```
+
+## Mini Notification
+```lua
+Chloex:MakeNotify({
+    Title = "Small Notification",
+    Icon = "lucide:info",
+    Description = "System",
+    Content = "This is a short message.",
+    Color = Color3.fromRGB(0, 150, 255),
+    Delay = 3,
+    Mini = true, -- Parameter untuk membuat notifikasi mini
+})
+``
+
 ## Funcions Notify
 ```lua
 NotifyFunc:Close()
