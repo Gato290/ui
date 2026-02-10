@@ -90,6 +90,7 @@ local CURRENT_CONFIG_NAME = "NexaHub" -- Default value
 ConfigData = {}
 CURRENT_VERSION = nil
 local ConfigFile = ""
+local DEFAULT_NOTIFY_SIZE = 320 -- Default width untuk notifikasi
 
 -- Fungsi-fungsi config yang akan diupdate berdasarkan Configname
 function SaveConfig()
@@ -179,7 +180,8 @@ local function MakeDraggable(topbarobject, object)
                     if input.UserInputState == Enum.UserInputState.End then
                         Dragging = false
                     end
-                end)
+                end
+                )
             end
         end)
 
@@ -307,6 +309,10 @@ function Chloex:MakeNotify(NotifyConfig)
     NotifyConfig.Color = NotifyConfig.Color or Color3.fromRGB(255, 0, 255)
     NotifyConfig.Time = NotifyConfig.Time or 0.5
     NotifyConfig.Delay = NotifyConfig.Delay or 5
+    NotifyConfig.Icon = NotifyConfig.Icon or "" -- Parameter baru: Icon
+    NotifyConfig.NotifySize = NotifyConfig.NotifySize or DEFAULT_NOTIFY_SIZE -- Parameter baru: Ukuran
+    NotifyConfig.Mini = NotifyConfig.Mini or false -- Parameter baru: Mode mini
+    
     local NotifyFunction = {}
     spawn(function()
         if not CoreGui:FindFirstChild("NotifyGui") then
@@ -323,9 +329,13 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyLayout.BorderColor3 = Color3.fromRGB(0, 0, 0)
             NotifyLayout.BorderSizePixel = 0
             NotifyLayout.Position = UDim2.new(1, -30, 1, -30)
-            NotifyLayout.Size = UDim2.new(0, 320, 1, 0)
+            NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0) -- Gunakan NotifySize dari config
             NotifyLayout.Name = "NotifyLayout"
             NotifyLayout.Parent = CoreGui.NotifyGui
+            
+            -- MODIFIKASI: Tambahkan properti untuk menyimpan ukuran notifikasi
+            NotifyLayout:SetAttribute("NotifySize", NotifyConfig.NotifySize)
+            
             local Count = 0
             CoreGui.NotifyGui.NotifyLayout.ChildRemoved:Connect(function()
                 Count = 0
@@ -338,6 +348,13 @@ function Chloex:MakeNotify(NotifyConfig)
                     Count = Count + 1
                 end
             end)
+        else
+            -- MODIFIKASI: Jika NotifyLayout sudah ada, update ukurannya
+            local currentSize = CoreGui.NotifyGui.NotifyLayout:GetAttribute("NotifySize") or DEFAULT_NOTIFY_SIZE
+            if currentSize ~= NotifyConfig.NotifySize then
+                CoreGui.NotifyGui.NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0)
+                CoreGui.NotifyGui.NotifyLayout:SetAttribute("NotifySize", NotifyConfig.NotifySize)
+            end
         end
         local NotifyPosHeigh = 0
         for i, v in CoreGui.NotifyGui.NotifyLayout:GetChildren() do
@@ -349,6 +366,7 @@ function Chloex:MakeNotify(NotifyConfig)
         local DropShadowHolder = Instance.new("Frame");
         local DropShadow = Instance.new("ImageLabel");
         local Top = Instance.new("Frame");
+        local IconLabel = Instance.new("ImageLabel"); -- Icon baru
         local TextLabel = Instance.new("TextLabel");
         local UICorner1 = Instance.new("UICorner");
         local TextLabel1 = Instance.new("TextLabel");
@@ -388,37 +406,106 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.BackgroundTransparency = 0.9990000128746033
         Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Top.BorderSizePixel = 0
-        Top.Size = UDim2.new(1, 0, 0, 36)
+        
+        -- MODIFIKASI: Atur ukuran Top berdasarkan mode mini
+        if NotifyConfig.Mini then
+            Top.Size = UDim2.new(1, 0, 0, 24) -- Lebih kecil untuk mode mini
+        else
+            Top.Size = UDim2.new(1, 0, 0, 36)
+        end
         Top.Name = "Top"
         Top.Parent = NotifyFrameReal
 
+        -- MODIFIKASI: Tambahkan IconLabel untuk icon notifikasi
+        if NotifyConfig.Icon and NotifyConfig.Icon ~= "" then
+            local iconImage = getIcon(NotifyConfig.Icon)
+            if iconImage ~= "" then
+                IconLabel.Image = iconImage
+                IconLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                IconLabel.BackgroundTransparency = 1
+                IconLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                IconLabel.BorderSizePixel = 0
+                
+                -- MODIFIKASI: Atur ukuran dan posisi icon berdasarkan mode mini
+                if NotifyConfig.Mini then
+                    IconLabel.Position = UDim2.new(0, 6, 0.5, -6) -- Posisi lebih kecil
+                    IconLabel.Size = UDim2.new(0, 12, 0, 12) -- Ukuran lebih kecil
+                else
+                    IconLabel.Position = UDim2.new(0, 10, 0.5, -8)
+                    IconLabel.Size = UDim2.new(0, 16, 0, 16)
+                end
+                
+                IconLabel.AnchorPoint = Vector2.new(0, 0.5)
+                IconLabel.Name = "IconLabel"
+                IconLabel.Parent = Top
+            end
+        end
+
         TextLabel.Font = Enum.Font.GothamBold
+        
+        -- MODIFIKASI: Atur ukuran font berdasarkan mode mini
+        if NotifyConfig.Mini then
+            TextLabel.TextSize = 11 -- Font lebih kecil untuk mode mini
+        else
+            TextLabel.TextSize = 14
+        end
+        
         TextLabel.Text = NotifyConfig.Title
         TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel.TextSize = 14
         TextLabel.TextXAlignment = Enum.TextXAlignment.Left
         TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         TextLabel.BackgroundTransparency = 0.9990000128746033
         TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel.BorderSizePixel = 0
-        TextLabel.Size = UDim2.new(1, 0, 1, 0)
-        TextLabel.Position = UDim2.new(0, 10, 0, 0)
+        TextLabel.Size = UDim2.new(1, -100, 1, 0)
+        
+        -- Atur posisi berdasarkan ada/tidaknya icon dan mode mini
+        if NotifyConfig.Icon and NotifyConfig.Icon ~= "" and getIcon(NotifyConfig.Icon) ~= "" then
+            if NotifyConfig.Mini then
+                TextLabel.Position = UDim2.new(0, 24, 0, 0) -- Posisi dengan icon (mini)
+            else
+                TextLabel.Position = UDim2.new(0, 35, 0, 0) -- Posisi dengan icon (normal)
+            end
+        else
+            if NotifyConfig.Mini then
+                TextLabel.Position = UDim2.new(0, 6, 0, 0) -- Posisi tanpa icon (mini)
+            else
+                TextLabel.Position = UDim2.new(0, 10, 0, 0) -- Posisi tanpa icon (normal)
+            end
+        end
         TextLabel.Parent = Top
 
         UICorner1.Parent = Top
         UICorner1.CornerRadius = UDim.new(0, 5)
 
         TextLabel1.Font = Enum.Font.GothamBold
+        
+        -- MODIFIKASI: Atur ukuran font berdasarkan mode mini
+        if NotifyConfig.Mini then
+            TextLabel1.TextSize = 10 -- Font lebih kecil untuk mode mini
+        else
+            TextLabel1.TextSize = 14
+        end
+        
         TextLabel1.Text = NotifyConfig.Description
         TextLabel1.TextColor3 = NotifyConfig.Color
-        TextLabel1.TextSize = 14
         TextLabel1.TextXAlignment = Enum.TextXAlignment.Left
         TextLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         TextLabel1.BackgroundTransparency = 0.9990000128746033
         TextLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel1.BorderSizePixel = 0
         TextLabel1.Size = UDim2.new(1, 0, 1, 0)
-        TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
+        
+        -- Atur posisi berdasarkan TextLabel
+        local xOffset = TextLabel.TextBounds.X + 15
+        if NotifyConfig.Icon and NotifyConfig.Icon ~= "" and getIcon(NotifyConfig.Icon) ~= "" then
+            if NotifyConfig.Mini then
+                xOffset = xOffset + 18 -- Tambah offset lebih kecil jika ada icon (mini)
+            else
+                xOffset = xOffset + 25 -- Tambah offset jika ada icon (normal)
+            end
+        end
+        TextLabel1.Position = UDim2.new(0, xOffset, 0, 0)
         TextLabel1.Parent = Top
 
         Close.Font = Enum.Font.SourceSans
@@ -431,7 +518,14 @@ function Chloex:MakeNotify(NotifyConfig)
         Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Close.BorderSizePixel = 0
         Close.Position = UDim2.new(1, -5, 0.5, 0)
-        Close.Size = UDim2.new(0, 25, 0, 25)
+        
+        -- MODIFIKASI: Atur ukuran tombol close berdasarkan mode mini
+        if NotifyConfig.Mini then
+            Close.Size = UDim2.new(0, 20, 0, 20) -- Tombol close lebih kecil untuk mode mini
+        else
+            Close.Size = UDim2.new(0, 25, 0, 25)
+        end
+        
         Close.Name = "Close"
         Close.Parent = Top
 
@@ -442,12 +536,26 @@ function Chloex:MakeNotify(NotifyConfig)
         ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
         ImageLabel.BorderSizePixel = 0
         ImageLabel.Position = UDim2.new(0.49000001, 0, 0.5, 0)
-        ImageLabel.Size = UDim2.new(1, -8, 1, -8)
+        
+        -- MODIFIKASI: Atur ukuran icon close berdasarkan mode mini
+        if NotifyConfig.Mini then
+            ImageLabel.Size = UDim2.new(1, -6, 1, -6) -- Icon close lebih kecil
+        else
+            ImageLabel.Size = UDim2.new(1, -8, 1, -8)
+        end
+        
         ImageLabel.Parent = Close
 
         TextLabel2.Font = Enum.Font.GothamBold
         TextLabel2.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel2.TextSize = 13
+        
+        -- MODIFIKASI: Atur ukuran font content berdasarkan mode mini
+        if NotifyConfig.Mini then
+            TextLabel2.TextSize = 11 -- Font content lebih kecil
+        else
+            TextLabel2.TextSize = 13
+        end
+        
         TextLabel2.Text = NotifyConfig.Content
         TextLabel2.TextXAlignment = Enum.TextXAlignment.Left
         TextLabel2.TextYAlignment = Enum.TextYAlignment.Top
@@ -456,18 +564,60 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.TextColor3 = Color3.fromRGB(150.0000062584877, 150.0000062584877, 150.0000062584877)
         TextLabel2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel2.BorderSizePixel = 0
-        TextLabel2.Position = UDim2.new(0, 10, 0, 27)
+        
+        -- MODIFIKASI: Atur posisi dan ukuran TextLabel2 berdasarkan mode mini
+        if NotifyConfig.Mini then
+            TextLabel2.Position = UDim2.new(0, 6, 0, 22) -- Posisi lebih rapat ke atas
+        else
+            TextLabel2.Position = UDim2.new(0, 10, 0, 27)
+        end
+        
         TextLabel2.Parent = NotifyFrameReal
         TextLabel2.Size = UDim2.new(1, -20, 0, 13)
 
-        TextLabel2.Size = UDim2.new(1, -20, 0, 13 + (13 * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
+        -- MODIFIKASI: Hitung ukuran text dengan wrap berdasarkan NotifySize dan mode mini
+        local textBoundsX = TextLabel2.TextBounds.X
+        local frameWidth = NotifyConfig.NotifySize - 40 -- Kurangi padding berdasarkan ukuran notifikasi
+        local linesNeeded = math.ceil(textBoundsX / frameWidth)
+        
+        -- MODIFIKASI: Atur ukuran baris berdasarkan mode mini
+        local lineHeight = NotifyConfig.Mini and 11 or 13
+        
+        if linesNeeded > 1 then
+            TextLabel2.Size = UDim2.new(1, -20, 0, lineHeight * linesNeeded)
+        else
+            TextLabel2.Size = UDim2.new(1, -20, 0, lineHeight)
+        end
         TextLabel2.TextWrapped = true
 
-        if TextLabel2.AbsoluteSize.Y < 27 then
-            NotifyFrame.Size = UDim2.new(1, 0, 0, 65)
+        -- MODIFIKASI: Atur ukuran frame berdasarkan tinggi konten dan mode mini
+        local contentHeight = TextLabel2.AbsoluteSize.Y
+        local minHeight, maxHeight
+        
+        if NotifyConfig.Mini then
+            minHeight = 45 -- Minimum height untuk mode mini
+            maxHeight = 150 -- Maximum height untuk mode mini
         else
-            NotifyFrame.Size = UDim2.new(1, 0, 0, TextLabel2.AbsoluteSize.Y + 40)
+            minHeight = 65
+            maxHeight = 250 -- Batas maksimum tinggi
         end
+        
+        -- MODIFIKASI: Hitung finalHeight berdasarkan mode mini
+        local headerHeight = NotifyConfig.Mini and 24 or 36
+        local finalHeight = contentHeight + headerHeight + 4 -- Tambah margin
+        
+        if finalHeight < minHeight then
+            finalHeight = minHeight
+        elseif finalHeight > maxHeight then
+            finalHeight = maxHeight
+            -- Jika terlalu tinggi, tambahkan scroll
+            local maxContentHeight = maxHeight - headerHeight - 10
+            TextLabel2.Size = UDim2.new(1, -20, 0, maxContentHeight)
+            TextLabel2.AutomaticSize = Enum.AutomaticSize.Y
+        end
+        
+        NotifyFrame.Size = UDim2.new(1, 0, 0, finalHeight)
+        
         local waitbruh = false
         function NotifyFunction:Close()
             if waitbruh then
@@ -497,14 +647,31 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
--- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME
-function Notify(msg, delay, color, title, desc)
+-- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME dan mendukung icon
+function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
     return Chloex:MakeNotify({
         Title = title or CURRENT_CONFIG_NAME, -- Menggunakan CURRENT_CONFIG_NAME sebagai default
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
-        Delay = delay or 4
+        Delay = delay or 4,
+        Icon = icon or "", -- Parameter icon baru
+        NotifySize = notifySize or DEFAULT_NOTIFY_SIZE, -- Parameter ukuran notifikasi baru
+        Mini = mini or false -- Parameter mode mini
+    })
+end
+
+-- Fungsi baru untuk notifikasi mini
+function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
+    return Chloex:MakeNotify({
+        Title = title or CURRENT_CONFIG_NAME,
+        Description = desc or "Info",
+        Content = msg or "Content",
+        Color = color or Color3.fromRGB(0, 208, 255),
+        Delay = delay or 3, -- Delay lebih pendek untuk mini
+        Icon = icon or "",
+        NotifySize = notifySize or 200, -- Default size lebih kecil untuk mini
+        Mini = true -- Mode mini aktif
     })
 end
 
@@ -534,9 +701,13 @@ function Chloex:Window(GuiConfig)
     GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0 -- Untuk kompatibilitas dengan Theme
     GuiConfig.ShowUser     = GuiConfig.ShowUser or false -- Parameter untuk menampilkan user profile
     GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple" -- "full" atau "simple"
+    GuiConfig.NotifySize   = GuiConfig.NotifySize or 320 -- Parameter baru: Ukuran notifikasi (width)
 
     -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
+    
+    -- Update DEFAULT_NOTIFY_SIZE berdasarkan parameter NotifySize
+    DEFAULT_NOTIFY_SIZE = GuiConfig.NotifySize
     
     -- Proses folder dan file config berdasarkan Configname
     local configFolderName = GuiConfig.Configname:gsub("%s+", "_")
@@ -886,6 +1057,21 @@ function Chloex:Window(GuiConfig)
         end
         return false
     end
+    
+    -- MODIFIKASI: Tambah fungsi untuk mengubah ukuran notifikasi
+    function GuiFunc:SetNotifySize(size)
+        if size and type(size) == "number" and size >= 200 and size <= 800 then
+            DEFAULT_NOTIFY_SIZE = size
+            
+            -- Update NotifyLayout yang sudah ada jika ada
+            if CoreGui:FindFirstChild("NotifyGui") and CoreGui.NotifyGui:FindFirstChild("NotifyLayout") then
+                CoreGui.NotifyGui.NotifyLayout.Size = UDim2.new(0, size, 1, 0)
+                CoreGui.NotifyGui.NotifyLayout:SetAttribute("NotifySize", size)
+            end
+            return true
+        end
+        return false
+    end
 
     Min.Activated:Connect(function()
         CircleClick(Min, Mouse.X, Mouse.Y)
@@ -1053,7 +1239,8 @@ function Chloex:Window(GuiConfig)
                     if input.UserInputState == Enum.UserInputState.End then
                         dragging = false
                     end
-                end)
+                end
+                )
             end
         end)
 
