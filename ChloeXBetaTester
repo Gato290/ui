@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.7 
+local HttpService = game:GetService("HttpService") -- V0.0.8 (Added Search Feature)
 local Players = game:GetService("Players")
 
 -- Load Elements dari file eksternal
@@ -688,6 +688,192 @@ local function applyUITransparency(mainObject, transparency)
     end
 end
 
+--=== SEARCH FEATURE ===--
+-- Fungsi untuk membuat frame search di bagian atas tab
+local function CreateSearchFrame(parent, scroller)
+    -- Main container untuk search
+    local SearchContainer = Instance.new("Frame")
+    SearchContainer.Name = "SearchContainer"
+    SearchContainer.BackgroundTransparency = 1
+    SearchContainer.BorderSizePixel = 0
+    SearchContainer.Size = UDim2.new(1, -10, 0, 30)
+    SearchContainer.Position = UDim2.new(0, 5, 0, 0)
+    SearchContainer.Parent = parent
+    
+    -- Search icon
+    local SearchIcon = Instance.new("ImageLabel")
+    SearchIcon.Name = "SearchIcon"
+    SearchIcon.Image = "rbxassetid://6031094678" -- Icon search
+    SearchIcon.BackgroundTransparency = 1
+    SearchIcon.BorderSizePixel = 0
+    SearchIcon.Size = UDim2.new(0, 16, 0, 16)
+    SearchIcon.Position = UDim2.new(0, 8, 0.5, -8)
+    SearchIcon.Parent = SearchContainer
+    
+    -- Search input field
+    local SearchInput = Instance.new("TextBox")
+    SearchInput.Name = "SearchInput"
+    SearchInput.Font = Enum.Font.Gotham
+    SearchInput.Text = ""
+    SearchInput.PlaceholderText = "Search settings..."
+    SearchInput.TextSize = 13
+    SearchInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+    SearchInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
+    SearchInput.TextXAlignment = Enum.TextXAlignment.Left
+    SearchInput.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    SearchInput.BackgroundTransparency = 0.5
+    SearchInput.BorderSizePixel = 0
+    SearchInput.Position = UDim2.new(0, 30, 0, 0)
+    SearchInput.Size = UDim2.new(1, -70, 1, 0)
+    SearchInput.Parent = SearchContainer
+    
+    local UICornerInput = Instance.new("UICorner")
+    UICornerInput.CornerRadius = UDim.new(0, 4)
+    UICornerInput.Parent = SearchInput
+    
+    -- Clear button
+    local ClearButton = Instance.new("TextButton")
+    ClearButton.Name = "ClearButton"
+    ClearButton.Font = Enum.Font.Gotham
+    ClearButton.Text = "✕"
+    ClearButton.TextSize = 14
+    ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ClearButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    ClearButton.BackgroundTransparency = 0.5
+    ClearButton.BorderSizePixel = 0
+    ClearButton.Position = UDim2.new(1, -30, 0, 0)
+    ClearButton.Size = UDim2.new(0, 30, 1, 0)
+    ClearButton.Visible = false
+    ClearButton.Parent = SearchContainer
+    
+    local UICornerClear = Instance.new("UICorner")
+    UICornerClear.CornerRadius = UDim.new(0, 4)
+    UICornerClear.Parent = ClearButton
+    
+    -- No results label
+    local NoResults = Instance.new("TextLabel")
+    NoResults.Name = "NoResults"
+    NoResults.Font = Enum.Font.Gotham
+    NoResults.Text = "No results found"
+    NoResults.TextSize = 14
+    NoResults.TextColor3 = Color3.fromRGB(150, 150, 150)
+    NoResults.BackgroundTransparency = 1
+    NoResults.BorderSizePixel = 0
+    NoResults.Size = UDim2.new(1, 0, 0, 30)
+    NoResults.Position = UDim2.new(0, 0, 0, 35)
+    NoResults.Visible = false
+    NoResults.Parent = parent
+    
+    -- Function to search through elements
+    local function PerformSearch(query)
+        query = query:lower():gsub("%s+", "")
+        local hasResults = false
+        
+        -- Iterate through all sections in the scroller
+        for _, section in ipairs(scroller:GetChildren()) do
+            if section.Name == "Section" then
+                local sectionVisible = false
+                
+                -- Get the SectionAdd frame inside section
+                local sectionAdd = section:FindFirstChild("SectionAdd")
+                if sectionAdd then
+                    -- Search through all elements in the section
+                    for _, element in ipairs(sectionAdd:GetChildren()) do
+                        if element:IsA("Frame") and element.Name ~= "UICorner" and element.Name ~= "UIListLayout" then
+                            local elementVisible = false
+                            
+                            -- Check for TextLabel with element title
+                            local titleLabel = element:FindFirstChild("Title") or 
+                                             element:FindFirstChild("TextLabel") or
+                                             element:FindFirstChildOfClass("TextLabel")
+                            
+                            if titleLabel and titleLabel:IsA("TextLabel") then
+                                local title = titleLabel.Text:lower()
+                                if query == "" or title:find(query, 1, true) then
+                                    elementVisible = true
+                                    hasResults = true
+                                    sectionVisible = true
+                                end
+                            else
+                                -- If no title found, keep visible when no search query
+                                elementVisible = (query == "")
+                                if query == "" then
+                                    hasResults = true
+                                    sectionVisible = true
+                                end
+                            end
+                            
+                            element.Visible = elementVisible
+                        end
+                    end
+                end
+                
+                -- Show/hide section based on whether it has visible elements
+                if sectionVisible then
+                    section.Visible = true
+                    -- Keep section open if it has visible results
+                    if section:FindFirstChild("SectionReal") then
+                        local sectionReal = section.SectionReal
+                        if sectionReal and not section:FindFirstChild("AlwaysOpen") then
+                            -- Animate section open if not already open
+                            local featureFrame = sectionReal:FindFirstChild("FeatureFrame")
+                            if featureFrame and featureFrame.Rotation ~= 90 then
+                                featureFrame.Rotation = 90
+                            end
+                        end
+                    end
+                else
+                    section.Visible = (query == "")
+                end
+            end
+        end
+        
+        -- Show/hide no results label
+        NoResults.Visible = (query ~= "" and not hasResults)
+        ClearButton.Visible = (query ~= "")
+        
+        -- Update canvas size
+        local layout = scroller:FindFirstChildOfClass("UIListLayout")
+        if layout then
+            scroller.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+        end
+    end
+    
+    -- Connect search input events
+    SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
+        PerformSearch(SearchInput.Text)
+    end)
+    
+    SearchInput.FocusLost:Connect(function()
+        if SearchInput.Text == "" then
+            PerformSearch("")
+        end
+    end)
+    
+    -- Clear button functionality
+    ClearButton.MouseButton1Click:Connect(function()
+        SearchInput.Text = ""
+        PerformSearch("")
+        SearchInput:CaptureFocus()
+    end)
+    
+    -- Return search functions for external control
+    return {
+        SetSearch = function(query)
+            SearchInput.Text = query
+            PerformSearch(query)
+        end,
+        Clear = function()
+            SearchInput.Text = ""
+            PerformSearch("")
+        end,
+        Focus = function()
+            SearchInput:CaptureFocus()
+        end
+    }
+end
+--=== END SEARCH FEATURE ===--
+
 function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
@@ -702,6 +888,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig.ShowUser     = GuiConfig.ShowUser or false -- Parameter untuk menampilkan user profile
     GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple" -- "full" atau "simple"
     GuiConfig.NotifySize   = GuiConfig.NotifySize or 320 -- Parameter baru: Ukuran notifikasi (width)
+    GuiConfig.EnableSearch = GuiConfig.EnableSearch or true -- Parameter baru: Enable search feature
 
     -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
@@ -1393,6 +1580,52 @@ function Chloex:Window(GuiConfig)
         UIListLayout1.Padding = UDim.new(0, 3)
         UIListLayout1.SortOrder = Enum.SortOrder.LayoutOrder
         UIListLayout1.Parent = ScrolLayers
+        
+        -- MODIFIKASI: Tambah container untuk search dan content
+        local TabContent = Instance.new("Frame")
+        TabContent.Name = "TabContent"
+        TabContent.BackgroundTransparency = 1
+        TabContent.BorderSizePixel = 0
+        TabContent.Size = UDim2.new(1, 0, 1, 0)
+        TabContent.Parent = ScrolLayers
+        
+        -- Search container
+        local SearchContainer = Instance.new("Frame")
+        SearchContainer.Name = "SearchContainer"
+        SearchContainer.BackgroundTransparency = 1
+        SearchContainer.BorderSizePixel = 0
+        SearchContainer.Size = UDim2.new(1, 0, 0, 35)
+        SearchContainer.Position = UDim2.new(0, 0, 0, 0)
+        SearchContainer.Parent = TabContent
+        SearchContainer.Visible = GuiConfig.EnableSearch
+        
+        -- Content scroller (for sections)
+        local ContentScroller = Instance.new("ScrollingFrame")
+        ContentScroller.Name = "ContentScroller"
+        ContentScroller.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+        ContentScroller.ScrollBarThickness = 4
+        ContentScroller.Active = true
+        ContentScroller.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ContentScroller.BackgroundTransparency = 0.999
+        ContentScroller.BorderSizePixel = 0
+        ContentScroller.Position = UDim2.new(0, 0, 0, 35)
+        ContentScroller.Size = UDim2.new(1, 0, 1, -35)
+        ContentScroller.Parent = TabContent
+        
+        local ContentLayout = Instance.new("UIListLayout")
+        ContentLayout.Padding = UDim.new(0, 3)
+        ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        ContentLayout.Parent = ContentScroller
+        
+        ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            ContentScroller.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 10)
+        end)
+        
+        -- MODIFIKASI: Search feature
+        local SearchFunctions = nil
+        if GuiConfig.EnableSearch then
+            SearchFunctions = CreateSearchFrame(SearchContainer, ContentScroller)
+        end
 
         local Tab = Instance.new("Frame");
         local UICorner3 = Instance.new("UICorner");
@@ -1524,8 +1757,14 @@ function Chloex:Window(GuiConfig)
                     TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
                     { Size = UDim2.new(0, 1, 0, 12) }
                 ):Play()
+                
+                -- MODIFIKASI: Clear search ketika pindah tab
+                if SearchFunctions then
+                    SearchFunctions.Clear()
+                end
             end
         end)
+        
         --// Section
         local Sections = {}
         local CountSection = 0
@@ -1551,7 +1790,7 @@ function Chloex:Window(GuiConfig)
             Section.LayoutOrder = 1
             Section.Size = UDim2.new(1, 0, 0, 30)
             Section.Name = "Section"
-            Section.Parent = ScrolLayers
+            Section.Parent = ContentScroller
 
             local SectionReal = Instance.new("Frame");
             local UICorner = Instance.new("UICorner");
@@ -1701,12 +1940,12 @@ function Chloex:Window(GuiConfig)
 
             local function UpdateSizeScroll()
                 local OffsetY = 0
-                for _, child in ScrolLayers:GetChildren() do
+                for _, child in ContentScroller:GetChildren() do
                     if child.Name ~= "UIListLayout" then
                         OffsetY = OffsetY + 3 + child.Size.Y.Offset
                     end
                 end
-                ScrolLayers.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
+                ContentScroller.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
             end
 
             local function UpdateSizeSection()
@@ -1776,10 +2015,10 @@ function Chloex:Window(GuiConfig)
             SectionAdd.ChildAdded:Connect(UpdateSizeSection)
             SectionAdd.ChildRemoved:Connect(UpdateSizeSection)
 
-            local layout = ScrolLayers:FindFirstChildOfClass("UIListLayout")
+            local layout = ContentScroller:FindFirstChildOfClass("UIListLayout")
             if layout then
                 layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    ScrolLayers.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+                    ContentScroller.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
                 end)
             end
 
@@ -1829,7 +2068,9 @@ function Chloex:Window(GuiConfig)
         CountTab = CountTab + 1
         local safeName = TabConfig.Name:gsub("%s+", "_")
         _G[safeName] = Sections
-        return Sections
+        
+        -- Return search functions for this tab
+        return Sections, SearchFunctions
     end
 
     return Tabs
