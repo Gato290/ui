@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.8 (Added Search Feature - Top Bar)
+local HttpService = game:GetService("HttpService") -- V0.0.8 (Added Global Search Feature)
 local Players = game:GetService("Players")
 
 -- Load Elements dari file eksternal
@@ -667,23 +667,17 @@ local function applyUITransparency(mainObject, transparency)
     end
 end
 
---=== SEARCH FEATURE - TOP BAR ===--
-local SearchConnections = {}
-
-local function CreateTopSearchFrame(parent, layersFolder, pageLayout)
-    -- Container untuk search di top bar
+--=== GLOBAL SEARCH FEATURE ===--
+-- Fungsi untuk membuat global search bar di atas tab list
+local function CreateGlobalSearch(parent, windowRef, tabButtons, contentPages)
+    -- Main container untuk search
     local SearchContainer = Instance.new("Frame")
-    SearchContainer.Name = "TopSearchContainer"
-    SearchContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    SearchContainer.BackgroundTransparency = 0.5
+    SearchContainer.Name = "GlobalSearchContainer"
+    SearchContainer.BackgroundTransparency = 1
     SearchContainer.BorderSizePixel = 0
-    SearchContainer.Position = UDim2.new(1, -280, 0, 6)  -- Posisi di kanan, dekat tombol close/min
-    SearchContainer.Size = UDim2.new(0, 250, 0, 26)
+    SearchContainer.Size = UDim2.new(1, -20, 0, 35)
+    SearchContainer.Position = UDim2.new(0, 10, 0, 5)
     SearchContainer.Parent = parent
-    
-    local UICornerSearch = Instance.new("UICorner")
-    UICornerSearch.CornerRadius = UDim.new(0, 13)
-    UICornerSearch.Parent = SearchContainer
     
     -- Search icon
     local SearchIcon = Instance.new("ImageLabel")
@@ -691,72 +685,180 @@ local function CreateTopSearchFrame(parent, layersFolder, pageLayout)
     SearchIcon.Image = "rbxassetid://6031094678"
     SearchIcon.BackgroundTransparency = 1
     SearchIcon.BorderSizePixel = 0
-    SearchIcon.Size = UDim2.new(0, 14, 0, 14)
-    SearchIcon.Position = UDim2.new(0, 8, 0.5, -7)
+    SearchIcon.Size = UDim2.new(0, 16, 0, 16)
+    SearchIcon.Position = UDim2.new(0, 8, 0.5, -8)
     SearchIcon.Parent = SearchContainer
     
     -- Search input field
     local SearchInput = Instance.new("TextBox")
-    SearchInput.Name = "TopSearchInput"
+    SearchInput.Name = "GlobalSearchInput"
     SearchInput.Font = Enum.Font.Gotham
     SearchInput.Text = ""
-    SearchInput.PlaceholderText = "Search..."
-    SearchInput.TextSize = 12
+    SearchInput.PlaceholderText = "🔍 Search tabs, sections, settings..."
+    SearchInput.TextSize = 13
     SearchInput.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SearchInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+    SearchInput.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
     SearchInput.TextXAlignment = Enum.TextXAlignment.Left
-    SearchInput.BackgroundTransparency = 1
+    SearchInput.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    SearchInput.BackgroundTransparency = 0.3
     SearchInput.BorderSizePixel = 0
-    SearchInput.Position = UDim2.new(0, 28, 0, 0)
-    SearchInput.Size = UDim2.new(1, -58, 1, 0)
+    SearchInput.Position = UDim2.new(0, 30, 0, 0)
+    SearchInput.Size = UDim2.new(1, -65, 1, 0)
     SearchInput.Parent = SearchContainer
+    SearchInput.ClearTextOnFocus = false
+    
+    local UICornerInput = Instance.new("UICorner")
+    UICornerInput.CornerRadius = UDim.new(0, 6)
+    UICornerInput.Parent = SearchInput
     
     -- Clear button
     local ClearButton = Instance.new("TextButton")
-    ClearButton.Name = "TopClearButton"
+    ClearButton.Name = "ClearSearchButton"
     ClearButton.Font = Enum.Font.Gotham
     ClearButton.Text = "✕"
-    ClearButton.TextSize = 14
-    ClearButton.TextColor3 = Color3.fromRGB(180, 180, 180)
-    ClearButton.BackgroundTransparency = 1
+    ClearButton.TextSize = 16
+    ClearButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+    ClearButton.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+    ClearButton.BackgroundTransparency = 0.5
     ClearButton.BorderSizePixel = 0
-    ClearButton.Position = UDim2.new(1, -24, 0, 0)
-    ClearButton.Size = UDim2.new(0, 20, 1, 0)
+    ClearButton.Position = UDim2.new(1, -30, 0, 0)
+    ClearButton.Size = UDim2.new(0, 30, 1, 0)
     ClearButton.Visible = false
     ClearButton.Parent = SearchContainer
     
-    -- No results label (akan muncul di tab aktif)
-    local NoResults = Instance.new("TextLabel")
-    NoResults.Name = "TopSearchNoResults"
-    NoResults.Font = Enum.Font.Gotham
-    NoResults.Text = "No results found"
-    NoResults.TextSize = 14
-    NoResults.TextColor3 = Color3.fromRGB(150, 150, 150)
-    NoResults.BackgroundTransparency = 1
-    NoResults.BorderSizePixel = 0
-    NoResults.Size = UDim2.new(1, -20, 0, 30)
-    NoResults.Position = UDim2.new(0, 10, 0, 10)
-    NoResults.Visible = false
-    NoResults.Parent = layersFolder.Parent  -- Akan dipindah ke tab aktif
+    local UICornerClear = Instance.new("UICorner")
+    UICornerClear.CornerRadius = UDim.new(0, 6)
+    UICornerClear.Parent = ClearButton
     
-    -- Store current search state
-    local currentSearchQuery = ""
-    local currentTabScroller = nil
+    -- No results overlay
+    local NoResultsOverlay = Instance.new("Frame")
+    NoResultsOverlay.Name = "NoResultsOverlay"
+    NoResultsOverlay.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    NoResultsOverlay.BackgroundTransparency = 0.1
+    NoResultsOverlay.BorderSizePixel = 0
+    NoResultsOverlay.Size = UDim2.new(1, 0, 1, 0)
+    NoResultsOverlay.Position = UDim2.new(0, 0, 0, 0)
+    NoResultsOverlay.Visible = false
+    NoResultsOverlay.ZIndex = 10
+    NoResultsOverlay.Parent = parent.Parent -- Parent ke CombinedLayersTab
     
-    -- Function to clear previous search highlights
-    local function ClearHighlights()
-        for _, tabPage in ipairs(layersFolder:GetChildren()) do
-            if tabPage:IsA("ScrollingFrame") then
-                local contentScroller = tabPage:FindFirstChild("ContentScroller")
+    local NoResultsLabel = Instance.new("TextLabel")
+    NoResultsLabel.Name = "NoResultsLabel"
+    NoResultsLabel.Font = Enum.Font.Gotham
+    NoResultsLabel.Text = "No results found"
+    NoResultsLabel.TextSize = 18
+    NoResultsLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+    NoResultsLabel.BackgroundTransparency = 1
+    NoResultsLabel.BorderSizePixel = 0
+    NoResultsLabel.Size = UDim2.new(1, 0, 0, 40)
+    NoResultsLabel.Position = UDim2.new(0, 0, 0.4, -20)
+    NoResultsLabel.ZIndex = 11
+    NoResultsLabel.Parent = NoResultsOverlay
+    
+    local NoResultsSubLabel = Instance.new("TextLabel")
+    NoResultsSubLabel.Name = "NoResultsSubLabel"
+    NoResultsSubLabel.Font = Enum.Font.Gotham
+    NoResultsSubLabel.Text = "Try different keywords"
+    NoResultsSubLabel.TextSize = 14
+    NoResultsSubLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+    NoResultsSubLabel.BackgroundTransparency = 1
+    NoResultsSubLabel.BorderSizePixel = 0
+    NoResultsSubLabel.Size = UDim2.new(1, 0, 0, 30)
+    NoResultsSubLabel.Position = UDim2.new(0, 0, 0.45, 10)
+    NoResultsSubLabel.ZIndex = 11
+    NoResultsSubLabel.Parent = NoResultsOverlay
+    
+    -- Store original visibility states
+    local originalStates = {}
+    
+    -- Function to collect all searchable items
+    local function collectSearchableItems()
+        local items = {}
+        
+        -- Collect tabs
+        for i, tabButton in ipairs(tabButtons) do
+            if tabButton and tabButton.Parent then
+                local tabName = tabButton:FindFirstChild("TabName")
+                if tabName and tabName:IsA("TextLabel") then
+                    table.insert(items, {
+                        Type = "Tab",
+                        Name = tabName.Text:gsub("| ", ""),
+                        Element = tabButton.Parent,
+                        TabButton = tabButton,
+                        Page = contentPages[i],
+                        Priority = 1
+                    })
+                end
+            end
+        end
+        
+        -- Collect sections and elements from all pages
+        for pageIndex, page in ipairs(contentPages) do
+            if page and page.Parent then
+                local contentScroller = page:FindFirstChild("ContentScroller")
                 if contentScroller then
                     for _, section in ipairs(contentScroller:GetChildren()) do
                         if section.Name == "Section" then
-                            section.Visible = true
+                            -- Collect section
+                            local sectionReal = section:FindFirstChild("SectionReal")
+                            if sectionReal then
+                                local sectionTitle = sectionReal:FindFirstChild("SectionTitle")
+                                if sectionTitle and sectionTitle:IsA("TextLabel") then
+                                    table.insert(items, {
+                                        Type = "Section",
+                                        Name = sectionTitle.Text,
+                                        Element = section,
+                                        Section = section,
+                                        Page = page,
+                                        PageIndex = pageIndex,
+                                        TabButton = tabButtons[pageIndex],
+                                        Priority = 2
+                                    })
+                                end
+                            end
+                            
+                            -- Collect elements in section
                             local sectionAdd = section:FindFirstChild("SectionAdd")
                             if sectionAdd then
                                 for _, element in ipairs(sectionAdd:GetChildren()) do
-                                    if element:IsA("Frame") then
-                                        element.Visible = true
+                                    if element:IsA("Frame") and element.Name ~= "UICorner" and element.Name ~= "UIListLayout" then
+                                        local elementName = ""
+                                        local elementType = "Element"
+                                        
+                                        -- Check element type and get name
+                                        local titleLabel = element:FindFirstChild("Title") or 
+                                                         element:FindFirstChild("TextLabel") or
+                                                         element:FindFirstChildOfClass("TextLabel")
+                                        
+                                        if titleLabel and titleLabel:IsA("TextLabel") then
+                                            elementName = titleLabel.Text
+                                        end
+                                        
+                                        -- Determine element type
+                                        if element:FindFirstChild("Toggle") or element:FindFirstChild("ToggleButton") then
+                                            elementType = "Toggle"
+                                        elseif element:FindFirstChild("Slider") then
+                                            elementType = "Slider"
+                                        elseif element:FindFirstChild("Button") then
+                                            elementType = "Button"
+                                        elseif element:FindFirstChild("Dropdown") then
+                                            elementType = "Dropdown"
+                                        elseif element:FindFirstChild("Input") then
+                                            elementType = "Input"
+                                        end
+                                        
+                                        if elementName ~= "" then
+                                            table.insert(items, {
+                                                Type = elementType,
+                                                Name = elementName,
+                                                Element = element,
+                                                Section = section,
+                                                Page = page,
+                                                PageIndex = pageIndex,
+                                                TabButton = tabButtons[pageIndex],
+                                                Priority = 3
+                                            })
+                                        end
                                     end
                                 end
                             end
@@ -765,154 +867,223 @@ local function CreateTopSearchFrame(parent, layersFolder, pageLayout)
                 end
             end
         end
+        
+        return items
     end
     
-    -- Function to perform search on current tab
-    local function PerformSearch(query)
+    -- Function to perform global search
+    local function performGlobalSearch(query)
         query = query:lower():gsub("%s+", "")
-        currentSearchQuery = query
+        local hasResults = false
+        local matchedItems = {}
         
-        -- Get current active tab
-        local currentPage = pageLayout.CurrentPage
-        if not currentPage then return end
-        
-        local scroller = currentPage
-        local contentScroller = scroller:FindFirstChild("ContentScroller")
-        if not contentScroller then return end
-        
-        -- Clear previous no results
-        if NoResults.Parent ~= contentScroller then
-            NoResults.Parent = contentScroller
+        -- Hide all tabs and sections initially
+        for _, tabButton in ipairs(tabButtons) do
+            if tabButton and tabButton.Parent then
+                tabButton.Parent.Visible = (query == "")
+            end
         end
         
-        local hasResults = false
-        
-        -- Search through sections in current tab
-        for _, section in ipairs(contentScroller:GetChildren()) do
-            if section.Name == "Section" then
-                local sectionVisible = false
-                local sectionAdd = section:FindFirstChild("SectionAdd")
+        for _, page in ipairs(contentPages) do
+            if page and page.Parent then
+                page.Visible = false
                 
-                if sectionAdd then
-                    -- Check each element in section
-                    for _, element in ipairs(sectionAdd:GetChildren()) do
-                        if element:IsA("Frame") and element.Name ~= "UICorner" and element.Name ~= "UIListLayout" then
-                            local elementVisible = false
+                local contentScroller = page:FindFirstChild("ContentScroller")
+                if contentScroller then
+                    for _, section in ipairs(contentScroller:GetChildren()) do
+                        if section.Name == "Section" then
+                            section.Visible = false
                             
-                            -- Find title label
-                            local titleLabel = element:FindFirstChild("Title") or 
-                                             element:FindFirstChild("TextLabel") or
-                                             element:FindFirstChildOfClass("TextLabel")
-                            
-                            if titleLabel and titleLabel:IsA("TextLabel") then
-                                local title = titleLabel.Text:lower()
-                                if query == "" or title:find(query, 1, true) then
-                                    elementVisible = true
-                                    hasResults = true
-                                    sectionVisible = true
-                                end
-                            else
-                                elementVisible = (query == "")
-                                if query == "" then
-                                    hasResults = true
-                                    sectionVisible = true
+                            local sectionAdd = section:FindFirstChild("SectionAdd")
+                            if sectionAdd then
+                                for _, element in ipairs(sectionAdd:GetChildren()) do
+                                    if element:IsA("Frame") then
+                                        element.Visible = false
+                                    end
                                 end
                             end
-                            
-                            element.Visible = elementVisible
                         end
                     end
-                end
-                
-                -- Show/hide section
-                if sectionVisible then
-                    section.Visible = true
-                    -- Open section if it has results
-                    local sectionReal = section:FindFirstChild("SectionReal")
-                    if sectionReal and not section:FindFirstChild("AlwaysOpen") then
-                        local featureFrame = sectionReal:FindFirstChild("FeatureFrame")
-                        if featureFrame and featureFrame.Rotation ~= 90 then
-                            featureFrame.Rotation = 90
-                        end
-                        -- Adjust section size
-                        local sectionAdd = section:FindFirstChild("SectionAdd")
-                        if sectionAdd then
-                            local sectionHeight = 38
-                            for _, v in ipairs(sectionAdd:GetChildren()) do
-                                if v:IsA("Frame") and v.Visible then
-                                    sectionHeight = sectionHeight + v.Size.Y.Offset + 3
-                                end
-                            end
-                            section.Size = UDim2.new(1, 1, 0, sectionHeight)
-                            sectionAdd.Size = UDim2.new(1, 0, 0, sectionHeight - 38)
-                        end
-                    end
-                else
-                    section.Visible = (query == "")
                 end
             end
         end
         
-        -- Show/hide no results
-        NoResults.Visible = (query ~= "" and not hasResults)
-        ClearButton.Visible = (query ~= "")
+        NoResultsOverlay.Visible = false
         
-        -- Update canvas size
-        local layout = contentScroller:FindFirstChildOfClass("UIListLayout")
-        if layout then
-            contentScroller.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+        if query == "" then
+            -- Restore original visibility
+            for _, tabButton in ipairs(tabButtons) do
+                if tabButton and tabButton.Parent then
+                    tabButton.Parent.Visible = true
+                end
+            end
+            
+            -- Show current page
+            local currentPage = windowRef.GetCurrentPage and windowRef:GetCurrentPage()
+            if currentPage then
+                currentPage.Visible = true
+            end
+            
+            ClearButton.Visible = false
+            return
+        end
+        
+        ClearButton.Visible = true
+        
+        -- Collect and search items
+        local allItems = collectSearchableItems()
+        local matchedTabs = {}
+        local matchedSections = {}
+        
+        for _, item in ipairs(allItems) do
+            if item.Name:lower():find(query, 1, true) then
+                table.insert(matchedItems, item)
+                
+                if item.Type == "Tab" then
+                    matchedTabs[item.TabButton] = true
+                    hasResults = true
+                elseif item.Type == "Section" then
+                    matchedSections[item.Section] = true
+                    if item.TabButton then
+                        matchedTabs[item.TabButton] = true
+                    end
+                    hasResults = true
+                else
+                    -- Element
+                    if item.Section then
+                        matchedSections[item.Section] = true
+                    end
+                    if item.TabButton then
+                        matchedTabs[item.TabButton] = true
+                    end
+                    hasResults = true
+                end
+            end
+        end
+        
+        -- Show matched tabs
+        for tabButton, _ in pairs(matchedTabs) do
+            if tabButton and tabButton.Parent then
+                tabButton.Parent.Visible = true
+                
+                -- Highlight tab
+                local tabFrame = tabButton.Parent
+                tabFrame.BackgroundTransparency = 0.85
+                tabFrame.ZIndex = 5
+            end
+        end
+        
+        -- Show matched sections and their elements
+        for section, _ in pairs(matchedSections) do
+            if section and section.Parent then
+                section.Visible = true
+                
+                -- Open section
+                local sectionReal = section:FindFirstChild("SectionReal")
+                if sectionReal then
+                    local featureFrame = sectionReal:FindFirstChild("FeatureFrame")
+                    if featureFrame then
+                        featureFrame.Rotation = 90
+                    end
+                end
+                
+                -- Show matched elements in this section
+                local sectionAdd = section:FindFirstChild("SectionAdd")
+                if sectionAdd then
+                    for _, item in ipairs(matchedItems) do
+                        if item.Section == section and item.Type ~= "Section" and item.Type ~= "Tab" then
+                            if item.Element and item.Element.Parent then
+                                item.Element.Visible = true
+                            end
+                        end
+                    end
+                end
+                
+                -- Show the page containing this section
+                for pageIndex, page in ipairs(contentPages) do
+                    if page == section.Parent.Parent.Parent then -- Navigate up to page
+                        page.Visible = true
+                        -- Switch to this tab
+                        if tabButtons[pageIndex] then
+                            windowRef.SwitchToTab and windowRef:SwitchToTab(pageIndex)
+                        end
+                        break
+                    end
+                end
+            end
+        end
+        
+        -- Show no results overlay if no matches
+        NoResultsOverlay.Visible = not hasResults and query ~= ""
+        
+        -- Update canvas sizes
+        for _, page in ipairs(contentPages) do
+            if page and page.Parent then
+                local contentScroller = page:FindFirstChild("ContentScroller")
+                if contentScroller then
+                    local layout = contentScroller:FindFirstChildOfClass("UIListLayout")
+                    if layout then
+                        contentScroller.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+                    end
+                end
+            end
         end
     end
     
     -- Connect search input events
     SearchInput:GetPropertyChangedSignal("Text"):Connect(function()
-        PerformSearch(SearchInput.Text)
+        performGlobalSearch(SearchInput.Text)
     end)
     
-    SearchInput.FocusLost:Connect(function()
+    SearchInput.FocusLost:Connect(function(enterPressed)
         if SearchInput.Text == "" then
-            PerformSearch("")
+            performGlobalSearch("")
         end
     end)
     
-    -- Clear button
+    -- Clear button functionality
     ClearButton.MouseButton1Click:Connect(function()
         SearchInput.Text = ""
-        PerformSearch("")
+        performGlobalSearch("")
         SearchInput:CaptureFocus()
     end)
     
-    -- When tab changes
-    pageLayout:GetPropertyChangedSignal("CurrentPage"):Connect(function()
-        PerformSearch(SearchInput.Text)
-    end)
-    
-    -- Focus with Ctrl+F
-    local connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == Enum.KeyCode.F and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
-            SearchInput:CaptureFocus()
+    -- Keyboard shortcut: Ctrl+F to focus search
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed then
+            if input.KeyCode == Enum.KeyCode.F and UserInputService:IsKeyDown(Enum.KeyCode.LeftControl) then
+                SearchInput:CaptureFocus()
+                SearchInput.Text = ""
+            elseif input.KeyCode == Enum.KeyCode.Escape then
+                if SearchInput.Text ~= "" then
+                    SearchInput.Text = ""
+                    performGlobalSearch("")
+                else
+                    SearchInput:ReleaseFocus()
+                end
+            end
         end
     end)
-    table.insert(SearchConnections, connection)
     
+    -- Return search functions
     return {
         SetSearch = function(query)
             SearchInput.Text = query
-            PerformSearch(query)
+            performGlobalSearch(query)
         end,
         Clear = function()
             SearchInput.Text = ""
-            PerformSearch("")
+            performGlobalSearch("")
         end,
         Focus = function()
             SearchInput:CaptureFocus()
         end,
-        GetContainer = function()
-            return SearchContainer
+        GetQuery = function()
+            return SearchInput.Text
         end
     }
 end
---=== END SEARCH FEATURE - TOP BAR ===--
+--=== END GLOBAL SEARCH FEATURE ===--
 
 function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
@@ -928,7 +1099,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig.ShowUser     = GuiConfig.ShowUser or false
     GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple"
     GuiConfig.NotifySize   = GuiConfig.NotifySize or 320
-    GuiConfig.EnableSearch = GuiConfig.EnableSearch or true  -- Search feature toggle
+    GuiConfig.EnableSearch = GuiConfig.EnableSearch or true -- Enable global search
 
     CURRENT_CONFIG_NAME = GuiConfig.Configname
     DEFAULT_NOTIFY_SIZE = GuiConfig.NotifySize
@@ -1067,13 +1238,6 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
 
-    --=== TOP SEARCH BAR ===--
-    local TopSearch = nil
-    if GuiConfig.EnableSearch then
-        TopSearch = CreateTopSearchFrame(Top, LayersFolder, LayersPageLayout)
-    end
-    --=== END TOP SEARCH BAR ===--
-
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
     Close.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -1180,7 +1344,7 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
-    -- Combined LayersTab
+    -- Gabungkan User Profile dengan LayersTab
     local CombinedLayersTab = Instance.new("Frame")
     CombinedLayersTab.Name = "CombinedLayersTab"
     CombinedLayersTab.BackgroundTransparency = 1
@@ -1193,12 +1357,22 @@ function Chloex:Window(GuiConfig)
     UICornerCombined.CornerRadius = UDim.new(0, 2)
     UICornerCombined.Parent = CombinedLayersTab
 
+    -- Bagian atas: Global Search Bar (diletakkan di atas TabListSection)
+    local GlobalSearchSection = Instance.new("Frame")
+    GlobalSearchSection.Name = "GlobalSearchSection"
+    GlobalSearchSection.BackgroundTransparency = 1
+    GlobalSearchSection.BorderSizePixel = 0
+    GlobalSearchSection.Size = UDim2.new(1, 0, 0, 45)
+    GlobalSearchSection.Position = UDim2.new(0, 0, 0, 0)
+    GlobalSearchSection.Parent = CombinedLayersTab
+
+    -- Bagian bawah: Tab list
     local TabListSection = Instance.new("Frame")
     TabListSection.Name = "TabListSection"
     TabListSection.BackgroundTransparency = 1
     TabListSection.BorderSizePixel = 0
-    TabListSection.Size = UDim2.new(1, 0, 1, 0)
-    TabListSection.Position = UDim2.new(0, 0, 0, 0)
+    TabListSection.Size = UDim2.new(1, 0, 1, -45) -- Kurangi tinggi untuk search bar
+    TabListSection.Position = UDim2.new(0, 0, 0, 45)
     TabListSection.Parent = CombinedLayersTab
 
     local ScrollTab = Instance.new("ScrollingFrame");
@@ -1232,18 +1406,23 @@ function Chloex:Window(GuiConfig)
     ScrollTab.ChildAdded:Connect(UpdateSize1)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
-    -- User Profile
+    -- MODIFIKASI: Buat user profile menggunakan module terpisah
     if GuiConfig.ShowUser then
-        TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
+        -- Atur ulang ukuran untuk menampung search bar + tab list + user profile
+        GlobalSearchSection.Size = UDim2.new(1, 0, 0, 45)
+        TabListSection.Size = UDim2.new(1, 0, 0.6, -45)
+        TabListSection.Position = UDim2.new(0, 0, 0, 45)
         
+        -- Buat UserProfileSection
         local UserProfileSection = Instance.new("Frame")
         UserProfileSection.Name = "UserProfileSection"
         UserProfileSection.BackgroundTransparency = 1
         UserProfileSection.BorderSizePixel = 0
-        UserProfileSection.Size = UDim2.new(1, 0, 0.3, 0)
-        UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
+        UserProfileSection.Size = UDim2.new(1, 0, 0.4, 0)
+        UserProfileSection.Position = UDim2.new(0, 0, 0.6, 0)
         UserProfileSection.Parent = CombinedLayersTab
 
+        -- Frame pembatas
         local Divider = Instance.new("Frame")
         Divider.Name = "Divider"
         Divider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -1253,6 +1432,7 @@ function Chloex:Window(GuiConfig)
         Divider.Position = UDim2.new(0, 5, 0, 0)
         Divider.Parent = UserProfileSection
 
+        -- Buat user profile berdasarkan tipe yang dipilih
         local userProfile
         if GuiConfig.UserProfileType == "full" then
             userProfile = UserInfo.CreateUserProfile(UserProfileSection, true, GuiConfig.Uitransparent, GuiConfig.Color)
@@ -1266,10 +1446,6 @@ function Chloex:Window(GuiConfig)
     function GuiFunc:DestroyGui()
         if CoreGui:FindFirstChild("Chloeex") then
             Chloeex:Destroy()
-        end
-        -- Cleanup search connections
-        for _, conn in ipairs(SearchConnections) do
-            conn:Disconnect()
         end
     end
     
@@ -1292,25 +1468,6 @@ function Chloex:Window(GuiConfig)
             return true
         end
         return false
-    end
-    
-    -- Search control functions
-    function GuiFunc:FocusSearch()
-        if TopSearch then
-            TopSearch.Focus()
-        end
-    end
-    
-    function GuiFunc:SetSearchQuery(query)
-        if TopSearch then
-            TopSearch.SetSearch(query)
-        end
-    end
-    
-    function GuiFunc:ClearSearch()
-        if TopSearch then
-            TopSearch.Clear()
-        end
     end
 
     Min.Activated:Connect(function()
@@ -1419,10 +1576,6 @@ function Chloex:Window(GuiConfig)
             if Chloeex then Chloeex:Destroy() end
             if game.CoreGui:FindFirstChild("ToggleUIButton") then
                 game.CoreGui.ToggleUIButton:Destroy()
-            end
-            -- Cleanup search connections
-            for _, conn in ipairs(SearchConnections) do
-                conn:Disconnect()
             end
         end)
 
@@ -1614,6 +1767,9 @@ function Chloex:Window(GuiConfig)
     local Tabs = {}
     local CountTab = 0
     local CountDropdown = 0
+    local tabButtons = {} -- Store tab buttons for search
+    local contentPages = {} -- Store content pages for search
+    
     function Tabs:AddTab(TabConfig)
         local TabConfig = TabConfig or {}
         TabConfig.Name = TabConfig.Name or "Tab"
@@ -1634,7 +1790,7 @@ function Chloex:Window(GuiConfig)
         ScrolLayers.Name = "ScrolLayers"
         ScrolLayers.Parent = LayersFolder
         
-        -- Content container
+        -- Tab content container
         local TabContent = Instance.new("Frame")
         TabContent.Name = "TabContent"
         TabContent.BackgroundTransparency = 1
@@ -1642,7 +1798,7 @@ function Chloex:Window(GuiConfig)
         TabContent.Size = UDim2.new(1, 0, 1, 0)
         TabContent.Parent = ScrolLayers
         
-        -- Content scroller for sections
+        -- Content scroller (for sections)
         local ContentScroller = Instance.new("ScrollingFrame")
         ContentScroller.Name = "ContentScroller"
         ContentScroller.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
@@ -1663,6 +1819,9 @@ function Chloex:Window(GuiConfig)
         ContentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
             ContentScroller.CanvasSize = UDim2.new(0, 0, 0, ContentLayout.AbsoluteContentSize.Y + 10)
         end)
+        
+        -- Store page for global search
+        table.insert(contentPages, TabContent)
 
         local Tab = Instance.new("Frame");
         local UICorner3 = Instance.new("UICorner");
@@ -1700,6 +1859,9 @@ function Chloex:Window(GuiConfig)
         TabButton.Size = UDim2.new(1, 0, 1, 0)
         TabButton.Name = "TabButton"
         TabButton.Parent = Tab
+        
+        -- Store tab button for search
+        table.insert(tabButtons, TabButton)
 
         TabName.Font = Enum.Font.GothamBold
         TabName.Text = "| " .. tostring(TabConfig.Name)
@@ -1748,7 +1910,8 @@ function Chloex:Window(GuiConfig)
             UICorner4.Parent = ChooseFrame
         end
 
-        TabButton.Activated:Connect(function()
+        -- Function to switch to this tab
+        local function switchToThisTab()
             CircleClick(TabButton, Mouse.X, Mouse.Y)
             local FrameChoose
             for a, s in ScrollTab:GetChildren() do
@@ -1794,7 +1957,26 @@ function Chloex:Window(GuiConfig)
                     { Size = UDim2.new(0, 1, 0, 12) }
                 ):Play()
             end
-        end)
+        end
+
+        TabButton.Activated:Connect(switchToThisTab)
+        
+        -- Add function to window ref for search
+        if not GuiFunc.SwitchToTab then
+            GuiFunc.SwitchToTab = function(index)
+                if tabButtons[index] then
+                    tabButtons[index].Activated:Fire()
+                end
+            end
+            
+            GuiFunc.GetCurrentPage = function()
+                return LayersPageLayout.CurrentPage
+            end
+            
+            GuiFunc.GetCurrentTabIndex = function()
+                return LayersPageLayout.CurrentPage and LayersPageLayout.CurrentPage.LayoutOrder or 0
+            end
+        end
         
         --// Section
         local Sections = {}
@@ -1828,6 +2010,7 @@ function Chloex:Window(GuiConfig)
             local SectionButton = Instance.new("TextButton");
             local FeatureFrame = Instance.new("Frame");
             local FeatureImg = Instance.new("ImageLabel");
+            
             local SectionIcon = Instance.new("ImageLabel");
             local SectionTitle = Instance.new("TextLabel");
 
@@ -2093,6 +2276,12 @@ function Chloex:Window(GuiConfig)
         _G[safeName] = Sections
         
         return Sections
+    end
+
+    -- Initialize Global Search if enabled
+    if GuiConfig.EnableSearch then
+        local searchFunctions = CreateGlobalSearch(GlobalSearchSection, GuiFunc, tabButtons, contentPages)
+        GuiFunc.Search = searchFunctions
     end
 
     return Tabs
