@@ -67,15 +67,17 @@ local function getIcon(iconString)
     
     -- Cek format dengan prefix
     if iconString:find("^lucide:") then
-        local iconName = iconString:sub(8)
+        local iconName = iconString:sub(8) -- Hilangkan "lucide:" (7 karakter + :)
         return LucideIcons[iconName] or ""
     elseif iconString:find("^solar:") then
-        local iconName = iconString:sub(7)
+        local iconName = iconString:sub(7) -- Hilangkan "solar:" (6 karakter + :)
         return SolarIcons[iconName] or ""
     else
+        -- Cek di Icons biasa (default)
         if Icons[iconString] then
             return Icons[iconString]
         else
+            -- Jika bukan key di Icons, anggap sebagai asset ID langsung
             return iconString
         end
     end
@@ -84,13 +86,13 @@ end
 local Elements = ElementsModule
 
 -- Variabel global untuk config
-local CURRENT_CONFIG_NAME = "NexaHub"
+local CURRENT_CONFIG_NAME = "NexaHub" -- Default value
 ConfigData = {}
 CURRENT_VERSION = nil
 local ConfigFile = ""
-local DEFAULT_NOTIFY_SIZE = 320
+local DEFAULT_NOTIFY_SIZE = 320 -- Default width untuk notifikasi
 
--- Fungsi-fungsi config
+-- Fungsi-fungsi config yang akan diupdate berdasarkan Configname
 function SaveConfig()
     if writefile and ConfigFile ~= "" then
         ConfigData._version = CURRENT_VERSION
@@ -178,7 +180,8 @@ local function MakeDraggable(topbarobject, object)
                     if input.UserInputState == Enum.UserInputState.End then
                         Dragging = false
                     end
-                end)
+                end
+                )
             end
         end)
 
@@ -306,9 +309,9 @@ function Chloex:MakeNotify(NotifyConfig)
     NotifyConfig.Color = NotifyConfig.Color or Color3.fromRGB(255, 0, 255)
     NotifyConfig.Time = NotifyConfig.Time or 0.5
     NotifyConfig.Delay = NotifyConfig.Delay or 5
-    NotifyConfig.Icon = NotifyConfig.Icon or ""
-    NotifyConfig.NotifySize = NotifyConfig.NotifySize or DEFAULT_NOTIFY_SIZE
-    NotifyConfig.Mini = NotifyConfig.Mini or false
+    NotifyConfig.Icon = NotifyConfig.Icon or "" -- Parameter baru: Icon
+    NotifyConfig.NotifySize = NotifyConfig.NotifySize or DEFAULT_NOTIFY_SIZE -- Parameter baru: Ukuran
+    NotifyConfig.Mini = NotifyConfig.Mini or false -- Parameter baru: Mode mini
     
     local NotifyFunction = {}
     spawn(function()
@@ -326,10 +329,11 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyLayout.BorderColor3 = Color3.fromRGB(0, 0, 0)
             NotifyLayout.BorderSizePixel = 0
             NotifyLayout.Position = UDim2.new(1, -30, 1, -30)
-            NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0)
+            NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0) -- Gunakan NotifySize dari config
             NotifyLayout.Name = "NotifyLayout"
             NotifyLayout.Parent = CoreGui.NotifyGui
             
+            -- MODIFIKASI: Tambahkan properti untuk menyimpan ukuran notifikasi
             NotifyLayout:SetAttribute("NotifySize", NotifyConfig.NotifySize)
             
             local Count = 0
@@ -345,6 +349,7 @@ function Chloex:MakeNotify(NotifyConfig)
                 end
             end)
         else
+            -- MODIFIKASI: Jika NotifyLayout sudah ada, update ukurannya
             local currentSize = CoreGui.NotifyGui.NotifyLayout:GetAttribute("NotifySize") or DEFAULT_NOTIFY_SIZE
             if currentSize ~= NotifyConfig.NotifySize then
                 CoreGui.NotifyGui.NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0)
@@ -361,7 +366,7 @@ function Chloex:MakeNotify(NotifyConfig)
         local DropShadowHolder = Instance.new("Frame");
         local DropShadow = Instance.new("ImageLabel");
         local Top = Instance.new("Frame");
-        local IconLabel = Instance.new("ImageLabel");
+        local IconLabel = Instance.new("ImageLabel"); -- Icon baru
         local TextLabel = Instance.new("TextLabel");
         local UICorner1 = Instance.new("UICorner");
         local TextLabel1 = Instance.new("TextLabel");
@@ -402,14 +407,16 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Top.BorderSizePixel = 0
         
+        -- MODIFIKASI: Atur ukuran Top berdasarkan mode mini
         if NotifyConfig.Mini then
-            Top.Size = UDim2.new(1, 0, 0, 24)
+            Top.Size = UDim2.new(1, 0, 0, 24) -- Lebih kecil untuk mode mini
         else
             Top.Size = UDim2.new(1, 0, 0, 36)
         end
         Top.Name = "Top"
         Top.Parent = NotifyFrameReal
 
+        -- MODIFIKASI: Tambahkan IconLabel untuk icon notifikasi
         if NotifyConfig.Icon and NotifyConfig.Icon ~= "" then
             local iconImage = getIcon(NotifyConfig.Icon)
             if iconImage ~= "" then
@@ -419,9 +426,10 @@ function Chloex:MakeNotify(NotifyConfig)
                 IconLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 IconLabel.BorderSizePixel = 0
                 
+                -- MODIFIKASI: Atur ukuran dan posisi icon berdasarkan mode mini
                 if NotifyConfig.Mini then
-                    IconLabel.Position = UDim2.new(0, 6, 0.5, -6)
-                    IconLabel.Size = UDim2.new(0, 12, 0, 12)
+                    IconLabel.Position = UDim2.new(0, 6, 0.5, -6) -- Posisi lebih kecil
+                    IconLabel.Size = UDim2.new(0, 12, 0, 12) -- Ukuran lebih kecil
                 else
                     IconLabel.Position = UDim2.new(0, 10, 0.5, -8)
                     IconLabel.Size = UDim2.new(0, 16, 0, 16)
@@ -435,8 +443,9 @@ function Chloex:MakeNotify(NotifyConfig)
 
         TextLabel.Font = Enum.Font.GothamBold
         
+        -- MODIFIKASI: Atur ukuran font berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel.TextSize = 11
+            TextLabel.TextSize = 11 -- Font lebih kecil untuk mode mini
         else
             TextLabel.TextSize = 14
         end
@@ -450,17 +459,18 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel.BorderSizePixel = 0
         TextLabel.Size = UDim2.new(1, -100, 1, 0)
         
+        -- Atur posisi berdasarkan ada/tidaknya icon dan mode mini
         if NotifyConfig.Icon and NotifyConfig.Icon ~= "" and getIcon(NotifyConfig.Icon) ~= "" then
             if NotifyConfig.Mini then
-                TextLabel.Position = UDim2.new(0, 24, 0, 0)
+                TextLabel.Position = UDim2.new(0, 24, 0, 0) -- Posisi dengan icon (mini)
             else
-                TextLabel.Position = UDim2.new(0, 35, 0, 0)
+                TextLabel.Position = UDim2.new(0, 35, 0, 0) -- Posisi dengan icon (normal)
             end
         else
             if NotifyConfig.Mini then
-                TextLabel.Position = UDim2.new(0, 6, 0, 0)
+                TextLabel.Position = UDim2.new(0, 6, 0, 0) -- Posisi tanpa icon (mini)
             else
-                TextLabel.Position = UDim2.new(0, 10, 0, 0)
+                TextLabel.Position = UDim2.new(0, 10, 0, 0) -- Posisi tanpa icon (normal)
             end
         end
         TextLabel.Parent = Top
@@ -470,8 +480,9 @@ function Chloex:MakeNotify(NotifyConfig)
 
         TextLabel1.Font = Enum.Font.GothamBold
         
+        -- MODIFIKASI: Atur ukuran font berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel1.TextSize = 10
+            TextLabel1.TextSize = 10 -- Font lebih kecil untuk mode mini
         else
             TextLabel1.TextSize = 14
         end
@@ -485,12 +496,13 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel1.BorderSizePixel = 0
         TextLabel1.Size = UDim2.new(1, 0, 1, 0)
         
+        -- Atur posisi berdasarkan TextLabel
         local xOffset = TextLabel.TextBounds.X + 15
         if NotifyConfig.Icon and NotifyConfig.Icon ~= "" and getIcon(NotifyConfig.Icon) ~= "" then
             if NotifyConfig.Mini then
-                xOffset = xOffset + 18
+                xOffset = xOffset + 18 -- Tambah offset lebih kecil jika ada icon (mini)
             else
-                xOffset = xOffset + 25
+                xOffset = xOffset + 25 -- Tambah offset jika ada icon (normal)
             end
         end
         TextLabel1.Position = UDim2.new(0, xOffset, 0, 0)
@@ -507,8 +519,9 @@ function Chloex:MakeNotify(NotifyConfig)
         Close.BorderSizePixel = 0
         Close.Position = UDim2.new(1, -5, 0.5, 0)
         
+        -- MODIFIKASI: Atur ukuran tombol close berdasarkan mode mini
         if NotifyConfig.Mini then
-            Close.Size = UDim2.new(0, 20, 0, 20)
+            Close.Size = UDim2.new(0, 20, 0, 20) -- Tombol close lebih kecil untuk mode mini
         else
             Close.Size = UDim2.new(0, 25, 0, 25)
         end
@@ -524,8 +537,9 @@ function Chloex:MakeNotify(NotifyConfig)
         ImageLabel.BorderSizePixel = 0
         ImageLabel.Position = UDim2.new(0.49000001, 0, 0.5, 0)
         
+        -- MODIFIKASI: Atur ukuran icon close berdasarkan mode mini
         if NotifyConfig.Mini then
-            ImageLabel.Size = UDim2.new(1, -6, 1, -6)
+            ImageLabel.Size = UDim2.new(1, -6, 1, -6) -- Icon close lebih kecil
         else
             ImageLabel.Size = UDim2.new(1, -8, 1, -8)
         end
@@ -535,8 +549,9 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.Font = Enum.Font.GothamBold
         TextLabel2.TextColor3 = Color3.fromRGB(255, 255, 255)
         
+        -- MODIFIKASI: Atur ukuran font content berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel2.TextSize = 11
+            TextLabel2.TextSize = 11 -- Font content lebih kecil
         else
             TextLabel2.TextSize = 13
         end
@@ -550,8 +565,9 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel2.BorderSizePixel = 0
         
+        -- MODIFIKASI: Atur posisi dan ukuran TextLabel2 berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel2.Position = UDim2.new(0, 6, 0, 22)
+            TextLabel2.Position = UDim2.new(0, 6, 0, 22) -- Posisi lebih rapat ke atas
         else
             TextLabel2.Position = UDim2.new(0, 10, 0, 27)
         end
@@ -559,10 +575,12 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.Parent = NotifyFrameReal
         TextLabel2.Size = UDim2.new(1, -20, 0, 13)
 
+        -- MODIFIKASI: Hitung ukuran text dengan wrap berdasarkan NotifySize dan mode mini
         local textBoundsX = TextLabel2.TextBounds.X
-        local frameWidth = NotifyConfig.NotifySize - 40
+        local frameWidth = NotifyConfig.NotifySize - 40 -- Kurangi padding berdasarkan ukuran notifikasi
         local linesNeeded = math.ceil(textBoundsX / frameWidth)
         
+        -- MODIFIKASI: Atur ukuran baris berdasarkan mode mini
         local lineHeight = NotifyConfig.Mini and 11 or 13
         
         if linesNeeded > 1 then
@@ -572,24 +590,27 @@ function Chloex:MakeNotify(NotifyConfig)
         end
         TextLabel2.TextWrapped = true
 
+        -- MODIFIKASI: Atur ukuran frame berdasarkan tinggi konten dan mode mini
         local contentHeight = TextLabel2.AbsoluteSize.Y
         local minHeight, maxHeight
         
         if NotifyConfig.Mini then
-            minHeight = 45
-            maxHeight = 150
+            minHeight = 45 -- Minimum height untuk mode mini
+            maxHeight = 150 -- Maximum height untuk mode mini
         else
             minHeight = 65
-            maxHeight = 250
+            maxHeight = 250 -- Batas maksimum tinggi
         end
         
+        -- MODIFIKASI: Hitung finalHeight berdasarkan mode mini
         local headerHeight = NotifyConfig.Mini and 24 or 36
-        local finalHeight = contentHeight + headerHeight + 4
+        local finalHeight = contentHeight + headerHeight + 4 -- Tambah margin
         
         if finalHeight < minHeight then
             finalHeight = minHeight
         elseif finalHeight > maxHeight then
             finalHeight = maxHeight
+            -- Jika terlalu tinggi, tambahkan scroll
             local maxContentHeight = maxHeight - headerHeight - 10
             TextLabel2.Size = UDim2.new(1, -20, 0, maxContentHeight)
             TextLabel2.AutomaticSize = Enum.AutomaticSize.Y
@@ -626,32 +647,35 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
+-- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME dan mendukung icon
 function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
     return Chloex:MakeNotify({
-        Title = title or CURRENT_CONFIG_NAME,
+        Title = title or CURRENT_CONFIG_NAME, -- Menggunakan CURRENT_CONFIG_NAME sebagai default
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
         Delay = delay or 4,
-        Icon = icon or "",
-        NotifySize = notifySize or DEFAULT_NOTIFY_SIZE,
-        Mini = mini or false
+        Icon = icon or "", -- Parameter icon baru
+        NotifySize = notifySize or DEFAULT_NOTIFY_SIZE, -- Parameter ukuran notifikasi baru
+        Mini = mini or false -- Parameter mode mini
     })
 end
 
+-- Fungsi baru untuk notifikasi mini
 function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
     return Chloex:MakeNotify({
         Title = title or CURRENT_CONFIG_NAME,
         Description = desc or "Info",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
-        Delay = delay or 3,
+        Delay = delay or 3, -- Delay lebih pendek untuk mini
         Icon = icon or "",
-        NotifySize = notifySize or 200,
-        Mini = true
+        NotifySize = notifySize or 200, -- Default size lebih kecil untuk mini
+        Mini = true -- Mode mini aktif
     })
 end
 
+-- MODIFIKASI: Tambah fungsi untuk mengatur transparency UI (tanpa save ke config)
 local function applyUITransparency(mainObject, transparency)
     if not mainObject then return end
     
@@ -671,17 +695,21 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
-    GuiConfig.Configname   = GuiConfig.Configname or "NexaHub"
+    GuiConfig.Configname   = GuiConfig.Configname or "NexaHub" -- Parameter baru
     GuiConfig.Image        = GuiConfig.Image or "71947103252559"
-    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0
-    GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0
-    GuiConfig.ShowUser     = GuiConfig.ShowUser or false
-    GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple"
-    GuiConfig.NotifySize   = GuiConfig.NotifySize or 320
+    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- Parameter transparency baru (0 = solid, 1 = transparan)
+    GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0 -- Untuk kompatibilitas dengan Theme
+    GuiConfig.ShowUser     = GuiConfig.ShowUser or false -- Parameter untuk menampilkan user profile
+    GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple" -- "full" atau "simple"
+    GuiConfig.NotifySize   = GuiConfig.NotifySize or 320 -- Parameter baru: Ukuran notifikasi (width)
 
+    -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
+    
+    -- Update DEFAULT_NOTIFY_SIZE berdasarkan parameter NotifySize
     DEFAULT_NOTIFY_SIZE = GuiConfig.NotifySize
     
+    -- Proses folder dan file config berdasarkan Configname
     local configFolderName = GuiConfig.Configname:gsub("%s+", "_")
     
     if not isfolder(configFolderName) then
@@ -696,9 +724,12 @@ function Chloex:Window(GuiConfig)
     gameName = gameName:gsub("%s+", "_")
     
     ConfigFile = configFolderName .. "/Config/CHX_" .. gameName .. ".json"
+    
     CURRENT_VERSION = GuiConfig.Version
     
+    -- Panggil fungsi LoadConfigFromFile
     LoadConfigFromFile()
+    
     Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
 
     local GuiFunc = {}
@@ -764,10 +795,11 @@ function Chloex:Window(GuiConfig)
         Main.Image = "rbxassetid://" .. GuiConfig.Theme
         Main.ScaleType = Enum.ScaleType.Crop
         Main.BackgroundTransparency = 1
+        -- Gunakan ThemeTransparency yang sudah diisi dari Uitransparent
         Main.ImageTransparency = GuiConfig.ThemeTransparency or 0.15
     else
         Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0
+        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0 -- Terapkan transparency
     end
 
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -922,7 +954,7 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
-    -- Combined Layers Tab
+    -- Gabungkan User Profile dengan LayersTab
     local CombinedLayersTab = Instance.new("Frame")
     CombinedLayersTab.Name = "CombinedLayersTab"
     CombinedLayersTab.BackgroundTransparency = 1
@@ -935,101 +967,13 @@ function Chloex:Window(GuiConfig)
     UICornerCombined.CornerRadius = UDim.new(0, 2)
     UICornerCombined.Parent = CombinedLayersTab
 
-    -- SEARCH BAR - DITEMPATKAN DI ATAS TAB LIST SECTION
-    local SearchSection = Instance.new("Frame")
-    SearchSection.Name = "SearchSection"
-    SearchSection.BackgroundTransparency = 1
-    SearchSection.BorderSizePixel = 0
-    SearchSection.Size = UDim2.new(1, 0, 0, 50)
-    SearchSection.Position = UDim2.new(0, 0, 0, 0)
-    SearchSection.Parent = CombinedLayersTab
-
-    local SearchBg = Instance.new("Frame")
-    SearchBg.Name = "SearchBg"
-    SearchBg.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    SearchBg.BackgroundTransparency = 0.3
-    SearchBg.BorderSizePixel = 0
-    SearchBg.Size = UDim2.new(1, -10, 0, 35)
-    SearchBg.Position = UDim2.new(0, 5, 0, 8)
-    SearchBg.Parent = SearchSection
-    Instance.new("UICorner", SearchBg).CornerRadius = UDim.new(0, 6)
-
-    local SearchIcon = Instance.new("ImageLabel")
-    SearchIcon.Name = "SearchIcon"
-    SearchIcon.Image = getIcon("lucide:Search") or "rbxassetid://7484758998"
-    SearchIcon.BackgroundTransparency = 1
-    SearchIcon.Size = UDim2.new(0, 20, 0, 20)
-    SearchIcon.Position = UDim2.new(0, 10, 0.5, -10)
-    SearchIcon.Parent = SearchBg
-
-    local SearchBox = Instance.new("TextBox")
-    SearchBox.Name = "SearchBox"
-    SearchBox.Font = Enum.Font.Gotham
-    SearchBox.Text = ""
-    SearchBox.PlaceholderText = "Search tabs, sections, or elements..."
-    SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SearchBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
-    SearchBox.TextSize = 14
-    SearchBox.TextXAlignment = Enum.TextXAlignment.Left
-    SearchBox.BackgroundTransparency = 1
-    SearchBox.BorderSizePixel = 0
-    SearchBox.Size = UDim2.new(1, -80, 1, 0)
-    SearchBox.Position = UDim2.new(0, 40, 0, 0)
-    SearchBox.Parent = SearchBg
-    SearchBox.ClearTextOnFocus = false
-
-    local ClearButton = Instance.new("TextButton")
-    ClearButton.Name = "ClearButton"
-    ClearButton.Font = Enum.Font.Gotham
-    ClearButton.Text = "×"
-    ClearButton.TextColor3 = Color3.fromRGB(150, 150, 150)
-    ClearButton.TextSize = 20
-    ClearButton.BackgroundTransparency = 1
-    ClearButton.BorderSizePixel = 0
-    ClearButton.Size = UDim2.new(0, 30, 0, 30)
-    ClearButton.Position = UDim2.new(1, -35, 0.5, -15)
-    ClearButton.Parent = SearchBg
-    ClearButton.Visible = false
-    Instance.new("UICorner", ClearButton).CornerRadius = UDim.new(0, 4)
-
-    ClearButton.MouseEnter:Connect(function()
-        ClearButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    end)
-    ClearButton.MouseLeave:Connect(function()
-        ClearButton.TextColor3 = Color3.fromRGB(150, 150, 150)
-    end)
-
-    local SearchResultsSection = Instance.new("Frame")
-    SearchResultsSection.Name = "SearchResultsSection"
-    SearchResultsSection.BackgroundTransparency = 1
-    SearchResultsSection.BorderSizePixel = 0
-    SearchResultsSection.Size = UDim2.new(1, 0, 1, -50)
-    SearchResultsSection.Position = UDim2.new(0, 0, 0, 50)
-    SearchResultsSection.Parent = CombinedLayersTab
-    SearchResultsSection.Visible = false
-
-    local SearchResultsScroller = Instance.new("ScrollingFrame")
-    SearchResultsScroller.Name = "SearchResultsScroller"
-    SearchResultsScroller.BackgroundTransparency = 1
-    SearchResultsScroller.BorderSizePixel = 0
-    SearchResultsScroller.Size = UDim2.new(1, 0, 1, 0)
-    SearchResultsScroller.CanvasSize = UDim2.new(0, 0, 0, 0)
-    SearchResultsScroller.ScrollBarThickness = 2
-    SearchResultsScroller.ScrollBarImageColor3 = Color3.fromRGB(60, 60, 60)
-    SearchResultsScroller.Parent = SearchResultsSection
-
-    local SearchResultsLayout = Instance.new("UIListLayout")
-    SearchResultsLayout.Padding = UDim.new(0, 3)
-    SearchResultsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    SearchResultsLayout.Parent = SearchResultsScroller
-
-    -- Tab List Section (di bawah search bar)
+    -- Bagian atas: Tab list
     local TabListSection = Instance.new("Frame")
     TabListSection.Name = "TabListSection"
     TabListSection.BackgroundTransparency = 1
     TabListSection.BorderSizePixel = 0
-    TabListSection.Size = UDim2.new(1, 0, 1, -50)
-    TabListSection.Position = UDim2.new(0, 0, 0, 50)
+    TabListSection.Size = UDim2.new(1, 0, 1, 0)
+    TabListSection.Position = UDim2.new(0, 0, 0, 0)
     TabListSection.Parent = CombinedLayersTab
 
     local ScrollTab = Instance.new("ScrollingFrame");
@@ -1063,218 +1007,12 @@ function Chloex:Window(GuiConfig)
     ScrollTab.ChildAdded:Connect(UpdateSize1)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
-    -- Store references untuk search functionality
-    local searchState = {
-        allTabs = {},
-        allSections = {},
-        allElements = {},
-        currentSearchQuery = ""
-    }
-
-    --- ============ FUNGSI SEARCH (DIDEFINISIKAN DAHULU) ============
-    
-    -- Helper function untuk mencari tab parent
-    local function findParentTab(obj)
-        while obj do
-            if obj:IsA("Frame") and obj.Name == "Tab" then
-                return obj
-            end
-            obj = obj.Parent
-        end
-        return nil
-    end
-
-    -- Helper function untuk membuat item hasil pencarian
-    local function createSearchResultItem(itemType, itemName, itemObject, accentColor)
-        local item = Instance.new("Frame")
-        item.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        item.BackgroundTransparency = 0.5
-        item.Size = UDim2.new(1, -10, 0, 40)
-        item.Position = UDim2.new(0, 5, 0, 0)
-        
-        local corner = Instance.new("UICorner")
-        corner.CornerRadius = UDim.new(0, 6)
-        corner.Parent = item
-        
-        local typeLabel = Instance.new("TextLabel")
-        typeLabel.Font = Enum.Font.GothamBold
-        typeLabel.Text = itemType
-        typeLabel.TextColor3 = accentColor
-        typeLabel.TextSize = 11
-        typeLabel.BackgroundTransparency = 1
-        typeLabel.Size = UDim2.new(0, 60, 0, 20)
-        typeLabel.Position = UDim2.new(0, 10, 0, 5)
-        typeLabel.TextXAlignment = Enum.TextXAlignment.Left
-        typeLabel.Parent = item
-        
-        local nameLabel = Instance.new("TextLabel")
-        nameLabel.Font = Enum.Font.Gotham
-        nameLabel.Text = itemName
-        nameLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        nameLabel.TextSize = 14
-        nameLabel.BackgroundTransparency = 1
-        nameLabel.Size = UDim2.new(1, -20, 0, 20)
-        nameLabel.Position = UDim2.new(0, 10, 0, 20)
-        nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-        nameLabel.Parent = item
-        
-        local hover = Instance.new("Frame")
-        hover.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        hover.BackgroundTransparency = 0.95
-        hover.Size = UDim2.new(1, 0, 1, 0)
-        hover.Visible = false
-        corner = Instance.new("UICorner", hover)
-        corner.CornerRadius = UDim.new(0, 6)
-        hover.Parent = item
-        
-        local button = Instance.new("TextButton")
-        button.Text = ""
-        button.BackgroundTransparency = 1
-        button.Size = UDim2.new(1, 0, 1, 0)
-        button.Parent = item
-        
-        button.MouseEnter:Connect(function()
-            hover.Visible = true
-        end)
-        button.MouseLeave:Connect(function()
-            hover.Visible = false
-        end)
-        
-        button.MouseButton1Click:Connect(function()
-            if itemObject and itemObject:IsDescendantOf(game) then
-                local tab = findParentTab(itemObject)
-                if tab then
-                    for _, tabButton in pairs(ScrollTab:GetChildren()) do
-                        if tabButton:IsA("Frame") and tabButton.Name == "Tab" then
-                            local tabButtonObj = tabButton:FindFirstChild("TabButton")
-                            if tabButtonObj and tabButton.LayoutOrder == tab:GetAttribute("LayoutOrder") then
-                                tabButtonObj.Activated:Fire()
-                                break
-                            end
-                        end
-                    end
-                    
-                    task.wait(0.6)
-                    if itemObject:IsDescendantOf(game) then
-                        local layersFrame = itemObject
-                        while layersFrame and layersFrame.Name ~= "ScrolLayers" do
-                            layersFrame = layersFrame.Parent
-                        end
-                        if layersFrame and layersFrame:IsA("ScrollingFrame") then
-                            layersFrame.CanvasPosition = Vector2.new(0, itemObject.AbsolutePosition.Y - layersFrame.AbsolutePosition.Y)
-                        end
-                    end
-                end
-            end
-        end)
-        
-        return item
-    end
-
-    -- Fungsi untuk update search results
-    local function performSearch(query)
-        query = query:lower()
-        
-        for _, child in pairs(SearchResultsScroller:GetChildren()) do
-            if child:IsA("Frame") and child.Name ~= "UIListLayout" then
-                child:Destroy()
-            end
-        end
-        
-        if query == "" then
-            SearchResultsSection.Visible = false
-            TabListSection.Visible = true
-            ClearButton.Visible = false
-            return
-        end
-        
-        ClearButton.Visible = true
-        SearchResultsSection.Visible = true
-        TabListSection.Visible = false
-        
-        local resultCount = 0
-        
-        for _, tabData in pairs(searchState.allTabs) do
-            if tabData.name:lower():find(query) then
-                resultCount = resultCount + 1
-                local resultItem = createSearchResultItem("Tab", tabData.name, tabData.tabObject, GuiConfig.Color)
-                resultItem.Parent = SearchResultsScroller
-            end
-            
-            for _, sectionData in pairs(tabData.sections or {}) do
-                if sectionData.name and sectionData.name:lower():find(query) then
-                    resultCount = resultCount + 1
-                    local resultItem = createSearchResultItem("Section", sectionData.name, sectionData.sectionObject, GuiConfig.Color)
-                    resultItem.Parent = SearchResultsScroller
-                end
-                
-                for _, elementData in pairs(sectionData.elements or {}) do
-                    if elementData.name and elementData.name:lower():find(query) then
-                        resultCount = resultCount + 1
-                        local elementType = elementData.type or "Element"
-                        local resultItem = createSearchResultItem(elementType, elementData.name, elementData.elementObject, GuiConfig.Color)
-                        resultItem.Parent = SearchResultsScroller
-                    end
-                end
-            end
-        end
-        
-        if resultCount == 0 then
-            local noResults = Instance.new("Frame")
-            noResults.BackgroundTransparency = 1
-            noResults.Size = UDim2.new(1, 0, 0, 60)
-            noResults.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            noResults.BackgroundTransparency = 1
-            
-            local noResultsLabel = Instance.new("TextLabel")
-            noResultsLabel.Font = Enum.Font.Gotham
-            noResultsLabel.Text = "No results found for '" .. query .. "'"
-            noResultsLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
-            noResultsLabel.TextSize = 14
-            noResultsLabel.BackgroundTransparency = 1
-            noResultsLabel.Size = UDim2.new(1, 0, 1, 0)
-            noResultsLabel.Parent = noResults
-            
-            noResults.Parent = SearchResultsScroller
-        end
-        
-        local layout = SearchResultsScroller:FindFirstChildOfClass("UIListLayout")
-        if layout then
-            SearchResultsScroller.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-        end
-    end
-
-    -- Search event handlers
-    SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-        searchState.currentSearchQuery = SearchBox.Text
-        performSearch(searchState.currentSearchQuery)
-    end)
-
-    ClearButton.MouseButton1Click:Connect(function()
-        SearchBox.Text = ""
-        SearchBox:CaptureFocus()
-    end)
-
-    SearchBox.Focused:Connect(function()
-        TweenService:Create(SearchBg, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(35, 35, 35),
-            BackgroundTransparency = 0.2
-        }):Play()
-    end)
-
-    SearchBox.FocusLost:Connect(function()
-        TweenService:Create(SearchBg, TweenInfo.new(0.2), {
-            BackgroundColor3 = Color3.fromRGB(25, 25, 25),
-            BackgroundTransparency = 0.3
-        }):Play()
-    end)
-
-    --- ============ AKHIR FUNGSI SEARCH ============
-
-    -- User Profile
+    -- MODIFIKASI: Buat user profile menggunakan module terpisah
     if GuiConfig.ShowUser then
-        TabListSection.Size = UDim2.new(1, 0, 0.7, -50)
+        -- Atur ukuran TabListSection untuk memberi ruang untuk user profile
+        TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
         
+        -- Buat UserProfileSection
         local UserProfileSection = Instance.new("Frame")
         UserProfileSection.Name = "UserProfileSection"
         UserProfileSection.BackgroundTransparency = 1
@@ -1283,6 +1021,7 @@ function Chloex:Window(GuiConfig)
         UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
         UserProfileSection.Parent = CombinedLayersTab
 
+        -- Frame pembatas
         local Divider = Instance.new("Frame")
         Divider.Name = "Divider"
         Divider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -1292,6 +1031,7 @@ function Chloex:Window(GuiConfig)
         Divider.Position = UDim2.new(0, 5, 0, 0)
         Divider.Parent = UserProfileSection
 
+        -- Buat user profile berdasarkan tipe yang dipilih
         local userProfile
         if GuiConfig.UserProfileType == "full" then
             userProfile = UserInfo.CreateUserProfile(UserProfileSection, true, GuiConfig.Uitransparent, GuiConfig.Color)
@@ -1299,6 +1039,7 @@ function Chloex:Window(GuiConfig)
             userProfile = UserInfo.CreateSimpleUserProfile(UserProfileSection, true, GuiConfig.Uitransparent, GuiConfig.Color)
         end
         
+        -- Simpan reference jika diperlukan
         GuiFunc.UserProfile = userProfile
     end
 
@@ -1308,6 +1049,7 @@ function Chloex:Window(GuiConfig)
         end
     end
     
+    -- MODIFIKASI: Tambah fungsi untuk mengubah transparency UI secara dinamis (tanpa save ke config)
     function GuiFunc:SetTransparency(transparency)
         if transparency and transparency >= 0 and transparency <= 1 then
             applyUITransparency(Main, transparency)
@@ -1316,10 +1058,12 @@ function Chloex:Window(GuiConfig)
         return false
     end
     
+    -- MODIFIKASI: Tambah fungsi untuk mengubah ukuran notifikasi
     function GuiFunc:SetNotifySize(size)
         if size and type(size) == "number" and size >= 200 and size <= 800 then
             DEFAULT_NOTIFY_SIZE = size
             
+            -- Update NotifyLayout yang sudah ada jika ada
             if CoreGui:FindFirstChild("NotifyGui") and CoreGui.NotifyGui:FindFirstChild("NotifyLayout") then
                 CoreGui.NotifyGui.NotifyLayout.Size = UDim2.new(0, size, 1, 0)
                 CoreGui.NotifyGui.NotifyLayout:SetAttribute("NotifySize", size)
@@ -1333,7 +1077,6 @@ function Chloex:Window(GuiConfig)
         CircleClick(Min, Mouse.X, Mouse.Y)
         DropShadowHolder.Visible = false
     end)
-    
     Close.Activated:Connect(function()
         CircleClick(Close, Mouse.X, Mouse.Y)
 
@@ -1378,6 +1121,7 @@ function Chloex:Window(GuiConfig)
         Gradient.Rotation = 90
         Gradient.Parent = DialogGlow
 
+        -- Perbarui judul dialog untuk menggunakan CURRENT_CONFIG_NAME
         local Title = Instance.new("TextLabel")
         Title.Size = UDim2.new(1, 0, 0, 40)
         Title.Position = UDim2.new(0, 0, 0, 4)
@@ -1495,7 +1239,8 @@ function Chloex:Window(GuiConfig)
                     if input.UserInputState == Enum.UserInputState.End then
                         dragging = false
                     end
-                end)
+                end
+                )
             end
         end)
 
@@ -1625,7 +1370,6 @@ function Chloex:Window(GuiConfig)
     local Tabs = {}
     local CountTab = 0
     local CountDropdown = 0
-    
     function Tabs:AddTab(TabConfig)
         local TabConfig = TabConfig or {}
         TabConfig.Name = TabConfig.Name or "Tab"
@@ -1671,8 +1415,6 @@ function Chloex:Window(GuiConfig)
         Tab.Name = "Tab"
         Tab.Parent = ScrollTab
 
-        Tab:SetAttribute("LayoutOrder", CountTab)
-
         UICorner3.CornerRadius = UDim.new(0, 4)
         UICorner3.Parent = Tab
 
@@ -1712,6 +1454,7 @@ function Chloex:Window(GuiConfig)
         FeatureImg.Name = "FeatureImg"
         FeatureImg.Parent = Tab
         
+        -- Menggunakan fungsi getIcon untuk mendapatkan icon di Tab
         local iconImage = getIcon(TabConfig.Icon)
         if iconImage ~= "" then
             FeatureImg.Image = iconImage
@@ -1735,13 +1478,6 @@ function Chloex:Window(GuiConfig)
 
             UICorner4.Parent = ChooseFrame
         end
-
-        local tabData = {
-            name = TabConfig.Name,
-            tabObject = Tab,
-            sections = {}
-        }
-        searchState.allTabs[CountTab] = tabData
 
         TabButton.Activated:Connect(function()
             CircleClick(TabButton, Mouse.X, Mouse.Y)
@@ -1790,16 +1526,16 @@ function Chloex:Window(GuiConfig)
                 ):Play()
             end
         end)
-        
         --// Section
         local Sections = {}
         local CountSection = 0
         
+        -- MODIFIKASI: Update fungsi AddSection untuk menerima icon
         function Sections:AddSection(SectionConfig)
             local SectionConfig = SectionConfig or {}
             local Title = SectionConfig.Title or "Title"
             local AlwaysOpen = SectionConfig.AlwaysOpen
-            local Icon = SectionConfig.Icon or ""
+            local Icon = SectionConfig.Icon or ""  -- Parameter icon baru
             
             local Section = Instance.new("Frame");
             local SectionDecideFrame = Instance.new("Frame");
@@ -1824,6 +1560,7 @@ function Chloex:Window(GuiConfig)
             local FeatureFrame = Instance.new("Frame");
             local FeatureImg = Instance.new("ImageLabel");
             
+            -- MODIFIKASI: Menambahkan SectionIcon
             local SectionIcon = Instance.new("ImageLabel");
             local SectionTitle = Instance.new("TextLabel");
 
@@ -1875,6 +1612,7 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
+            -- MODIFIKASI: Membuat SectionIcon
             SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             SectionIcon.BackgroundTransparency = 0.9990000128746033
             SectionIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -1884,10 +1622,12 @@ function Chloex:Window(GuiConfig)
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionReal
             
+            -- MODIFIKASI: Menggunakan fungsi getIcon untuk Section
             local sectionIconImage = getIcon(Icon)
             if sectionIconImage ~= "" then
                 SectionIcon.Image = sectionIconImage
             else
+                -- Jika tidak ada icon, sembunyikan icon dan atur posisi Title
                 SectionIcon.Visible = false
             end
 
@@ -1903,12 +1643,13 @@ function Chloex:Window(GuiConfig)
             SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionTitle.BorderSizePixel = 0
             
+            -- MODIFIKASI: Atur posisi Title berdasarkan ada/tidaknya icon
             if sectionIconImage ~= "" then
-                SectionTitle.Position = UDim2.new(0, 35, 0.5, 0)
-                SectionTitle.Size = UDim2.new(1, -70, 0, 13)
+                SectionTitle.Position = UDim2.new(0, 35, 0.5, 0)  -- Dengan icon
+                SectionTitle.Size = UDim2.new(1, -70, 0, 13)      -- Dengan icon
             else
-                SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
-                SectionTitle.Size = UDim2.new(1, -50, 0, 13)
+                SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)  -- Tanpa icon
+                SectionTitle.Size = UDim2.new(1, -50, 0, 13)      -- Tanpa icon
             end
             
             SectionTitle.Name = "SectionTitle"
@@ -1932,6 +1673,7 @@ function Chloex:Window(GuiConfig)
             }
             UIGradient.Parent = SectionDecideFrame
 
+            --// Section Add
             local SectionAdd = Instance.new("Frame");
             local UICorner8 = Instance.new("UICorner");
             local UIListLayout2 = Instance.new("UIListLayout");
@@ -1954,16 +1696,6 @@ function Chloex:Window(GuiConfig)
             UIListLayout2.Padding = UDim.new(0, 3)
             UIListLayout2.SortOrder = Enum.SortOrder.LayoutOrder
             UIListLayout2.Parent = SectionAdd
-
-            local sectionData = {
-                name = Title,
-                sectionObject = SectionReal,
-                elements = {}
-            }
-            
-            if tabData then
-                table.insert(tabData.sections, sectionData)
-            end
 
             local OpenSection = false
 
@@ -2055,87 +1787,31 @@ function Chloex:Window(GuiConfig)
             local CountItem = 0
 
             function Items:AddParagraph(ParagraphConfig)
-                local element = Elements.AddParagraph(SectionAdd, ParagraphConfig, CountItem, UpdateSizeSection)
-                if element and element.Name and sectionData then
-                    table.insert(sectionData.elements, {
-                        name = ParagraphConfig.Title or "Paragraph",
-                        type = "Paragraph",
-                        elementObject = element
-                    })
-                end
-                return element
+                return Elements.AddParagraph(SectionAdd, ParagraphConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddPanel(PanelConfig)
-                local element = Elements.AddPanel(SectionAdd, PanelConfig, CountItem, UpdateSizeSection)
-                if element and element.Name and sectionData then
-                    table.insert(sectionData.elements, {
-                        name = PanelConfig.Title or "Panel",
-                        type = "Panel",
-                        elementObject = element
-                    })
-                end
-                return element
+                return Elements.AddPanel(SectionAdd, PanelConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddButton(ButtonConfig)
-                local element = Elements.AddButton(SectionAdd, ButtonConfig, CountItem, UpdateSizeSection)
-                if element and ButtonConfig.Title and sectionData then
-                    table.insert(sectionData.elements, {
-                        name = ButtonConfig.Title,
-                        type = "Button",
-                        elementObject = element
-                    })
-                end
-                return element
+                return Elements.AddButton(SectionAdd, ButtonConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddToggle(ToggleConfig)
-                local element = Elements.AddToggle(SectionAdd, ToggleConfig, CountItem, UpdateSizeSection)
-                if element and ToggleConfig.Title and sectionData then
-                    table.insert(sectionData.elements, {
-                        name = ToggleConfig.Title,
-                        type = "Toggle",
-                        elementObject = element
-                    })
-                end
-                return element
+                return Elements.AddToggle(SectionAdd, ToggleConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddSlider(SliderConfig)
-                local element = Elements.AddSlider(SectionAdd, SliderConfig, CountItem, UpdateSizeSection)
-                if element and SliderConfig.Title and sectionData then
-                    table.insert(sectionData.elements, {
-                        name = SliderConfig.Title,
-                        type = "Slider",
-                        elementObject = element
-                    })
-                end
-                return element
+                return Elements.AddSlider(SectionAdd, SliderConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddInput(InputConfig)
-                local element = Elements.AddInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection)
-                if element and InputConfig.Title and sectionData then
-                    table.insert(sectionData.elements, {
-                        name = InputConfig.Title,
-                        type = "Input",
-                        elementObject = element
-                    })
-                end
-                return element
+                return Elements.AddInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddDropdown(DropdownConfig)
-                local element = Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
-                if element and DropdownConfig.Title and sectionData then
-                    table.insert(sectionData.elements, {
-                        name = DropdownConfig.Title,
-                        type = "Dropdown",
-                        elementObject = element
-                    })
-                end
-                return element
+                return Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
             end
 
             function Items:AddDivider()
