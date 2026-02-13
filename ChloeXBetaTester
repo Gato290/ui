@@ -1,5 +1,18 @@
-local HttpService = game:GetService("HttpService") -- V0.0.7 
+local HttpService = game:GetService("HttpService") -- V0.0.8 
 local Players = game:GetService("Players")
+
+-- Load Color module dari file eksternal
+local successColor, Colors = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/color.lua"))()
+end)
+
+if not successColor then
+    warn("Failed to load Color module: " .. tostring(Colors))
+    Colors = {
+        ["Dark"] = Color3.fromRGB(20, 20, 25),
+        ["Light"] = Color3.fromRGB(240, 240, 240)
+    }
+end
 
 -- Load Elements dari file eksternal
 local success, ElementsModule = pcall(function()
@@ -80,6 +93,26 @@ local function getIcon(iconString)
             -- Jika bukan key di Icons, anggap sebagai asset ID langsung
             return iconString
         end
+    end
+end
+
+-- Fungsi untuk mengkonversi string warna ke Color3 (Menggunakan Colors dari file terpisah)
+local function getColorFromString(colorString)
+    if type(colorString) == "string" then
+        -- Cek apakah colorString ada dalam daftar warna
+        if Colors[colorString] then
+            return Colors[colorString]
+        else
+            -- Jika tidak ditemukan, kembalikan warna default (Dark)
+            warn("Color '" .. colorString .. "' not found, using Dark theme")
+            return Colors["Dark"] or Color3.fromRGB(20, 20, 25)
+        end
+    elseif type(colorString) == "userdata" and typeof(colorString) == "Color3" then
+        -- Jika sudah berupa Color3, kembalikan langsung
+        return colorString
+    else
+        -- Default ke Dark jika input tidak valid
+        return Colors["Dark"] or Color3.fromRGB(20, 20, 25)
     end
 end
 
@@ -301,17 +334,26 @@ function CircleClick(Button, X, Y)
 end
 
 local Chloex = {}
+
+-- Fungsi untuk membuat notifikasi
 function Chloex:MakeNotify(NotifyConfig)
     local NotifyConfig = NotifyConfig or {}
     NotifyConfig.Title = NotifyConfig.Title or "Chloe X"
     NotifyConfig.Description = NotifyConfig.Description or "Notification"
     NotifyConfig.Content = NotifyConfig.Content or "Content"
-    NotifyConfig.Color = NotifyConfig.Color or Color3.fromRGB(255, 0, 255)
+    
+    -- Konversi warna jika berupa string (menggunakan Colors dari file terpisah)
+    if type(NotifyConfig.Color) == "string" then
+        NotifyConfig.Color = getColorFromString(NotifyConfig.Color)
+    elseif NotifyConfig.Color == nil then
+        NotifyConfig.Color = getColorFromString("Dark")
+    end
+    
     NotifyConfig.Time = NotifyConfig.Time or 0.5
     NotifyConfig.Delay = NotifyConfig.Delay or 5
-    NotifyConfig.Icon = NotifyConfig.Icon or "" -- Parameter baru: Icon
-    NotifyConfig.NotifySize = NotifyConfig.NotifySize or DEFAULT_NOTIFY_SIZE -- Parameter baru: Ukuran
-    NotifyConfig.Mini = NotifyConfig.Mini or false -- Parameter baru: Mode mini
+    NotifyConfig.Icon = NotifyConfig.Icon or ""
+    NotifyConfig.NotifySize = NotifyConfig.NotifySize or DEFAULT_NOTIFY_SIZE
+    NotifyConfig.Mini = NotifyConfig.Mini or false
     
     local NotifyFunction = {}
     spawn(function()
@@ -329,11 +371,10 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyLayout.BorderColor3 = Color3.fromRGB(0, 0, 0)
             NotifyLayout.BorderSizePixel = 0
             NotifyLayout.Position = UDim2.new(1, -30, 1, -30)
-            NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0) -- Gunakan NotifySize dari config
+            NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0)
             NotifyLayout.Name = "NotifyLayout"
             NotifyLayout.Parent = CoreGui.NotifyGui
             
-            -- MODIFIKASI: Tambahkan properti untuk menyimpan ukuran notifikasi
             NotifyLayout:SetAttribute("NotifySize", NotifyConfig.NotifySize)
             
             local Count = 0
@@ -349,7 +390,6 @@ function Chloex:MakeNotify(NotifyConfig)
                 end
             end)
         else
-            -- MODIFIKASI: Jika NotifyLayout sudah ada, update ukurannya
             local currentSize = CoreGui.NotifyGui.NotifyLayout:GetAttribute("NotifySize") or DEFAULT_NOTIFY_SIZE
             if currentSize ~= NotifyConfig.NotifySize then
                 CoreGui.NotifyGui.NotifyLayout.Size = UDim2.new(0, NotifyConfig.NotifySize, 1, 0)
@@ -366,7 +406,7 @@ function Chloex:MakeNotify(NotifyConfig)
         local DropShadowHolder = Instance.new("Frame");
         local DropShadow = Instance.new("ImageLabel");
         local Top = Instance.new("Frame");
-        local IconLabel = Instance.new("ImageLabel"); -- Icon baru
+        local IconLabel = Instance.new("ImageLabel");
         local TextLabel = Instance.new("TextLabel");
         local UICorner1 = Instance.new("UICorner");
         local TextLabel1 = Instance.new("TextLabel");
@@ -407,16 +447,14 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Top.BorderSizePixel = 0
         
-        -- MODIFIKASI: Atur ukuran Top berdasarkan mode mini
         if NotifyConfig.Mini then
-            Top.Size = UDim2.new(1, 0, 0, 24) -- Lebih kecil untuk mode mini
+            Top.Size = UDim2.new(1, 0, 0, 24)
         else
             Top.Size = UDim2.new(1, 0, 0, 36)
         end
         Top.Name = "Top"
         Top.Parent = NotifyFrameReal
 
-        -- MODIFIKASI: Tambahkan IconLabel untuk icon notifikasi
         if NotifyConfig.Icon and NotifyConfig.Icon ~= "" then
             local iconImage = getIcon(NotifyConfig.Icon)
             if iconImage ~= "" then
@@ -426,10 +464,9 @@ function Chloex:MakeNotify(NotifyConfig)
                 IconLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 IconLabel.BorderSizePixel = 0
                 
-                -- MODIFIKASI: Atur ukuran dan posisi icon berdasarkan mode mini
                 if NotifyConfig.Mini then
-                    IconLabel.Position = UDim2.new(0, 6, 0.5, -6) -- Posisi lebih kecil
-                    IconLabel.Size = UDim2.new(0, 12, 0, 12) -- Ukuran lebih kecil
+                    IconLabel.Position = UDim2.new(0, 6, 0.5, -6)
+                    IconLabel.Size = UDim2.new(0, 12, 0, 12)
                 else
                     IconLabel.Position = UDim2.new(0, 10, 0.5, -8)
                     IconLabel.Size = UDim2.new(0, 16, 0, 16)
@@ -443,9 +480,8 @@ function Chloex:MakeNotify(NotifyConfig)
 
         TextLabel.Font = Enum.Font.GothamBold
         
-        -- MODIFIKASI: Atur ukuran font berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel.TextSize = 11 -- Font lebih kecil untuk mode mini
+            TextLabel.TextSize = 11
         else
             TextLabel.TextSize = 14
         end
@@ -459,18 +495,17 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel.BorderSizePixel = 0
         TextLabel.Size = UDim2.new(1, -100, 1, 0)
         
-        -- Atur posisi berdasarkan ada/tidaknya icon dan mode mini
         if NotifyConfig.Icon and NotifyConfig.Icon ~= "" and getIcon(NotifyConfig.Icon) ~= "" then
             if NotifyConfig.Mini then
-                TextLabel.Position = UDim2.new(0, 24, 0, 0) -- Posisi dengan icon (mini)
+                TextLabel.Position = UDim2.new(0, 24, 0, 0)
             else
-                TextLabel.Position = UDim2.new(0, 35, 0, 0) -- Posisi dengan icon (normal)
+                TextLabel.Position = UDim2.new(0, 35, 0, 0)
             end
         else
             if NotifyConfig.Mini then
-                TextLabel.Position = UDim2.new(0, 6, 0, 0) -- Posisi tanpa icon (mini)
+                TextLabel.Position = UDim2.new(0, 6, 0, 0)
             else
-                TextLabel.Position = UDim2.new(0, 10, 0, 0) -- Posisi tanpa icon (normal)
+                TextLabel.Position = UDim2.new(0, 10, 0, 0)
             end
         end
         TextLabel.Parent = Top
@@ -480,9 +515,8 @@ function Chloex:MakeNotify(NotifyConfig)
 
         TextLabel1.Font = Enum.Font.GothamBold
         
-        -- MODIFIKASI: Atur ukuran font berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel1.TextSize = 10 -- Font lebih kecil untuk mode mini
+            TextLabel1.TextSize = 10
         else
             TextLabel1.TextSize = 14
         end
@@ -496,13 +530,12 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel1.BorderSizePixel = 0
         TextLabel1.Size = UDim2.new(1, 0, 1, 0)
         
-        -- Atur posisi berdasarkan TextLabel
         local xOffset = TextLabel.TextBounds.X + 15
         if NotifyConfig.Icon and NotifyConfig.Icon ~= "" and getIcon(NotifyConfig.Icon) ~= "" then
             if NotifyConfig.Mini then
-                xOffset = xOffset + 18 -- Tambah offset lebih kecil jika ada icon (mini)
+                xOffset = xOffset + 18
             else
-                xOffset = xOffset + 25 -- Tambah offset jika ada icon (normal)
+                xOffset = xOffset + 25
             end
         end
         TextLabel1.Position = UDim2.new(0, xOffset, 0, 0)
@@ -519,9 +552,8 @@ function Chloex:MakeNotify(NotifyConfig)
         Close.BorderSizePixel = 0
         Close.Position = UDim2.new(1, -5, 0.5, 0)
         
-        -- MODIFIKASI: Atur ukuran tombol close berdasarkan mode mini
         if NotifyConfig.Mini then
-            Close.Size = UDim2.new(0, 20, 0, 20) -- Tombol close lebih kecil untuk mode mini
+            Close.Size = UDim2.new(0, 20, 0, 20)
         else
             Close.Size = UDim2.new(0, 25, 0, 25)
         end
@@ -537,9 +569,8 @@ function Chloex:MakeNotify(NotifyConfig)
         ImageLabel.BorderSizePixel = 0
         ImageLabel.Position = UDim2.new(0.49000001, 0, 0.5, 0)
         
-        -- MODIFIKASI: Atur ukuran icon close berdasarkan mode mini
         if NotifyConfig.Mini then
-            ImageLabel.Size = UDim2.new(1, -6, 1, -6) -- Icon close lebih kecil
+            ImageLabel.Size = UDim2.new(1, -6, 1, -6)
         else
             ImageLabel.Size = UDim2.new(1, -8, 1, -8)
         end
@@ -549,9 +580,8 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.Font = Enum.Font.GothamBold
         TextLabel2.TextColor3 = Color3.fromRGB(255, 255, 255)
         
-        -- MODIFIKASI: Atur ukuran font content berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel2.TextSize = 11 -- Font content lebih kecil
+            TextLabel2.TextSize = 11
         else
             TextLabel2.TextSize = 13
         end
@@ -565,9 +595,8 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel2.BorderSizePixel = 0
         
-        -- MODIFIKASI: Atur posisi dan ukuran TextLabel2 berdasarkan mode mini
         if NotifyConfig.Mini then
-            TextLabel2.Position = UDim2.new(0, 6, 0, 22) -- Posisi lebih rapat ke atas
+            TextLabel2.Position = UDim2.new(0, 6, 0, 22)
         else
             TextLabel2.Position = UDim2.new(0, 10, 0, 27)
         end
@@ -575,12 +604,10 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.Parent = NotifyFrameReal
         TextLabel2.Size = UDim2.new(1, -20, 0, 13)
 
-        -- MODIFIKASI: Hitung ukuran text dengan wrap berdasarkan NotifySize dan mode mini
         local textBoundsX = TextLabel2.TextBounds.X
-        local frameWidth = NotifyConfig.NotifySize - 40 -- Kurangi padding berdasarkan ukuran notifikasi
+        local frameWidth = NotifyConfig.NotifySize - 40
         local linesNeeded = math.ceil(textBoundsX / frameWidth)
         
-        -- MODIFIKASI: Atur ukuran baris berdasarkan mode mini
         local lineHeight = NotifyConfig.Mini and 11 or 13
         
         if linesNeeded > 1 then
@@ -590,27 +617,24 @@ function Chloex:MakeNotify(NotifyConfig)
         end
         TextLabel2.TextWrapped = true
 
-        -- MODIFIKASI: Atur ukuran frame berdasarkan tinggi konten dan mode mini
         local contentHeight = TextLabel2.AbsoluteSize.Y
         local minHeight, maxHeight
         
         if NotifyConfig.Mini then
-            minHeight = 45 -- Minimum height untuk mode mini
-            maxHeight = 150 -- Maximum height untuk mode mini
+            minHeight = 45
+            maxHeight = 150
         else
             minHeight = 65
-            maxHeight = 250 -- Batas maksimum tinggi
+            maxHeight = 250
         end
         
-        -- MODIFIKASI: Hitung finalHeight berdasarkan mode mini
         local headerHeight = NotifyConfig.Mini and 24 or 36
-        local finalHeight = contentHeight + headerHeight + 4 -- Tambah margin
+        local finalHeight = contentHeight + headerHeight + 4
         
         if finalHeight < minHeight then
             finalHeight = minHeight
         elseif finalHeight > maxHeight then
             finalHeight = maxHeight
-            -- Jika terlalu tinggi, tambahkan scroll
             local maxContentHeight = maxHeight - headerHeight - 10
             TextLabel2.Size = UDim2.new(1, -20, 0, maxContentHeight)
             TextLabel2.AutomaticSize = Enum.AutomaticSize.Y
@@ -649,29 +673,45 @@ end
 
 -- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME dan mendukung icon
 function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
+    -- Konversi warna jika berupa string (menggunakan Colors dari file terpisah)
+    local notifyColor = color
+    if type(color) == "string" then
+        notifyColor = getColorFromString(color)
+    elseif color == nil then
+        notifyColor = getColorFromString("Dark")
+    end
+    
     return Chloex:MakeNotify({
-        Title = title or CURRENT_CONFIG_NAME, -- Menggunakan CURRENT_CONFIG_NAME sebagai default
+        Title = title or CURRENT_CONFIG_NAME,
         Description = desc or "Notification",
         Content = msg or "Content",
-        Color = color or Color3.fromRGB(0, 208, 255),
+        Color = notifyColor or getColorFromString("Dark"),
         Delay = delay or 4,
-        Icon = icon or "", -- Parameter icon baru
-        NotifySize = notifySize or DEFAULT_NOTIFY_SIZE, -- Parameter ukuran notifikasi baru
-        Mini = mini or false -- Parameter mode mini
+        Icon = icon or "",
+        NotifySize = notifySize or DEFAULT_NOTIFY_SIZE,
+        Mini = mini or false
     })
 end
 
 -- Fungsi baru untuk notifikasi mini
 function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
+    -- Konversi warna jika berupa string (menggunakan Colors dari file terpisah)
+    local notifyColor = color
+    if type(color) == "string" then
+        notifyColor = getColorFromString(color)
+    elseif color == nil then
+        notifyColor = getColorFromString("Dark")
+    end
+    
     return Chloex:MakeNotify({
         Title = title or CURRENT_CONFIG_NAME,
         Description = desc or "Info",
         Content = msg or "Content",
-        Color = color or Color3.fromRGB(0, 208, 255),
-        Delay = delay or 3, -- Delay lebih pendek untuk mini
+        Color = notifyColor or getColorFromString("Dark"),
+        Delay = delay or 3,
         Icon = icon or "",
-        NotifySize = notifySize or 200, -- Default size lebih kecil untuk mini
-        Mini = true -- Mode mini aktif
+        NotifySize = notifySize or 200,
+        Mini = true
     })
 end
 
@@ -692,16 +732,20 @@ function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
     GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
-    GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
+    
+    -- Konversi warna dari string ke Color3 jika diperlukan (menggunakan Colors dari file terpisah)
+    local windowColor = GuiConfig.Color or "Dark"
+    GuiConfig.Color = getColorFromString(windowColor)
+    
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
-    GuiConfig.Configname   = GuiConfig.Configname or "NexaHub" -- Parameter baru
+    GuiConfig.Configname   = GuiConfig.Configname or "NexaHub"
     GuiConfig.Image        = GuiConfig.Image or "71947103252559"
-    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- Parameter transparency baru (0 = solid, 1 = transparan)
-    GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0 -- Untuk kompatibilitas dengan Theme
-    GuiConfig.ShowUser     = GuiConfig.ShowUser or false -- Parameter untuk menampilkan user profile
-    GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple" -- "full" atau "simple"
-    GuiConfig.NotifySize   = GuiConfig.NotifySize or 320 -- Parameter baru: Ukuran notifikasi (width)
+    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0
+    GuiConfig.ThemeTransparency = GuiConfig.Uitransparent or 0
+    GuiConfig.ShowUser     = GuiConfig.ShowUser or false
+    GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple"
+    GuiConfig.NotifySize   = GuiConfig.NotifySize or 320
 
     -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
@@ -795,11 +839,10 @@ function Chloex:Window(GuiConfig)
         Main.Image = "rbxassetid://" .. GuiConfig.Theme
         Main.ScaleType = Enum.ScaleType.Crop
         Main.BackgroundTransparency = 1
-        -- Gunakan ThemeTransparency yang sudah diisi dari Uitransparent
         Main.ImageTransparency = GuiConfig.ThemeTransparency or 0.15
     else
         Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0 -- Terapkan transparency
+        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0
     end
 
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1121,7 +1164,6 @@ function Chloex:Window(GuiConfig)
         Gradient.Rotation = 90
         Gradient.Parent = DialogGlow
 
-        -- Perbarui judul dialog untuk menggunakan CURRENT_CONFIG_NAME
         local Title = Instance.new("TextLabel")
         Title.Size = UDim2.new(1, 0, 0, 40)
         Title.Position = UDim2.new(0, 0, 0, 4)
@@ -1530,12 +1572,11 @@ function Chloex:Window(GuiConfig)
         local Sections = {}
         local CountSection = 0
         
-        -- MODIFIKASI: Update fungsi AddSection untuk menerima icon
         function Sections:AddSection(SectionConfig)
             local SectionConfig = SectionConfig or {}
             local Title = SectionConfig.Title or "Title"
             local AlwaysOpen = SectionConfig.AlwaysOpen
-            local Icon = SectionConfig.Icon or ""  -- Parameter icon baru
+            local Icon = SectionConfig.Icon or ""
             
             local Section = Instance.new("Frame");
             local SectionDecideFrame = Instance.new("Frame");
@@ -1560,7 +1601,6 @@ function Chloex:Window(GuiConfig)
             local FeatureFrame = Instance.new("Frame");
             local FeatureImg = Instance.new("ImageLabel");
             
-            -- MODIFIKASI: Menambahkan SectionIcon
             local SectionIcon = Instance.new("ImageLabel");
             local SectionTitle = Instance.new("TextLabel");
 
@@ -1612,7 +1652,6 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
-            -- MODIFIKASI: Membuat SectionIcon
             SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             SectionIcon.BackgroundTransparency = 0.9990000128746033
             SectionIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -1622,12 +1661,10 @@ function Chloex:Window(GuiConfig)
             SectionIcon.Name = "SectionIcon"
             SectionIcon.Parent = SectionReal
             
-            -- MODIFIKASI: Menggunakan fungsi getIcon untuk Section
             local sectionIconImage = getIcon(Icon)
             if sectionIconImage ~= "" then
                 SectionIcon.Image = sectionIconImage
             else
-                -- Jika tidak ada icon, sembunyikan icon dan atur posisi Title
                 SectionIcon.Visible = false
             end
 
@@ -1643,13 +1680,12 @@ function Chloex:Window(GuiConfig)
             SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionTitle.BorderSizePixel = 0
             
-            -- MODIFIKASI: Atur posisi Title berdasarkan ada/tidaknya icon
             if sectionIconImage ~= "" then
-                SectionTitle.Position = UDim2.new(0, 35, 0.5, 0)  -- Dengan icon
-                SectionTitle.Size = UDim2.new(1, -70, 0, 13)      -- Dengan icon
+                SectionTitle.Position = UDim2.new(0, 35, 0.5, 0)
+                SectionTitle.Size = UDim2.new(1, -70, 0, 13)
             else
-                SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)  -- Tanpa icon
-                SectionTitle.Size = UDim2.new(1, -50, 0, 13)      -- Tanpa icon
+                SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
+                SectionTitle.Size = UDim2.new(1, -50, 0, 13)
             end
             
             SectionTitle.Name = "SectionTitle"
@@ -1673,7 +1709,6 @@ function Chloex:Window(GuiConfig)
             }
             UIGradient.Parent = SectionDecideFrame
 
-            --// Section Add
             local SectionAdd = Instance.new("Frame");
             local UICorner8 = Instance.new("UICorner");
             local UIListLayout2 = Instance.new("UIListLayout");
