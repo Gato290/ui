@@ -59,20 +59,6 @@ else
     UserInfo = UserInfoModule
 end
 
--- ==================================================
--- [BARU] Load Color module dari file eksternal
--- ==================================================
-local successColor, ColorModule = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/color.lua"))()
-end)
-
-if not successColor then
-    warn("Failed to load Color module: " .. tostring(ColorModule))
-    ColorThemes = {}
-else
-    ColorThemes = ColorModule
-end
-
 -- Fungsi untuk mendapatkan icon berdasarkan format
 local function getIcon(iconString)
     if not iconString or iconString == "" then
@@ -661,23 +647,13 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
--- ==================================================
--- [BARU] Fungsi Notify yang mendukung color string
--- ==================================================
+-- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME dan mendukung icon
 function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
-    -- Handle color yang bisa berupa string
-    local finalColor = color
-    if type(color) == "string" then
-        finalColor = ColorThemes[color] or Color3.fromRGB(0, 208, 255)
-    elseif type(color) ~= "table" or not pcall(function() return color.r end) then
-        finalColor = Color3.fromRGB(0, 208, 255)
-    end
-    
     return Chloex:MakeNotify({
         Title = title or CURRENT_CONFIG_NAME, -- Menggunakan CURRENT_CONFIG_NAME sebagai default
         Description = desc or "Notification",
         Content = msg or "Content",
-        Color = finalColor,
+        Color = color or Color3.fromRGB(0, 208, 255),
         Delay = delay or 4,
         Icon = icon or "", -- Parameter icon baru
         NotifySize = notifySize or DEFAULT_NOTIFY_SIZE, -- Parameter ukuran notifikasi baru
@@ -685,23 +661,13 @@ function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
     })
 end
 
--- ==================================================
--- [BARU] Fungsi MiniNotify yang mendukung color string
--- ==================================================
+-- Fungsi baru untuk notifikasi mini
 function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
-    -- Handle color yang bisa berupa string
-    local finalColor = color
-    if type(color) == "string" then
-        finalColor = ColorThemes[color] or Color3.fromRGB(0, 208, 255)
-    elseif type(color) ~= "table" or not pcall(function() return color.r end) then
-        finalColor = Color3.fromRGB(0, 208, 255)
-    end
-    
     return Chloex:MakeNotify({
         Title = title or CURRENT_CONFIG_NAME,
         Description = desc or "Info",
         Content = msg or "Content",
-        Color = finalColor,
+        Color = color or Color3.fromRGB(0, 208, 255),
         Delay = delay or 3, -- Delay lebih pendek untuk mini
         Icon = icon or "",
         NotifySize = notifySize or 200, -- Default size lebih kecil untuk mini
@@ -726,19 +692,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
     GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
-    
-    -- ==================================================
-    -- [BARU] Handle color yang bisa berupa string
-    -- ==================================================
-    if type(GuiConfig.Color) == "string" then
-        -- Jika string, ambil dari ColorThemes
-        GuiConfig.Color = ColorThemes[GuiConfig.Color] or Color3.fromRGB(255, 0, 255)
-    elseif type(GuiConfig.Color) ~= "table" or not pcall(function() return GuiConfig.Color.r end) then
-        -- Jika bukan Color3 yang valid, gunakan default
-        GuiConfig.Color = Color3.fromRGB(255, 0, 255)
-    end
-    -- Jika sudah Color3, biarkan apa adanya
-    
+    GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
     GuiConfig.Configname   = GuiConfig.Configname or "NexaHub" -- Parameter baru
@@ -1876,24 +1830,6 @@ function Chloex:Window(GuiConfig)
         local safeName = TabConfig.Name:gsub("%s+", "_")
         _G[safeName] = Sections
         return Sections
-    end
-
-    -- ==================================================
-    -- [BARU] Fungsi untuk mendapatkan daftar theme
-    -- ==================================================
-    function Chloex:GetAvailableThemes()
-        local themes = {}
-        for name, _ in pairs(ColorThemes) do
-            table.insert(themes, name)
-        end
-        return themes
-    end
-
-    -- ==================================================
-    -- [BARU] Fungsi untuk mendapatkan color dari theme name
-    -- ==================================================
-    function Chloex:GetThemeColor(themeName)
-        return ColorThemes[themeName] or Color3.fromRGB(255, 0, 255)
     end
 
     return Tabs
