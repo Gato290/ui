@@ -31,7 +31,7 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 local Window = Chloex:Window({
     Title = "Title",           -- Judul window
     Footer = "Footer",          -- Footer text
-    Color = Color3.fromRGB(0, 208, 255),  Or "Light" Color = "Light",
+    Color = Color3.fromRGB(0, 208, 255), --  Or "Light" Color = "Light",
     Version = 1.0,                -- Versi config
     ["Tab Width"] = 120,          -- Lebar sidebar tab
     Image = "70884221600423", -- Icon untuk toggle button
