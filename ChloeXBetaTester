@@ -9,7 +9,7 @@ end)
 if not successColor then
     warn("Failed to load Color module: " .. tostring(Colors))
     Colors = {
-        ["Dark"] = Color3.fromRGB(20, 20, 25),
+        ["Default"] = Color3.fromRGB(0, 208, 255),
         ["Light"] = Color3.fromRGB(240, 240, 240)
     }
 end
@@ -103,16 +103,16 @@ local function getColorFromString(colorString)
         if Colors[colorString] then
             return Colors[colorString]
         else
-            -- Jika tidak ditemukan, kembalikan warna default (Dark)
-            warn("Color '" .. colorString .. "' not found, using Dark theme")
-            return Colors["Dark"] or Color3.fromRGB(20, 20, 25)
+            -- Jika tidak ditemukan, kembalikan warna default (Default)
+            warn("Color '" .. colorString .. "' not found, using Default theme")
+            return Colors["Default"] or Color3.fromRGB(20, 20, 25)
         end
     elseif type(colorString) == "userdata" and typeof(colorString) == "Color3" then
         -- Jika sudah berupa Color3, kembalikan langsung
         return colorString
     else
-        -- Default ke Dark jika input tidak valid
-        return Colors["Dark"] or Color3.fromRGB(20, 20, 25)
+        -- Default ke Default jika input tidak valid
+        return Colors["Default"] or Color3.fromRGB(20, 20, 25)
     end
 end
 
@@ -346,7 +346,7 @@ function Chloex:MakeNotify(NotifyConfig)
     if type(NotifyConfig.Color) == "string" then
         NotifyConfig.Color = getColorFromString(NotifyConfig.Color)
     elseif NotifyConfig.Color == nil then
-        NotifyConfig.Color = getColorFromString("Dark")
+        NotifyConfig.Color = getColorFromString("Default")
     end
     
     NotifyConfig.Time = NotifyConfig.Time or 0.5
@@ -678,14 +678,14 @@ function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
     if type(color) == "string" then
         notifyColor = getColorFromString(color)
     elseif color == nil then
-        notifyColor = getColorFromString("Dark")
+        notifyColor = getColorFromString("Default")
     end
     
     return Chloex:MakeNotify({
         Title = title or CURRENT_CONFIG_NAME,
         Description = desc or "Notification",
         Content = msg or "Content",
-        Color = notifyColor or getColorFromString("Dark"),
+        Color = notifyColor or getColorFromString("Default"),
         Delay = delay or 4,
         Icon = icon or "",
         NotifySize = notifySize or DEFAULT_NOTIFY_SIZE,
@@ -700,14 +700,14 @@ function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
     if type(color) == "string" then
         notifyColor = getColorFromString(color)
     elseif color == nil then
-        notifyColor = getColorFromString("Dark")
+        notifyColor = getColorFromString("Default")
     end
     
     return Chloex:MakeNotify({
         Title = title or CURRENT_CONFIG_NAME,
         Description = desc or "Info",
         Content = msg or "Content",
-        Color = notifyColor or getColorFromString("Dark"),
+        Color = notifyColor or getColorFromString("Default"),
         Delay = delay or 3,
         Icon = icon or "",
         NotifySize = notifySize or 200,
@@ -734,7 +734,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
     
     -- Konversi warna dari string ke Color3 jika diperlukan (menggunakan Colors dari file terpisah)
-    local windowColor = GuiConfig.Color or "Dark"
+    local windowColor = GuiConfig.Color or "Default"
     GuiConfig.Color = getColorFromString(windowColor)
     
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
@@ -1871,3 +1871,4 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
+
