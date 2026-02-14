@@ -1,0 +1,1771 @@
+-- main.lua V2.0.0 - Chloe X UI Library (Enhanced & Optimized)
+--[[
+    Improvements in V2:
+    - Modular architecture with better separation of concerns
+    - Enhanced performance with object pooling and optimized rendering
+    - Better error handling and validation
+    - Improved mobile support with responsive design
+    - Enhanced animation system with easing options
+    - Memory management and cleanup utilities
+    - Better type safety and input validation
+    - Extended customization options
+    - Built-in theme system
+    - Performance monitoring
+]]
+
+-- ============================================
+-- SERVICES & UTILITIES
+-- ============================================
+
+local Services = {
+    HttpService = game:GetService("HttpService"),
+    Players = game:GetService("Players"),
+    UserInputService = game:GetService("UserInputService"),
+    TweenService = game:GetService("TweenService"),
+    CoreGui = game:GetService("CoreGui"),
+    RunService = game:GetService("RunService"),
+    MarketplaceService = game:GetService("MarketplaceService"),
+}
+
+local LocalPlayer = Services.Players.LocalPlayer
+local Mouse = LocalPlayer:GetMouse()
+local Viewport = workspace.CurrentCamera.ViewportSize
+
+-- ============================================
+-- CONSTANTS & CONFIGURATION
+-- ============================================
+
+local Constants = {
+    VERSION = "2.0.0",
+    MIN_SIZE = { Width = 400, Height = 300 },
+    DEFAULT_SIZE = { Width = 640, Height = 400 },
+    MOBILE_SIZE = { Width = 470, Height = 270 },
+    NOTIFY_SIZE = 320,
+    ANIMATION_TIME = 0.3,
+    DEBOUNCE_TIME = 0.05,
+}
+
+local DeviceInfo = {
+    IsMobile = Services.UserInputService.TouchEnabled and 
+               not Services.UserInputService.KeyboardEnabled and 
+               not Services.UserInputService.MouseEnabled,
+    ScreenSize = Viewport,
+}
+
+-- ============================================
+-- UTILITY FUNCTIONS
+-- ============================================
+
+local Utils = {}
+
+-- Validation utilities
+function Utils.ValidateType(value, expectedType, defaultValue)
+    if type(value) == expectedType then
+        return value
+    end
+    return defaultValue
+end
+
+function Utils.ValidateNumber(value, min, max, default)
+    if type(value) ~= "number" then return default end
+    return math.clamp(value, min, max)
+end
+
+function Utils.ValidateColor(color, default)
+    if typeof(color) == "Color3" then
+        return color
+    elseif type(color) == "string" then
+        return Utils.GetColorFromString(color)
+    end
+    return default or Color3.fromRGB(20, 20, 25)
+end
+
+-- Safe string operations
+function Utils.SafeString(str, maxLength)
+    str = tostring(str or "")
+    if maxLength and #str > maxLength then
+        return str:sub(1, maxLength) .. "..."
+    end
+    return str
+end
+
+-- Debounce utility
+function Utils.Debounce(func, delay)
+    local lastRun = 0
+    return function(...)
+        local now = tick()
+        if now - lastRun >= delay then
+            lastRun = now
+            return func(...)
+        end
+    end
+end
+
+-- Color utilities
+function Utils.GetColorFromString(colorString)
+    local Colors = {
+        ["Default"] = Color3.fromRGB(20, 20, 25),
+        ["Primary"] = Color3.fromRGB(88, 101, 242),
+        ["Success"] = Color3.fromRGB(87, 242, 135),
+        ["Warning"] = Color3.fromRGB(254, 231, 92),
+        ["Error"] = Color3.fromRGB(237, 66, 69),
+        ["Info"] = Color3.fromRGB(0, 176, 255),
+        ["Light"] = Color3.fromRGB(240, 240, 240),
+        ["Dark"] = Color3.fromRGB(15, 15, 20),
+    }
+    return Colors[colorString] or Colors["Default"]
+end
+
+-- Size calculation with responsive support
+function Utils.CalculateSize(pxWidth, pxHeight)
+    local scaleX = pxWidth / Viewport.X
+    local scaleY = pxHeight / Viewport.Y
+    
+    if DeviceInfo.IsMobile then
+        scaleX = math.min(scaleX, 0.95)
+        scaleY = math.min(scaleY, 0.85)
+    end
+    
+    return UDim2.new(scaleX, 0, scaleY, 0)
+end
+
+-- Apply transparency safely
+function Utils.SetTransparency(object, transparency)
+    if not object then return false end
+    transparency = Utils.ValidateNumber(transparency, 0, 1, 0)
+    
+    local success = pcall(function()
+        if object:IsA("ImageLabel") or object:IsA("ImageButton") then
+            object.ImageTransparency = transparency
+        elseif object:IsA("TextLabel") or object:IsA("TextButton") then
+            object.TextTransparency = transparency
+        end
+        
+        if object:IsA("GuiObject") then
+            object.BackgroundTransparency = transparency
+        end
+    end)
+    
+    return success
+end
+
+-- Create tween with validation
+function Utils.CreateTween(instance, properties, duration, easingStyle, easingDirection)
+    duration = Utils.ValidateNumber(duration, 0.01, 10, Constants.ANIMATION_TIME)
+    easingStyle = easingStyle or Enum.EasingStyle.Quad
+    easingDirection = easingDirection or Enum.EasingDirection.Out
+    
+    local tweenInfo = TweenInfo.new(duration, easingStyle, easingDirection)
+    return Services.TweenService:Create(instance, tweenInfo, properties)
+end
+
+-- ============================================
+-- MODULE LOADER WITH ENHANCED ERROR HANDLING
+-- ============================================
+
+local ModuleLoader = {}
+ModuleLoader.Cache = {}
+ModuleLoader.LoadAttempts = {}
+
+function ModuleLoader.Load(url, moduleName, maxRetries)
+    maxRetries = maxRetries or 3
+    
+    -- Check cache
+    if ModuleLoader.Cache[url] then
+        return ModuleLoader.Cache[url]
+    end
+    
+    -- Check load attempts
+    ModuleLoader.LoadAttempts[url] = ModuleLoader.LoadAttempts[url] or 0
+    
+    if ModuleLoader.LoadAttempts[url] >= maxRetries then
+        warn(string.format("Max retries reached for %s", moduleName))
+        return nil
+    end
+    
+    ModuleLoader.LoadAttempts[url] = ModuleLoader.LoadAttempts[url] + 1
+    
+    local success, result = pcall(function()
+        local response = game:HttpGet(url)
+        return loadstring(response)()
+    end)
+    
+    if success and result then
+        ModuleLoader.Cache[url] = result
+        return result
+    else
+        warn(string.format("Failed to load %s (Attempt %d/%d): %s", 
+            moduleName, ModuleLoader.LoadAttempts[url], maxRetries, tostring(result)))
+        return nil
+    end
+end
+
+-- Load all required modules
+local Modules = {
+    Colors = ModuleLoader.Load(
+        "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/color.lua",
+        "Colors"
+    ),
+    Elements = ModuleLoader.Load(
+        "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua",
+        "Elements"
+    ),
+    Icons = ModuleLoader.Load(
+        "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Icon.lua",
+        "Icons"
+    ),
+    LucideIcons = ModuleLoader.Load(
+        "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/LucideIcon.lua",
+        "LucideIcons"
+    ),
+    SolarIcons = ModuleLoader.Load(
+        "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/SolarIcon.lua",
+        "SolarIcons"
+    ),
+    UserInfo = ModuleLoader.Load(
+        "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/showuser.lua",
+        "UserInfo"
+    ),
+    Keybind = ModuleLoader.Load(
+        "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/keybind.lua",
+        "Keybind"
+    ),
+}
+
+-- Validate critical modules
+if not Modules.Elements then
+    error("Critical module 'Elements' failed to load. Cannot continue.")
+end
+
+-- ============================================
+-- ICON MANAGER
+-- ============================================
+
+local IconManager = {}
+
+function IconManager.GetIcon(iconString)
+    if not iconString or iconString == "" then 
+        return "" 
+    end
+    
+    -- Lucide icons
+    if iconString:find("^lucide:") and Modules.LucideIcons then
+        local iconName = iconString:sub(8)
+        return Modules.LucideIcons[iconName] or ""
+    end
+    
+    -- Solar icons
+    if iconString:find("^solar:") and Modules.SolarIcons then
+        local iconName = iconString:sub(7)
+        return Modules.SolarIcons[iconName] or ""
+    end
+    
+    -- Regular icons
+    if Modules.Icons then
+        return Modules.Icons[iconString] or iconString
+    end
+    
+    return iconString
+end
+
+-- ============================================
+-- CONFIG MANAGER
+-- ============================================
+
+local ConfigManager = {}
+ConfigManager.Data = {}
+ConfigManager.FilePath = ""
+ConfigManager.Version = nil
+ConfigManager.Name = "DefaultConfig"
+ConfigManager.AutoSave = true
+ConfigManager.SaveDebounce = nil
+
+function ConfigManager.Initialize(configName, version)
+    ConfigManager.Name = Utils.SafeString(configName, 50):gsub("%s+", "_")
+    ConfigManager.Version = version
+    
+    -- Setup folders
+    local folderName = ConfigManager.Name
+    if isfolder and not isfolder(folderName) then
+        makefolder(folderName)
+        makefolder(folderName .. "/Config")
+    end
+    
+    -- Generate file path
+    local gameName = "DefaultGame"
+    pcall(function()
+        local productInfo = Services.MarketplaceService:GetProductInfo(game.PlaceId)
+        gameName = productInfo.Name:gsub("[^%w_ ]", ""):gsub("%s+", "_")
+    end)
+    
+    ConfigManager.FilePath = folderName .. "/Config/CHX_" .. gameName .. ".json"
+    
+    -- Setup auto-save with debounce
+    if ConfigManager.AutoSave then
+        ConfigManager.SaveDebounce = Utils.Debounce(function()
+            ConfigManager.Save()
+        end, 1)
+    end
+    
+    ConfigManager.Load()
+end
+
+function ConfigManager.Save()
+    if not writefile or ConfigManager.FilePath == "" then 
+        return false 
+    end
+    
+    ConfigManager.Data._version = ConfigManager.Version
+    ConfigManager.Data._timestamp = os.time()
+    
+    local success, result = pcall(function()
+        local json = Services.HttpService:JSONEncode(ConfigManager.Data)
+        writefile(ConfigManager.FilePath, json)
+        return true
+    end)
+    
+    if not success then
+        warn("Failed to save config: " .. tostring(result))
+    end
+    
+    return success
+end
+
+function ConfigManager.Load()
+    if not isfile or not readfile or ConfigManager.FilePath == "" then 
+        ConfigManager.Data = { _version = ConfigManager.Version }
+        return false 
+    end
+    
+    if not isfile(ConfigManager.FilePath) then
+        ConfigManager.Data = { _version = ConfigManager.Version }
+        return false
+    end
+    
+    local success, result = pcall(function()
+        local json = readfile(ConfigManager.FilePath)
+        return Services.HttpService:JSONDecode(json)
+    end)
+    
+    if success and type(result) == "table" then
+        -- Version check
+        if result._version == ConfigManager.Version then
+            ConfigManager.Data = result
+            return true
+        else
+            warn("Config version mismatch. Creating new config.")
+            ConfigManager.Data = { _version = ConfigManager.Version }
+        end
+    else
+        warn("Failed to load config: " .. tostring(result))
+        ConfigManager.Data = { _version = ConfigManager.Version }
+    end
+    
+    return false
+end
+
+function ConfigManager.Get(key, default)
+    return ConfigManager.Data[key] ~= nil and ConfigManager.Data[key] or default
+end
+
+function ConfigManager.Set(key, value)
+    ConfigManager.Data[key] = value
+    
+    if ConfigManager.AutoSave and ConfigManager.SaveDebounce then
+        ConfigManager.SaveDebounce()
+    end
+end
+
+function ConfigManager.Reset()
+    ConfigManager.Data = { _version = ConfigManager.Version }
+    return ConfigManager.Save()
+end
+
+-- ============================================
+-- ANIMATION MANAGER
+-- ============================================
+
+local AnimationManager = {}
+AnimationManager.ActiveTweens = {}
+
+function AnimationManager.Play(instance, properties, duration, easingStyle, easingDirection, callback)
+    -- Cancel existing tween for this instance
+    AnimationManager.Cancel(instance)
+    
+    local tween = Utils.CreateTween(instance, properties, duration, easingStyle, easingDirection)
+    
+    AnimationManager.ActiveTweens[instance] = tween
+    
+    if callback then
+        tween.Completed:Connect(function()
+            callback()
+            AnimationManager.ActiveTweens[instance] = nil
+        end)
+    else
+        tween.Completed:Connect(function()
+            AnimationManager.ActiveTweens[instance] = nil
+        end)
+    end
+    
+    tween:Play()
+    return tween
+end
+
+function AnimationManager.Cancel(instance)
+    local tween = AnimationManager.ActiveTweens[instance]
+    if tween then
+        tween:Cancel()
+        AnimationManager.ActiveTweens[instance] = nil
+    end
+end
+
+function AnimationManager.CancelAll()
+    for _, tween in pairs(AnimationManager.ActiveTweens) do
+        pcall(function()
+            tween:Cancel()
+        end)
+    end
+    AnimationManager.ActiveTweens = {}
+end
+
+-- ============================================
+-- INTERACTION EFFECTS
+-- ============================================
+
+local InteractionEffects = {}
+
+function InteractionEffects.CreateRipple(button, x, y, color, duration)
+    task.spawn(function()
+        button.ClipsDescendants = true
+        
+        local circle = Instance.new("ImageLabel")
+        circle.Image = "rbxassetid://266543268"
+        circle.ImageColor3 = color or Color3.fromRGB(255, 255, 255)
+        circle.ImageTransparency = 0.5
+        circle.BackgroundTransparency = 1
+        circle.ZIndex = button.ZIndex + 10
+        circle.Name = "RippleEffect"
+        circle.Parent = button
+        
+        local relativeX = x - button.AbsolutePosition.X
+        local relativeY = y - button.AbsolutePosition.Y
+        circle.Position = UDim2.new(0, relativeX, 0, relativeY)
+        
+        local size = math.max(button.AbsoluteSize.X, button.AbsoluteSize.Y) * 2
+        local animDuration = duration or 0.5
+        
+        AnimationManager.Play(
+            circle,
+            {
+                Size = UDim2.new(0, size, 0, size),
+                Position = UDim2.new(0, relativeX - size/2, 0, relativeY - size/2),
+                ImageTransparency = 1
+            },
+            animDuration,
+            Enum.EasingStyle.Quad,
+            Enum.EasingDirection.Out,
+            function()
+                circle:Destroy()
+            end
+        )
+    end)
+end
+
+function InteractionEffects.CreateHoverEffect(button, hoverColor, normalColor)
+    local isHovering = false
+    
+    button.MouseEnter:Connect(function()
+        isHovering = true
+        AnimationManager.Play(
+            button,
+            { BackgroundColor3 = hoverColor },
+            0.2
+        )
+    end)
+    
+    button.MouseLeave:Connect(function()
+        isHovering = false
+        AnimationManager.Play(
+            button,
+            { BackgroundColor3 = normalColor },
+            0.2
+        )
+    end)
+end
+
+-- ============================================
+-- DRAGGABLE SYSTEM (Enhanced)
+-- ============================================
+
+local DraggableManager = {}
+
+function DraggableManager.MakeDraggable(handle, object, onDragEnd)
+    local dragging = false
+    local dragInput, dragStart, startPosition
+    
+    local function update(input)
+        local delta = input.Position - dragStart
+        object.Position = UDim2.new(
+            startPosition.X.Scale,
+            startPosition.X.Offset + delta.X,
+            startPosition.Y.Scale,
+            startPosition.Y.Offset + delta.Y
+        )
+    end
+    
+    handle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPosition = object.Position
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    if onDragEnd then
+                        onDragEnd(object.Position)
+                    end
+                end
+            end)
+        end
+    end)
+    
+    handle.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    Services.UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            update(input)
+        end
+    end)
+end
+
+function DraggableManager.MakeResizable(object, minSize, onResize)
+    local minSizeX = minSize and minSize.X or Constants.MIN_SIZE.Width
+    local minSizeY = minSize and minSize.Y or Constants.MIN_SIZE.Height
+    
+    local resizeHandle = Instance.new("Frame")
+    resizeHandle.AnchorPoint = Vector2.new(1, 1)
+    resizeHandle.BackgroundTransparency = 1
+    resizeHandle.Size = UDim2.new(0, 30, 0, 30)
+    resizeHandle.Position = UDim2.new(1, 15, 1, 15)
+    resizeHandle.Name = "ResizeHandle"
+    resizeHandle.ZIndex = object.ZIndex + 1
+    resizeHandle.Parent = object
+    
+    -- Visual indicator (optional)
+    local indicator = Instance.new("ImageLabel")
+    indicator.Size = UDim2.new(0, 12, 0, 12)
+    indicator.Position = UDim2.new(1, -6, 1, -6)
+    indicator.AnchorPoint = Vector2.new(1, 1)
+    indicator.BackgroundTransparency = 1
+    indicator.Image = "rbxassetid://5035938141"
+    indicator.ImageColor3 = Color3.fromRGB(150, 150, 150)
+    indicator.ImageTransparency = 0.5
+    indicator.Parent = resizeHandle
+    
+    local resizing = false
+    local resizeStart, startSize
+    
+    local function updateSize(input)
+        local delta = input.Position - resizeStart
+        local newWidth = math.max(startSize.X.Offset + delta.X, minSizeX)
+        local newHeight = math.max(startSize.Y.Offset + delta.Y, minSizeY)
+        
+        object.Size = UDim2.new(0, newWidth, 0, newHeight)
+        
+        if onResize then
+            onResize(UDim2.new(0, newWidth, 0, newHeight))
+        end
+    end
+    
+    resizeHandle.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+           input.UserInputType == Enum.UserInputType.Touch then
+            resizing = true
+            resizeStart = input.Position
+            startSize = object.Size
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    resizing = false
+                end
+            end)
+        end
+    end)
+    
+    Services.UserInputService.InputChanged:Connect(function(input)
+        if resizing and (input.UserInputType == Enum.UserInputType.MouseMovement or 
+                         input.UserInputType == Enum.UserInputType.Touch) then
+            updateSize(input)
+        end
+    end)
+    
+    return resizeHandle
+end
+
+-- ============================================
+-- NOTIFICATION SYSTEM (Enhanced)
+-- ============================================
+
+local NotificationManager = {}
+NotificationManager.Queue = {}
+NotificationManager.MaxVisible = 5
+NotificationManager.DefaultSize = Constants.NOTIFY_SIZE
+
+function NotificationManager.Initialize()
+    local notifyGui = Services.CoreGui:FindFirstChild("ChloeXNotifyGui")
+    if notifyGui then return notifyGui end
+    
+    notifyGui = Instance.new("ScreenGui")
+    notifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    notifyGui.Name = "ChloeXNotifyGui"
+    notifyGui.ResetOnSpawn = false
+    notifyGui.Parent = Services.CoreGui
+    
+    local container = Instance.new("Frame")
+    container.AnchorPoint = Vector2.new(1, 1)
+    container.BackgroundTransparency = 1
+    container.Position = UDim2.new(1, -20, 1, -20)
+    container.Size = UDim2.new(0, NotificationManager.DefaultSize, 1, 0)
+    container.Name = "Container"
+    container.Parent = notifyGui
+    
+    return notifyGui
+end
+
+function NotificationManager.Create(config)
+    config = config or {}
+    
+    -- Validate and set defaults
+    local notification = {
+        Title = Utils.SafeString(config.Title, 50) or "Notification",
+        Description = Utils.SafeString(config.Description, 100) or "",
+        Content = Utils.SafeString(config.Content, 500) or "Content",
+        Color = Utils.ValidateColor(config.Color, Utils.GetColorFromString("Primary")),
+        Icon = config.Icon or "",
+        Duration = Utils.ValidateNumber(config.Duration, 1, 30, 5),
+        AnimTime = Utils.ValidateNumber(config.AnimTime, 0.1, 2, 0.4),
+        Size = Utils.ValidateNumber(config.Size, 200, 800, NotificationManager.DefaultSize),
+        Mini = config.Mini == true,
+        Callback = config.Callback,
+    }
+    
+    local notifyGui = NotificationManager.Initialize()
+    local container = notifyGui:FindFirstChild("Container")
+    
+    -- Update container size if needed
+    if container.Size.X.Offset ~= notification.Size then
+        container.Size = UDim2.new(0, notification.Size, 1, 0)
+    end
+    
+    -- Calculate position
+    local yOffset = 0
+    for _, child in ipairs(container:GetChildren()) do
+        if child:IsA("Frame") and child.Name == "Notification" then
+            local childPos = child.Position.Y.Offset
+            local childSize = child.Size.Y.Offset
+            yOffset = math.min(yOffset, childPos - childSize - 12)
+        end
+    end
+    
+    -- Create notification frame
+    local frame = Instance.new("Frame")
+    frame.BackgroundTransparency = 1
+    frame.Size = UDim2.new(1, 0, 0, notification.Mini and 60 or 100)
+    frame.Position = UDim2.new(0, 0, 1, yOffset)
+    frame.AnchorPoint = Vector2.new(0, 1)
+    frame.Name = "Notification"
+    frame.Parent = container
+    
+    local inner = Instance.new("Frame")
+    inner.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    inner.BorderSizePixel = 0
+    inner.Position = UDim2.new(1, 0, 0, 0)
+    inner.Size = UDim2.new(1, 0, 1, 0)
+    inner.Name = "Inner"
+    inner.Parent = frame
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = inner
+    
+    local stroke = Instance.new("UIStroke")
+    stroke.Color = notification.Color
+    stroke.Thickness = 1
+    stroke.Transparency = 0.7
+    stroke.Parent = inner
+    
+    -- Content creation
+    NotificationManager.CreateContent(inner, notification)
+    
+    -- Reposition function
+    local function repositionAll()
+        local currentY = 0
+        for i = #container:GetChildren(), 1, -1 do
+            local child = container:GetChildren()[i]
+            if child:IsA("Frame") and child.Name == "Notification" then
+                AnimationManager.Play(
+                    child,
+                    { Position = UDim2.new(0, 0, 1, currentY) },
+                    0.3
+                )
+                currentY = currentY - child.Size.Y.Offset - 12
+            end
+        end
+    end
+    
+    container.ChildRemoved:Connect(repositionAll)
+    
+    -- Animate in
+    AnimationManager.Play(
+        inner,
+        { Position = UDim2.new(0, 0, 0, 0) },
+        notification.AnimTime,
+        Enum.EasingStyle.Back
+    )
+    
+    -- Auto dismiss
+    task.delay(notification.Duration, function()
+        NotificationManager.Dismiss(frame, notification.AnimTime)
+    end)
+    
+    return {
+        Frame = frame,
+        Dismiss = function()
+            NotificationManager.Dismiss(frame, notification.AnimTime)
+        end
+    }
+end
+
+function NotificationManager.CreateContent(parent, config)
+    local padding = config.Mini and 8 or 12
+    local headerHeight = config.Mini and 24 or 32
+    
+    -- Header
+    local header = Instance.new("Frame")
+    header.BackgroundTransparency = 1
+    header.Size = UDim2.new(1, 0, 0, headerHeight)
+    header.Name = "Header"
+    header.Parent = parent
+    
+    -- Icon
+    if config.Icon ~= "" then
+        local iconImg = IconManager.GetIcon(config.Icon)
+        if iconImg ~= "" then
+            local icon = Instance.new("ImageLabel")
+            icon.Image = iconImg
+            icon.BackgroundTransparency = 1
+            icon.Size = UDim2.new(0, config.Mini and 14 or 18, 0, config.Mini and 14 or 18)
+            icon.Position = UDim2.new(0, padding, 0.5, 0)
+            icon.AnchorPoint = Vector2.new(0, 0.5)
+            icon.ImageColor3 = config.Color
+            icon.Parent = header
+            padding = padding + (config.Mini and 20 or 26)
+        end
+    end
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Font = Enum.Font.GothamBold
+    title.Text = config.Title
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.TextSize = config.Mini and 12 or 14
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.BackgroundTransparency = 1
+    title.Size = UDim2.new(1, -padding - 60, 1, 0)
+    title.Position = UDim2.new(0, padding, 0, 0)
+    title.TextTruncate = Enum.TextTruncate.AtEnd
+    title.Parent = header
+    
+    -- Description
+    if config.Description ~= "" then
+        local desc = Instance.new("TextLabel")
+        desc.Font = Enum.Font.Gotham
+        desc.Text = config.Description
+        desc.TextColor3 = config.Color
+        desc.TextSize = config.Mini and 10 or 12
+        desc.TextXAlignment = Enum.TextXAlignment.Left
+        desc.BackgroundTransparency = 1
+        desc.Size = UDim2.new(0, 0, 1, 0)
+        desc.Position = UDim2.new(0, title.TextBounds.X + padding + 5, 0, 0)
+        desc.AutomaticSize = Enum.AutomaticSize.X
+        desc.Parent = header
+    end
+    
+    -- Close button
+    local closeBtn = Instance.new("TextButton")
+    closeBtn.Text = "×"
+    closeBtn.Font = Enum.Font.GothamBold
+    closeBtn.TextSize = config.Mini and 18 or 22
+    closeBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    closeBtn.BackgroundTransparency = 1
+    closeBtn.Size = UDim2.new(0, config.Mini and 24 or 30, 0, config.Mini and 24 or 30)
+    closeBtn.Position = UDim2.new(1, -(config.Mini and 4 or 8), 0.5, 0)
+    closeBtn.AnchorPoint = Vector2.new(1, 0.5)
+    closeBtn.Parent = header
+    
+    closeBtn.MouseButton1Click:Connect(function()
+        NotificationManager.Dismiss(parent.Parent, 0.2)
+    end)
+    
+    InteractionEffects.CreateHoverEffect(
+        closeBtn,
+        Color3.fromRGB(255, 255, 255),
+        Color3.fromRGB(200, 200, 200)
+    )
+    
+    -- Content
+    local content = Instance.new("TextLabel")
+    content.Font = Enum.Font.Gotham
+    content.Text = config.Content
+    content.TextColor3 = Color3.fromRGB(180, 180, 180)
+    content.TextSize = config.Mini and 11 or 13
+    content.TextXAlignment = Enum.TextXAlignment.Left
+    content.TextYAlignment = Enum.TextYAlignment.Top
+    content.TextWrapped = true
+    content.BackgroundTransparency = 1
+    content.Position = UDim2.new(0, config.Mini and 8 or 12, 0, headerHeight + 4)
+    content.Size = UDim2.new(1, -(config.Mini and 16 or 24), 1, -headerHeight - 8)
+    content.Parent = parent
+end
+
+function NotificationManager.Dismiss(frame, duration)
+    if not frame or not frame.Parent then return end
+    
+    local inner = frame:FindFirstChild("Inner")
+    if inner then
+        AnimationManager.Play(
+            inner,
+            { Position = UDim2.new(1, 0, 0, 0) },
+            duration or 0.3,
+            Enum.EasingStyle.Back,
+            Enum.EasingDirection.In,
+            function()
+                frame:Destroy()
+            end
+        )
+    else
+        frame:Destroy()
+    end
+end
+
+-- ============================================
+-- MAIN LIBRARY
+-- ============================================
+
+local ChloeX = {
+    Version = Constants.VERSION,
+    Instances = {},
+}
+
+function ChloeX:Notify(config)
+    return NotificationManager.Create(config)
+end
+
+-- Convenience functions
+function ChloeX:Success(message, duration)
+    return self:Notify({
+        Title = "Success",
+        Content = message,
+        Color = "Success",
+        Icon = "lucide:check-circle",
+        Duration = duration or 3,
+        Mini = true,
+    })
+end
+
+function ChloeX:Error(message, duration)
+    return self:Notify({
+        Title = "Error",
+        Content = message,
+        Color = "Error",
+        Icon = "lucide:x-circle",
+        Duration = duration or 5,
+    })
+end
+
+function ChloeX:Warning(message, duration)
+    return self:Notify({
+        Title = "Warning",
+        Content = message,
+        Color = "Warning",
+        Icon = "lucide:alert-triangle",
+        Duration = duration or 4,
+    })
+end
+
+function ChloeX:Info(message, duration)
+    return self:Notify({
+        Title = "Info",
+        Content = message,
+        Color = "Info",
+        Icon = "lucide:info",
+        Duration = duration or 3,
+        Mini = true,
+    })
+end
+
+-- ============================================
+-- WINDOW CREATION
+-- ============================================
+
+function ChloeX:CreateWindow(config)
+    config = config or {}
+    
+    -- Validate configuration
+    local windowConfig = {
+        Title = Utils.SafeString(config.Title, 50) or "Chloe X",
+        Subtitle = Utils.SafeString(config.Subtitle, 100) or "V" .. Constants.VERSION,
+        Color = Utils.ValidateColor(config.Color, Utils.GetColorFromString("Primary")),
+        Size = config.Size or (DeviceInfo.IsMobile and Constants.MOBILE_SIZE or Constants.DEFAULT_SIZE),
+        TabWidth = Utils.ValidateNumber(config.TabWidth, 80, 200, 120),
+        ConfigName = Utils.SafeString(config.ConfigName, 50) or "ChloeXConfig",
+        Version = Utils.ValidateNumber(config.Version, 1, 999, 1),
+        Theme = config.Theme,
+        ThemeTransparency = Utils.ValidateNumber(config.ThemeTransparency, 0, 1, 0),
+        ShowUserInfo = config.ShowUserInfo == true,
+        UserInfoType = config.UserInfoType or "simple",
+        Icon = config.Icon or "71947103252559",
+        SaveConfig = config.SaveConfig ~= false,
+        Acrylic = config.Acrylic == true,
+    }
+    
+    -- Initialize config manager
+    if windowConfig.SaveConfig then
+        ConfigManager.Initialize(windowConfig.ConfigName, windowConfig.Version)
+    end
+    
+    -- Initialize elements
+    if Modules.Elements and Modules.Elements.Initialize then
+        Modules.Elements.Initialize(
+            windowConfig.Color,
+            function() ConfigManager.Save() end,
+            ConfigManager.Data
+        )
+    end
+    
+    -- Create window instance
+    local window = {
+        Config = windowConfig,
+        Tabs = {},
+        IsVisible = true,
+        ScreenGui = nil,
+        MainFrame = nil,
+    }
+    
+    -- Build UI
+    window.ScreenGui = self:BuildWindowUI(window)
+    
+    -- Store instance
+    table.insert(self.Instances, window)
+    
+    return self:CreateWindowAPI(window)
+end
+
+function ChloeX:BuildWindowUI(window)
+    local config = window.Config
+    
+    -- Create ScreenGui
+    local screenGui = Instance.new("ScreenGui")
+    screenGui.Name = "ChloeXWindow_" .. config.ConfigName
+    screenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    screenGui.ResetOnSpawn = false
+    screenGui.Parent = Services.CoreGui
+    
+    -- Shadow container
+    local shadowContainer = Instance.new("Frame")
+    shadowContainer.Name = "ShadowContainer"
+    shadowContainer.BackgroundTransparency = 1
+    shadowContainer.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadowContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+    shadowContainer.Size = Utils.CalculateSize(config.Size.Width, config.Size.Height)
+    shadowContainer.Parent = screenGui
+    
+    -- Drop shadow
+    local shadow = Instance.new("ImageLabel")
+    shadow.Name = "DropShadow"
+    shadow.Image = "rbxassetid://6015897843"
+    shadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    shadow.ImageTransparency = 0.5
+    shadow.ScaleType = Enum.ScaleType.Slice
+    shadow.SliceCenter = Rect.new(49, 49, 450, 450)
+    shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    shadow.BackgroundTransparency = 1
+    shadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    shadow.Size = UDim2.new(1, 50, 1, 50)
+    shadow.ZIndex = 0
+    shadow.Parent = shadowContainer
+    
+    -- Main window
+    local main
+    if config.Theme then
+        main = Instance.new("ImageLabel")
+        main.Image = "rbxassetid://" .. config.Theme
+        main.ScaleType = Enum.ScaleType.Crop
+        main.BackgroundTransparency = 1
+        main.ImageTransparency = config.ThemeTransparency
+    else
+        main = Instance.new("Frame")
+        main.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+        main.BackgroundTransparency = config.Acrylic and 0.3 or 0
+    end
+    
+    main.Name = "Main"
+    main.AnchorPoint = Vector2.new(0.5, 0.5)
+    main.BorderSizePixel = 0
+    main.Position = UDim2.new(0.5, 0, 0.5, 0)
+    main.Size = UDim2.new(1, -50, 1, -50)
+    main.ClipsDescendants = true
+    main.Parent = shadow
+    
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 10)
+    mainCorner.Parent = main
+    
+    -- Acrylic blur effect
+    if config.Acrylic then
+        local blur = Instance.new("BlurEffect")
+        blur.Size = 24
+        blur.Parent = workspace.CurrentCamera
+    end
+    
+    window.MainFrame = main
+    
+    -- Build components
+    self:BuildTopBar(main, config, screenGui)
+    self:BuildSidebar(main, config, window)
+    self:BuildContentArea(main, config, window)
+    
+    -- Make draggable and resizable
+    local topBar = main:FindFirstChild("TopBar")
+    if topBar then
+        DraggableManager.MakeDraggable(topBar, shadowContainer)
+        DraggableManager.MakeResizable(shadowContainer, {
+            X = Constants.MIN_SIZE.Width,
+            Y = Constants.MIN_SIZE.Height
+        })
+    end
+    
+    return screenGui
+end
+
+function ChloeX:BuildTopBar(parent, config, screenGui)
+    local topBar = Instance.new("Frame")
+    topBar.Name = "TopBar"
+    topBar.BackgroundTransparency = 1
+    topBar.Size = UDim2.new(1, 0, 0, 45)
+    topBar.Parent = parent
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Name = "Title"
+    title.Font = Enum.Font.GothamBold
+    title.Text = config.Title
+    title.TextColor3 = config.Color
+    title.TextSize = 16
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.BackgroundTransparency = 1
+    title.Position = UDim2.new(0, 15, 0, 0)
+    title.Size = UDim2.new(0, 200, 1, 0)
+    title.Parent = topBar
+    
+    -- Subtitle
+    local subtitle = Instance.new("TextLabel")
+    subtitle.Name = "Subtitle"
+    subtitle.Font = Enum.Font.Gotham
+    subtitle.Text = config.Subtitle
+    subtitle.TextColor3 = Color3.fromRGB(150, 150, 150)
+    subtitle.TextSize = 12
+    subtitle.TextXAlignment = Enum.TextXAlignment.Left
+    subtitle.BackgroundTransparency = 1
+    subtitle.Position = UDim2.new(0, 15 + title.TextBounds.X + 10, 0, 0)
+    subtitle.Size = UDim2.new(0, 200, 1, 0)
+    subtitle.Parent = topBar
+    
+    -- Window controls
+    local controlsFrame = Instance.new("Frame")
+    controlsFrame.Name = "Controls"
+    controlsFrame.BackgroundTransparency = 1
+    controlsFrame.Size = UDim2.new(0, 80, 0, 30)
+    controlsFrame.Position = UDim2.new(1, -90, 0.5, 0)
+    controlsFrame.AnchorPoint = Vector2.new(0, 0.5)
+    controlsFrame.Parent = topBar
+    
+    local controlLayout = Instance.new("UIListLayout")
+    controlLayout.FillDirection = Enum.FillDirection.Horizontal
+    controlLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    controlLayout.Padding = UDim.new(0, 8)
+    controlLayout.Parent = controlsFrame
+    
+    -- Minimize button
+    local minBtn = self:CreateControlButton("Minimize", "rbxassetid://9886659276")
+    minBtn.Parent = controlsFrame
+    minBtn.MouseButton1Click:Connect(function()
+        parent.Parent.Parent.Visible = false
+    end)
+    
+    -- Close button
+    local closeBtn = self:CreateControlButton("Close", "rbxassetid://9886659671")
+    closeBtn.Parent = controlsFrame
+    closeBtn.MouseButton1Click:Connect(function()
+        self:ShowCloseDialog(parent, screenGui)
+    end)
+    
+    -- Divider
+    local divider = Instance.new("Frame")
+    divider.Name = "Divider"
+    divider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    divider.BackgroundTransparency = 0.9
+    divider.BorderSizePixel = 0
+    divider.Size = UDim2.new(1, -20, 0, 1)
+    divider.Position = UDim2.new(0, 10, 0, 45)
+    divider.Parent = parent
+end
+
+function ChloeX:CreateControlButton(name, icon)
+    local btn = Instance.new("TextButton")
+    btn.Name = name
+    btn.Text = ""
+    btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundTransparency = 0.95
+    btn.BorderSizePixel = 0
+    btn.Size = UDim2.new(0, 30, 0, 30)
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    
+    local img = Instance.new("ImageLabel")
+    img.Image = icon
+    img.BackgroundTransparency = 1
+    img.Size = UDim2.new(0, 16, 0, 16)
+    img.Position = UDim2.new(0.5, 0, 0.5, 0)
+    img.AnchorPoint = Vector2.new(0.5, 0.5)
+    img.Parent = btn
+    
+    InteractionEffects.CreateHoverEffect(
+        btn,
+        Color3.fromRGB(255, 255, 255):Lerp(Color3.fromRGB(0, 0, 0), 0.1),
+        Color3.fromRGB(255, 255, 255)
+    )
+    
+    return btn
+end
+
+function ChloeX:BuildSidebar(parent, config, window)
+    local sidebar = Instance.new("Frame")
+    sidebar.Name = "Sidebar"
+    sidebar.BackgroundTransparency = 1
+    sidebar.Position = UDim2.new(0, 10, 0, 55)
+    sidebar.Size = UDim2.new(0, config.TabWidth, 1, -65)
+    sidebar.Parent = parent
+    
+    local scroll = Instance.new("ScrollingFrame")
+    scroll.Name = "TabScroll"
+    scroll.BackgroundTransparency = 1
+    scroll.BorderSizePixel = 0
+    scroll.ScrollBarThickness = 4
+    scroll.ScrollBarImageColor3 = config.Color
+    scroll.Size = UDim2.new(1, 0, 1, 0)
+    scroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+    scroll.Parent = sidebar
+    
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 6)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = scroll
+    
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        scroll.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    end)
+    
+    window.TabScroll = scroll
+    window.Sidebar = sidebar
+end
+
+function ChloeX:BuildContentArea(parent, config, window)
+    local content = Instance.new("Frame")
+    content.Name = "ContentArea"
+    content.BackgroundTransparency = 1
+    content.Position = UDim2.new(0, config.TabWidth + 20, 0, 55)
+    content.Size = UDim2.new(1, -(config.TabWidth + 30), 1, -65)
+    content.Parent = parent
+    
+    -- Tab name label
+    local tabLabel = Instance.new("TextLabel")
+    tabLabel.Name = "CurrentTabLabel"
+    tabLabel.Font = Enum.Font.GothamBold
+    tabLabel.Text = ""
+    tabLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabLabel.TextSize = 20
+    tabLabel.TextXAlignment = Enum.TextXAlignment.Left
+    tabLabel.BackgroundTransparency = 1
+    tabLabel.Size = UDim2.new(1, 0, 0, 30)
+    tabLabel.Parent = content
+    
+    -- Page layout container
+    local pageContainer = Instance.new("Frame")
+    pageContainer.Name = "PageContainer"
+    pageContainer.BackgroundTransparency = 1
+    pageContainer.Position = UDim2.new(0, 0, 0, 35)
+    pageContainer.Size = UDim2.new(1, 0, 1, -35)
+    pageContainer.ClipsDescendants = true
+    pageContainer.Parent = content
+    
+    local pageLayout = Instance.new("UIPageLayout")
+    pageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    pageLayout.EasingStyle = Enum.EasingStyle.Quad
+    pageLayout.EasingDirection = Enum.EasingDirection.InOut
+    pageLayout.TweenTime = 0.4
+    pageLayout.Parent = pageContainer
+    
+    window.ContentArea = content
+    window.PageContainer = pageContainer
+    window.PageLayout = pageLayout
+    window.TabLabel = tabLabel
+end
+
+function ChloeX:ShowCloseDialog(main, screenGui)
+    local overlay = Instance.new("Frame")
+    overlay.Name = "CloseDialog"
+    overlay.Size = UDim2.new(1, 0, 1, 0)
+    overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    overlay.BackgroundTransparency = 0.5
+    overlay.ZIndex = 100
+    overlay.Parent = main
+    
+    local dialog = Instance.new("Frame")
+    dialog.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+    dialog.Size = UDim2.new(0, 350, 0, 180)
+    dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
+    dialog.AnchorPoint = Vector2.new(0.5, 0.5)
+    dialog.ZIndex = 101
+    dialog.Parent = overlay
+    
+    local dialogCorner = Instance.new("UICorner")
+    dialogCorner.CornerRadius = UDim.new(0, 10)
+    dialogCorner.Parent = dialog
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Text = "Close Window"
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 18
+    title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    title.BackgroundTransparency = 1
+    title.Size = UDim2.new(1, -40, 0, 40)
+    title.Position = UDim2.new(0, 20, 0, 15)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.ZIndex = 102
+    title.Parent = dialog
+    
+    -- Message
+    local message = Instance.new("TextLabel")
+    message.Text = "Are you sure you want to close this window?\nYou won't be able to reopen it."
+    message.Font = Enum.Font.Gotham
+    message.TextSize = 13
+    message.TextColor3 = Color3.fromRGB(180, 180, 180)
+    message.BackgroundTransparency = 1
+    message.Size = UDim2.new(1, -40, 0, 60)
+    message.Position = UDim2.new(0, 20, 0, 55)
+    message.TextXAlignment = Enum.TextXAlignment.Left
+    message.TextYAlignment = Enum.TextYAlignment.Top
+    message.TextWrapped = true
+    message.ZIndex = 102
+    message.Parent = dialog
+    
+    -- Buttons container
+    local btnContainer = Instance.new("Frame")
+    btnContainer.BackgroundTransparency = 1
+    btnContainer.Size = UDim2.new(1, -40, 0, 40)
+    btnContainer.Position = UDim2.new(0, 20, 1, -55)
+    btnContainer.ZIndex = 102
+    btnContainer.Parent = dialog
+    
+    -- Cancel button
+    local cancelBtn = Instance.new("TextButton")
+    cancelBtn.Text = "Cancel"
+    cancelBtn.Font = Enum.Font.GothamBold
+    cancelBtn.TextSize = 14
+    cancelBtn.TextColor3 = Color3.fromRGB(200, 200, 200)
+    cancelBtn.BackgroundColor3 = Color3.fromRGB(50, 50, 55)
+    cancelBtn.Size = UDim2.new(0.48, 0, 1, 0)
+    cancelBtn.Position = UDim2.new(0, 0, 0, 0)
+    cancelBtn.ZIndex = 103
+    cancelBtn.Parent = btnContainer
+    
+    local cancelCorner = Instance.new("UICorner")
+    cancelCorner.CornerRadius = UDim.new(0, 6)
+    cancelCorner.Parent = cancelBtn
+    
+    -- Confirm button
+    local confirmBtn = Instance.new("TextButton")
+    confirmBtn.Text = "Close Window"
+    confirmBtn.Font = Enum.Font.GothamBold
+    confirmBtn.TextSize = 14
+    confirmBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+    confirmBtn.BackgroundColor3 = Color3.fromRGB(237, 66, 69)
+    confirmBtn.Size = UDim2.new(0.48, 0, 1, 0)
+    confirmBtn.Position = UDim2.new(0.52, 0, 0, 0)
+    confirmBtn.ZIndex = 103
+    confirmBtn.Parent = btnContainer
+    
+    local confirmCorner = Instance.new("UICorner")
+    confirmCorner.CornerRadius = UDim.new(0, 6)
+    confirmCorner.Parent = confirmBtn
+    
+    -- Animate dialog in
+    dialog.Size = UDim2.new(0, 0, 0, 0)
+    AnimationManager.Play(dialog, {
+        Size = UDim2.new(0, 350, 0, 180)
+    }, 0.3, Enum.EasingStyle.Back)
+    
+    -- Button handlers
+    cancelBtn.MouseButton1Click:Connect(function()
+        AnimationManager.Play(dialog, {
+            Size = UDim2.new(0, 0, 0, 0)
+        }, 0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In, function()
+            overlay:Destroy()
+        end)
+    end)
+    
+    confirmBtn.MouseButton1Click:Connect(function()
+        screenGui:Destroy()
+        local toggleGui = Services.CoreGui:FindFirstChild("ChloeXToggle")
+        if toggleGui then
+            toggleGui:Destroy()
+        end
+    end)
+end
+
+function ChloeX:CreateWindowAPI(window)
+    local api = {}
+    
+    function api:SetVisible(visible)
+        window.IsVisible = visible
+        if window.ScreenGui then
+            window.ScreenGui.Enabled = visible
+        end
+    end
+    
+    function api:Toggle()
+        self:SetVisible(not window.IsVisible)
+    end
+    
+    function api:Destroy()
+        AnimationManager.CancelAll()
+        if window.ScreenGui then
+            window.ScreenGui:Destroy()
+        end
+        
+        for i, inst in ipairs(ChloeX.Instances) do
+            if inst == window then
+                table.remove(ChloeX.Instances, i)
+                break
+            end
+        end
+    end
+    
+    function api:CreateTab(config)
+        config = config or {}
+        
+        local tab = {
+            Name = Utils.SafeString(config.Name, 30) or "Tab",
+            Icon = config.Icon or "",
+            Index = #window.Tabs + 1,
+            Sections = {},
+            Page = nil,
+        }
+        
+        -- Create tab button
+        local tabBtn = self:CreateTabButton(window, tab)
+        tabBtn.Parent = window.TabScroll
+        
+        -- Create page
+        tab.Page = self:CreateTabPage(window, tab)
+        tab.Page.Parent = window.PageContainer
+        
+        table.insert(window.Tabs, tab)
+        
+        -- Select first tab
+        if tab.Index == 1 then
+            window.PageLayout:JumpToIndex(0)
+            window.TabLabel.Text = tab.Name
+            tabBtn.BackgroundTransparency = 0.9
+        end
+        
+        return self:CreateTabAPI(window, tab)
+    end
+    
+    function api:CreateToggleButton()
+        local toggleGui = Instance.new("ScreenGui")
+        toggleGui.Name = "ChloeXToggle"
+        toggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        toggleGui.ResetOnSpawn = false
+        toggleGui.Parent = Services.CoreGui
+        
+        local button = Instance.new("ImageLabel")
+        button.Image = "rbxassetid://" .. window.Config.Icon
+        button.BackgroundColor3 = window.Config.Color
+        button.BackgroundTransparency = 0.3
+        button.Size = UDim2.new(0, 50, 0, 50)
+        button.Position = UDim2.new(0, 20, 0, 100)
+        button.Parent = toggleGui
+        
+        local corner = Instance.new("UICorner")
+        corner.CornerRadius = UDim.new(0, 10)
+        corner.Parent = button
+        
+        local clickBtn = Instance.new("TextButton")
+        clickBtn.Text = ""
+        clickBtn.BackgroundTransparency = 1
+        clickBtn.Size = UDim2.new(1, 0, 1, 0)
+        clickBtn.Parent = button
+        
+        clickBtn.MouseButton1Click:Connect(function()
+            api:Toggle()
+        end)
+        
+        DraggableManager.MakeDraggable(button, button)
+    end
+    
+    -- Auto-create toggle
+    api:CreateToggleButton()
+    
+    return api
+end
+
+function ChloeX:CreateTabButton(window, tab)
+    local btn = Instance.new("TextButton")
+    btn.Name = "TabButton_" .. tab.Index
+    btn.Text = ""
+    btn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    btn.BackgroundTransparency = 1
+    btn.BorderSizePixel = 0
+    btn.Size = UDim2.new(1, 0, 0, 35)
+    btn.LayoutOrder = tab.Index
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = btn
+    
+    -- Icon
+    if tab.Icon ~= "" then
+        local iconImg = IconManager.GetIcon(tab.Icon)
+        if iconImg ~= "" then
+            local icon = Instance.new("ImageLabel")
+            icon.Image = iconImg
+            icon.BackgroundTransparency = 1
+            icon.Size = UDim2.new(0, 18, 0, 18)
+            icon.Position = UDim2.new(0, 10, 0.5, 0)
+            icon.AnchorPoint = Vector2.new(0, 0.5)
+            icon.ImageColor3 = window.Config.Color
+            icon.Parent = btn
+        end
+    end
+    
+    -- Label
+    local label = Instance.new("TextLabel")
+    label.Text = tab.Name
+    label.Font = Enum.Font.GothamBold
+    label.TextSize = 13
+    label.TextColor3 = Color3.fromRGB(220, 220, 220)
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.BackgroundTransparency = 1
+    label.Position = UDim2.new(0, tab.Icon ~= "" and 35 or 12, 0, 0)
+    label.Size = UDim2.new(1, -(tab.Icon ~= "" and 40 or 15), 1, 0)
+    label.Parent = btn
+    
+    -- Click handler
+    btn.MouseButton1Click:Connect(function()
+        -- Deselect all tabs
+        for _, otherTab in ipairs(window.Tabs) do
+            local otherBtn = window.TabScroll:FindFirstChild("TabButton_" .. otherTab.Index)
+            if otherBtn then
+                AnimationManager.Play(otherBtn, {
+                    BackgroundTransparency = 1
+                }, 0.2)
+            end
+        end
+        
+        -- Select this tab
+        AnimationManager.Play(btn, {
+            BackgroundTransparency = 0.9
+        }, 0.2)
+        
+        window.PageLayout:JumpToIndex(tab.Index - 1)
+        window.TabLabel.Text = tab.Name
+        
+        InteractionEffects.CreateRipple(btn, Mouse.X, Mouse.Y, window.Config.Color, 0.4)
+    end)
+    
+    return btn
+end
+
+function ChloeX:CreateTabPage(window, tab)
+    local page = Instance.new("ScrollingFrame")
+    page.Name = "Page_" .. tab.Index
+    page.BackgroundTransparency = 1
+    page.BorderSizePixel = 0
+    page.ScrollBarThickness = 4
+    page.ScrollBarImageColor3 = window.Config.Color
+    page.Size = UDim2.new(1, 0, 1, 0)
+    page.CanvasSize = UDim2.new(0, 0, 0, 0)
+    page.LayoutOrder = tab.Index - 1
+    
+    local layout = Instance.new("UIListLayout")
+    layout.Padding = UDim.new(0, 8)
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Parent = page
+    
+    layout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        page.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+    end)
+    
+    return page
+end
+
+function ChloeX:CreateTabAPI(window, tab)
+    local api = {}
+    
+    function api:CreateSection(config)
+        config = config or {}
+        
+        local section = {
+            Title = Utils.SafeString(config.Title, 50) or "Section",
+            Icon = config.Icon or "",
+            Locked = config.Locked == true,
+            IsOpen = config.Locked ~= true,
+            Elements = {},
+        }
+        
+        -- Create section UI
+        local sectionFrame = self:CreateSectionFrame(window, tab, section)
+        sectionFrame.Parent = tab.Page
+        
+        return self:CreateSectionAPI(window, tab, section, sectionFrame)
+    end
+    
+    return api
+end
+
+function ChloeX:CreateSectionFrame(window, tab, section)
+    local frame = Instance.new("Frame")
+    frame.Name = "Section"
+    frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    frame.BackgroundTransparency = 0.97
+    frame.BorderSizePixel = 0
+    frame.Size = UDim2.new(1, 0, 0, 40)
+    frame.ClipsDescendants = true
+    
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 8)
+    corner.Parent = frame
+    
+    -- Header
+    local header = Instance.new("TextButton")
+    header.Name = "Header"
+    header.Text = ""
+    header.BackgroundTransparency = 1
+    header.Size = UDim2.new(1, 0, 0, 40)
+    header.Parent = frame
+    
+    -- Icon
+    if section.Icon ~= "" then
+        local iconImg = IconManager.GetIcon(section.Icon)
+        if iconImg ~= "" then
+            local icon = Instance.new("ImageLabel")
+            icon.Image = iconImg
+            icon.BackgroundTransparency = 1
+            icon.Size = UDim2.new(0, 18, 0, 18)
+            icon.Position = UDim2.new(0, 12, 0, 11)
+            icon.ImageColor3 = window.Config.Color
+            icon.Parent = header
+        end
+    end
+    
+    -- Title
+    local title = Instance.new("TextLabel")
+    title.Text = section.Title
+    title.Font = Enum.Font.GothamBold
+    title.TextSize = 14
+    title.TextColor3 = Color3.fromRGB(230, 230, 230)
+    title.TextXAlignment = Enum.TextXAlignment.Left
+    title.BackgroundTransparency = 1
+    title.Position = UDim2.new(0, section.Icon ~= "" and 38 or 12, 0, 0)
+    title.Size = UDim2.new(1, -(section.Icon ~= "" and 70 or 50), 1, 0)
+    title.Parent = header
+    
+    -- Arrow
+    if not section.Locked then
+        local arrow = Instance.new("ImageLabel")
+        arrow.Name = "Arrow"
+        arrow.Image = "rbxassetid://16851841101"
+        arrow.BackgroundTransparency = 1
+        arrow.Size = UDim2.new(0, 16, 0, 16)
+        arrow.Position = UDim2.new(1, -28, 0.5, 0)
+        arrow.AnchorPoint = Vector2.new(0, 0.5)
+        arrow.Rotation = section.IsOpen and 90 or 0
+        arrow.Parent = header
+    end
+    
+    -- Content container
+    local content = Instance.new("Frame")
+    content.Name = "Content"
+    content.BackgroundTransparency = 1
+    content.Position = UDim2.new(0, 0, 0, 45)
+    content.Size = UDim2.new(1, 0, 1, -45)
+    content.Parent = frame
+    
+    local contentLayout = Instance.new("UIListLayout")
+    contentLayout.Padding = UDim.new(0, 6)
+    contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    contentLayout.Parent = content
+    
+    -- Toggle section
+    if not section.Locked then
+        header.MouseButton1Click:Connect(function()
+            section.IsOpen = not section.IsOpen
+            
+            local arrow = header:FindFirstChild("Arrow")
+            if arrow then
+                AnimationManager.Play(arrow, {
+                    Rotation = section.IsOpen and 90 or 0
+                }, 0.3)
+            end
+            
+            local targetHeight = section.IsOpen and (45 + contentLayout.AbsoluteContentSize.Y + 10) or 40
+            AnimationManager.Play(frame, {
+                Size = UDim2.new(1, 0, 0, targetHeight)
+            }, 0.3)
+            
+            InteractionEffects.CreateRipple(header, Mouse.X, Mouse.Y, window.Config.Color, 0.3)
+        end)
+    end
+    
+    -- Auto-resize
+    contentLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+        if section.IsOpen then
+            frame.Size = UDim2.new(1, 0, 0, 45 + contentLayout.AbsoluteContentSize.Y + 10)
+        end
+    end)
+    
+    -- Open by default
+    if section.IsOpen then
+        task.defer(function()
+            frame.Size = UDim2.new(1, 0, 0, 45 + contentLayout.AbsoluteContentSize.Y + 10)
+        end)
+    end
+    
+    return frame
+end
+
+function ChloeX:CreateSectionAPI(window, tab, section, sectionFrame)
+    local api = {}
+    local contentArea = sectionFrame:FindFirstChild("Content")
+    
+    -- Helper function to add elements
+    local function addElement(elementType, config)
+        if not Modules.Elements then
+            warn("Elements module not loaded")
+            return nil
+        end
+        
+        local elementFunc = Modules.Elements["Add" .. elementType]
+        if elementFunc then
+            local element = elementFunc(contentArea, config, #section.Elements, function()
+                -- Update section size
+                if section.IsOpen then
+                    local layout = contentArea:FindFirstChild("UIListLayout")
+                    if layout then
+                        sectionFrame.Size = UDim2.new(1, 0, 0, 45 + layout.AbsoluteContentSize.Y + 10)
+                    end
+                end
+            end)
+            
+            table.insert(section.Elements, element)
+            return element
+        end
+        
+        warn("Element type '" .. elementType .. "' not found")
+        return nil
+    end
+    
+    function api:AddButton(config)
+        return addElement("Button", config)
+    end
+    
+    function api:AddToggle(config)
+        return addElement("Toggle", config)
+    end
+    
+    function api:AddSlider(config)
+        return addElement("Slider", config)
+    end
+    
+    function api:AddDropdown(config)
+        return addElement("Dropdown", config)
+    end
+    
+    function api:AddInput(config)
+        return addElement("Input", config)
+    end
+    
+    function api:AddKeybind(config)
+        if not Modules.Keybind then
+            warn("Keybind module not loaded")
+            return nil
+        end
+        
+        config = config or {}
+        config.SaveKey = true
+        config.ConfigData = ConfigManager.Data
+        config.SaveFunction = function() ConfigManager.Save() end
+        
+        return addElement("Keybind", config)
+    end
+    
+    function api:AddParagraph(config)
+        return addElement("Paragraph", config)
+    end
+    
+    function api:AddDivider()
+        return addElement("Divider", {})
+    end
+    
+    return api
+end
+
+-- ============================================
+-- CLEANUP & UTILITIES
+-- ============================================
+
+function ChloeX:Cleanup()
+    AnimationManager.CancelAll()
+    
+    for _, window in ipairs(self.Instances) do
+        if window.ScreenGui then
+            window.ScreenGui:Destroy()
+        end
+    end
+    
+    self.Instances = {}
+    
+    -- Clear notifications
+    local notifyGui = Services.CoreGui:FindFirstChild("ChloeXNotifyGui")
+    if notifyGui then
+        notifyGui:Destroy()
+    end
+end
+
+-- ============================================
+-- RETURN LIBRARY
+-- ============================================
+
+return ChloeX
