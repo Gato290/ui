@@ -1,5 +1,5 @@
 -- Elements.lua - UI Elements Module
--- Version 1.0.0
+-- Version 1.1.0
 -- GitHub: https://github.com/Gato290/ui
 
 local TweenService = game:GetService("TweenService")
@@ -15,6 +15,14 @@ local ConfigData = {}
 
 -- Store all elements
 local AllElements = {}
+
+-- Tween info presets untuk konsistensi
+local TweenInfoPresets = {
+    Quick = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    Normal = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    Slow = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+    Bounce = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
+}
 
 function ElementsModule.Initialize(color, saveFunc, config)
     MainColor = color or MainColor
@@ -109,6 +117,17 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
         local btnCorner = Instance.new("UICorner")
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
+        
+        -- Hover effect untuk button
+        ParagraphButton.MouseEnter:Connect(function()
+            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
+        end)
+        
+        ParagraphButton.MouseLeave:Connect(function()
+            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
+        end)
 
         if config.ButtonCallback then
             ParagraphButton.MouseButton1Click:Connect(config.ButtonCallback)
@@ -220,6 +239,15 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
         InputBox.Size = UDim2.new(1, -10, 1, -6)
         InputBox.Position = UDim2.new(0, 5, 0, 3)
         InputBox.Parent = InputFrame
+        
+        -- Focus effect
+        InputBox.Focused:Connect(function()
+            TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
+        end)
+        
+        InputBox.FocusLost:Connect(function()
+            TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.95}):Play()
+        end)
     end
 
     local yBtn = config.Placeholder and 88 or 48
@@ -239,6 +267,17 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     local btnCorner = Instance.new("UICorner")
     btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = ButtonMain
+    
+    -- Hover effect
+    ButtonMain.MouseEnter:Connect(function()
+        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
+    end)
+    
+    ButtonMain.MouseLeave:Connect(function()
+        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
+    end)
 
     ButtonMain.MouseButton1Click:Connect(function()
         config.ButtonCallback(InputBox and InputBox.Text or "")
@@ -260,6 +299,17 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
         local subCorner = Instance.new("UICorner")
         subCorner.CornerRadius = UDim.new(0, 6)
         subCorner.Parent = SubButton
+        
+        -- Hover effect
+        SubButton.MouseEnter:Connect(function()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
+        end)
+        
+        SubButton.MouseLeave:Connect(function()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
+        end)
 
         SubButton.MouseButton1Click:Connect(function()
             config.SubButtonCallback(InputBox and InputBox.Text or "")
@@ -315,6 +365,17 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     local mainCorner = Instance.new("UICorner")
     mainCorner.CornerRadius = UDim.new(0, 4)
     mainCorner.Parent = MainButton
+    
+    -- Hover effect
+    MainButton.MouseEnter:Connect(function()
+        TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+        TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
+    end)
+    
+    MainButton.MouseLeave:Connect(function()
+        TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+        TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
+    end)
 
     MainButton.MouseButton1Click:Connect(config.Callback)
 
@@ -334,6 +395,17 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local subCorner = Instance.new("UICorner")
         subCorner.CornerRadius = UDim.new(0, 4)
         subCorner.Parent = SubButton
+        
+        -- Hover effect
+        SubButton.MouseEnter:Connect(function()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
+        end)
+        
+        SubButton.MouseLeave:Connect(function()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
+        end)
 
         SubButton.MouseButton1Click:Connect(config.SubCallback)
     end
@@ -491,18 +563,18 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
         ConfigData[configKey] = Value
         SaveConfigFunc()
         if Value then
-            TweenService:Create(ToggleTitle, TweenInfo.new(0.2), { TextColor3 = MainColor }):Play()
-            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 15, 0, 0) }):Play()
-            TweenService:Create(UIStroke8, TweenInfo.new(0.2), { Color = MainColor, Transparency = 0 }):Play()
-            TweenService:Create(FeatureFrame2, TweenInfo.new(0.2),
+            TweenService:Create(ToggleTitle, TweenInfoPresets.Normal, { TextColor3 = MainColor }):Play()
+            TweenService:Create(ToggleCircle, TweenInfoPresets.Slow, { Position = UDim2.new(0, 15, 0, 0) }):Play()
+            TweenService:Create(UIStroke8, TweenInfoPresets.Normal, { Color = MainColor, Transparency = 0 }):Play()
+            TweenService:Create(FeatureFrame2, TweenInfoPresets.Normal,
                 { BackgroundColor3 = MainColor, BackgroundTransparency = 0 }):Play()
         else
-            TweenService:Create(ToggleTitle, TweenInfo.new(0.2),
+            TweenService:Create(ToggleTitle, TweenInfoPresets.Normal,
                 { TextColor3 = Color3.fromRGB(230, 230, 230) }):Play()
-            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 0, 0, 0) }):Play()
-            TweenService:Create(UIStroke8, TweenInfo.new(0.2),
+            TweenService:Create(ToggleCircle, TweenInfoPresets.Slow, { Position = UDim2.new(0, 0, 0, 0) }):Play()
+            TweenService:Create(UIStroke8, TweenInfoPresets.Normal,
                 { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 }):Play()
-            TweenService:Create(FeatureFrame2, TweenInfo.new(0.2),
+            TweenService:Create(FeatureFrame2, TweenInfoPresets.Normal,
                 { BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92 }):Play()
         end
     end
@@ -677,13 +749,17 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
         Value = math.clamp(Round(Value, config.Increment), config.Min, config.Max)
         SliderFunc.Value = Value
         TextBox.Text = tostring(Value)
-        TweenService:Create(
-            SliderDraggable,
-            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-            { Size = UDim2.fromScale((Value - config.Min) / (config.Max - config.Min), 1) }
-        ):Play()
-
-        config.Callback(Value)
+        
+        -- Smooth animation untuk slider
+        local targetSize = UDim2.fromScale((Value - config.Min) / (config.Max - config.Min), 1)
+        TweenService:Create(SliderDraggable, TweenInfoPresets.Slow, { Size = targetSize }):Play()
+        
+        -- Callback dengan pcall untuk keamanan
+        local success, err = pcall(function()
+            config.Callback(Value)
+        end)
+        if not success then warn("Slider Callback error:", err) end
+        
         ConfigData[configKey] = Value
         SaveConfigFunc()
     end
@@ -691,11 +767,9 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderFrame.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
-            TweenService:Create(
-                SliderCircle,
-                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Size = UDim2.new(0, 14, 0, 14) }
-            ):Play()
+            -- Smooth circle expansion
+            TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 14, 0, 14) }):Play()
+            
             local SizeScale = math.clamp(
                 (Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X,
                 0,
@@ -708,12 +782,14 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderFrame.InputEnded:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = false
-            config.Callback(SliderFunc.Value)
-            TweenService:Create(
-                SliderCircle,
-                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Size = UDim2.new(0, 8, 0, 8) }
-            ):Play()
+            -- Smooth circle shrink
+            TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 8, 0, 8) }):Play()
+            
+            -- Final callback
+            local success, err = pcall(function()
+                config.Callback(SliderFunc.Value)
+            end)
+            if not success then warn("Slider Callback error:", err) end
         end
     end)
 
@@ -853,6 +929,15 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     InputTextBox.Name = "InputTextBox"
     InputTextBox.Parent = InputFrame
     
+    -- Focus effect
+    InputTextBox.Focused:Connect(function()
+        TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
+    end)
+    
+    InputTextBox.FocusLost:Connect(function()
+        TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.95}):Play()
+    end)
+    
     function InputFunc:Set(Value)
         InputTextBox.Text = Value
         InputFunc.Value = Value
@@ -949,12 +1034,21 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     UICorner11.CornerRadius = UDim.new(0, 4)
     UICorner11.Parent = SelectOptionsFrame
 
+    -- Hover effect untuk SelectOptionsFrame
+    SelectOptionsFrame.MouseEnter:Connect(function()
+        TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.9}):Play()
+    end)
+    
+    SelectOptionsFrame.MouseLeave:Connect(function()
+        TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
+    end)
+
     DropdownButton.Activated:Connect(function()
         if not moreBlur.Visible then
             moreBlur.Visible = true
             dropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder)
-            TweenService:Create(moreBlur, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
-            TweenService:Create(moreBlur:FindFirstChild("DropdownSelect"), TweenInfo.new(0.3), { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
+            TweenService:Create(moreBlur, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
+            TweenService:Create(moreBlur:FindFirstChild("DropdownSelect"), TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
         end
     end)
 
@@ -979,6 +1073,15 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     OptionImg.Size = UDim2.new(0, 25, 0, 25)
     OptionImg.Name = "OptionImg"
     OptionImg.Parent = SelectOptionsFrame
+
+    -- Rotasi arrow saat dropdown dibuka
+    local function UpdateArrowRotation(open)
+        if open then
+            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
+        else
+            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
+        end
+    end
 
     local DropdownContainer = Instance.new("Frame")
     DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -1073,6 +1176,15 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         OptionButton.Text = ""
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
+        
+        -- Hover effect untuk option
+        OptionButton.MouseEnter:Connect(function()
+            TweenService:Create(Option, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
+        end)
+        
+        OptionButton.MouseLeave:Connect(function()
+            TweenService:Create(Option, TweenInfoPresets.Quick, {BackgroundTransparency = 1}):Play()
+        end)
 
         OptionText.Font = Enum.Font.GothamBold
         OptionText.Text = label
@@ -1114,6 +1226,9 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
                 end
             else
                 DropdownFunc.Value = value
+                -- Tutup dropdown setelah memilih (untuk single select)
+                moreBlur.Visible = false
+                UpdateArrowRotation(false)
             end
             DropdownFunc:Set(DropdownFunc.Value)
         end)
@@ -1136,17 +1251,18 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
                 local selected = config.Multi and table.find(DropdownFunc.Value, v) or DropdownFunc.Value == v
 
                 if selected then
-                    TweenService:Create(Drop.ChooseFrame, TweenInfo.new(0.2),
+                    -- Smooth animation untuk selection
+                    TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Slow,
                         { Size = UDim2.new(0, 1, 0, 12) }):Play()
-                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfo.new(0.2), { Transparency = 0 }):Play()
-                    TweenService:Create(Drop, TweenInfo.new(0.2), { BackgroundTransparency = 0.935 }):Play()
+                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfoPresets.Normal, { Transparency = 0 }):Play()
+                    TweenService:Create(Drop, TweenInfoPresets.Normal, { BackgroundTransparency = 0.935 }):Play()
                     table.insert(texts, Drop.OptionText.Text)
                 else
-                    TweenService:Create(Drop.ChooseFrame, TweenInfo.new(0.1),
+                    TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Normal,
                         { Size = UDim2.new(0, 0, 0, 0) }):Play()
-                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfo.new(0.1),
+                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfoPresets.Normal,
                         { Transparency = 0.999 }):Play()
-                    TweenService:Create(Drop, TweenInfo.new(0.1), { BackgroundTransparency = 0.999 }):Play()
+                    TweenService:Create(Drop, TweenInfoPresets.Normal, { BackgroundTransparency = 0.999 }):Play()
                 end
             end
         end
