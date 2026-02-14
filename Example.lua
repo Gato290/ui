@@ -197,17 +197,23 @@ Sec.Dropdown:AddDropdown({
 -- Example Multi
 Sec.Dropdown:AddDropdown({
     Title = "Example",
-    Content = "Example dropdown description",
+    Content = "Example multi dropdown description",
     Options = {
-        "Option A",
-        "Option B",
-        "Option C",
-        "Option D"
+        "Option 1",
+        "Option 2",
+        "Option 3",
+        "Option 4"
     },
-    Multi = false,
-    Default = "Option A",
-    Callback = function(value)
-        print("Example selected:", value)
+    Multi = true,
+    Default = {
+        "Option 1",
+        "Option 2"
+    },
+    Callback = function(selectedTable)
+        print("Example selected options:")
+        for _, v in ipairs(selectedTable) do
+            print("- " .. v)
+        end
     end
 })
 
