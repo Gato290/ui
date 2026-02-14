@@ -1,5 +1,5 @@
 -- Elements.lua - UI Elements Module
--- Version 1.1.0
+-- Version 1.2.0 (dengan Badge untuk semua elemen)
 -- GitHub: https://github.com/Gato290/ui
 
 local TweenService = game:GetService("TweenService")
@@ -24,6 +24,41 @@ local TweenInfoPresets = {
     Bounce = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
 }
 
+-- Helper function untuk membuat badge
+local function createBadge(parent, config)
+    if not config.New or config.New ~= "true" then return nil end
+    
+    local BadgeFrame = Instance.new("Frame")
+    BadgeFrame.BackgroundColor3 = MainColor
+    BadgeFrame.BackgroundTransparency = 0.2
+    BadgeFrame.Size = UDim2.new(0, 34, 0, 16)
+    BadgeFrame.Position = UDim2.new(1, -50, 0, 8) -- Posisi default di kanan atas
+    BadgeFrame.Parent = parent
+    BadgeFrame.Name = "BadgeFrame"
+    BadgeFrame.ZIndex = 5
+
+    local BadgeCorner = Instance.new("UICorner")
+    BadgeCorner.CornerRadius = UDim.new(0, 8)
+    BadgeCorner.Parent = BadgeFrame
+
+    local BadgeText = Instance.new("TextLabel")
+    BadgeText.Font = Enum.Font.GothamBold
+    BadgeText.Text = "NEW"
+    BadgeText.TextSize = 9
+    BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    BadgeText.BackgroundTransparency = 1
+    BadgeText.Size = UDim2.new(1, 0, 1, 0)
+    BadgeText.Parent = BadgeFrame
+    BadgeText.ZIndex = 6
+    
+    -- Animasi masuk
+    BadgeFrame.Size = UDim2.new(0, 0, 0, 0)
+    task.wait()
+    TweenService:Create(BadgeFrame, TweenInfoPresets.Bounce, {Size = UDim2.new(0, 34, 0, 16)}):Play()
+    
+    return BadgeFrame
+end
+
 function ElementsModule.Initialize(color, saveFunc, config)
     MainColor = color or MainColor
     SaveConfigFunc = saveFunc or function() end
@@ -41,6 +76,7 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     config.Icon = config.Icon or nil
     config.ButtonText = config.ButtonText or nil
     config.ButtonCallback = config.ButtonCallback or function() end
+    config.New = config.New or "false" -- Tambahkan properti New
 
     local ParagraphFunc = {}
 
@@ -81,7 +117,7 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     ParagraphTitle.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphTitle.BackgroundTransparency = 1
     ParagraphTitle.Position = UDim2.new(0, iconOffset, 0, 10)
-    ParagraphTitle.Size = UDim2.new(1, -16, 0, 13)
+    ParagraphTitle.Size = UDim2.new(1, -80, 0, 13) -- Beri ruang untuk badge
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Parent = Paragraph
 
@@ -98,7 +134,13 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
-    ParagraphContent.Size = UDim2.new(1, -16, 0, ParagraphContent.TextBounds.Y)
+    ParagraphContent.Size = UDim2.new(1, -80, 0, ParagraphContent.TextBounds.Y)
+
+    -- Buat badge
+    local Badge = createBadge(Paragraph, config)
+    if Badge then
+        Badge.Position = UDim2.new(1, -90, 0, 8) -- Sesuaikan posisi
+    end
 
     local ParagraphButton
     if config.ButtonText then
@@ -166,6 +208,7 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     config.ButtonCallback = config.Callback or config.ButtonCallback or function() end
     config.SubButtonText = config.SubButton or config.SubButtonText or nil
     config.SubButtonCallback = config.SubCallback or config.SubButtonCallback or function() end
+    config.New = config.New or "false" -- Tambahkan properti New
 
     local configKey = "Panel_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -197,8 +240,14 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.BackgroundTransparency = 1
     Title.Position = UDim2.new(0, 10, 0, 10)
-    Title.Size = UDim2.new(1, -20, 0, 13)
+    Title.Size = UDim2.new(1, -80, 0, 13) -- Beri ruang untuk badge
     Title.Parent = Panel
+
+    -- Buat badge
+    local Badge = createBadge(Panel, config)
+    if Badge then
+        Badge.Position = UDim2.new(1, -60, 0, 8) -- Sesuaikan posisi
+    end
 
     local Content = Instance.new("TextLabel")
     Content.Font = Enum.Font.Gotham
@@ -338,6 +387,7 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     config.Callback = config.Callback or function() end
     config.SubTitle = config.SubTitle or nil
     config.SubCallback = config.SubCallback or function() end
+    config.New = config.New or "false" -- Tambahkan properti New
     
     -- Deteksi apakah ini button v2 (memiliki New atau Title2)
     local isV2 = config.New == "true" or config.Title2 ~= nil
@@ -350,24 +400,24 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local Button = Instance.new("Frame")
         Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Button.BackgroundTransparency = 0.935
-        Button.Size = UDim2.new(1, 0, 0, 48) -- Dikecilkan dari 64 ke 48
+        Button.Size = UDim2.new(1, 0, 0, 48)
         Button.LayoutOrder = countItem
         Button.Parent = parent
 
         local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 6) -- Dikecilkan dari 8 ke 6
+        UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = Button
 
         -- Icon panah (seperti di gambar)
         local ArrowIcon = Instance.new("ImageLabel")
-        ArrowIcon.Size = UDim2.new(0, 16, 0, 16) -- Dikecilkan dari 20 ke 16
-        ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0) -- Adjusted position
+        ArrowIcon.Size = UDim2.new(0, 16, 0, 16)
+        ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0)
         ArrowIcon.AnchorPoint = Vector2.new(0, 0.5)
         ArrowIcon.BackgroundTransparency = 1
-        ArrowIcon.Image = "rbxassetid://16851841101" -- Icon panah
+        ArrowIcon.Image = "rbxassetid://16851841101"
         ArrowIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
         ArrowIcon.ImageTransparency = 0.3
-        ArrowIcon.Rotation = -90 -- Putar panah ke kanan
+        ArrowIcon.Rotation = -90
         ArrowIcon.Name = "ArrowIcon"
         ArrowIcon.Parent = Button
 
@@ -375,13 +425,13 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local MainTitle = Instance.new("TextLabel")
         MainTitle.Font = Enum.Font.GothamBold
         MainTitle.Text = config.Title
-        MainTitle.TextSize = 14 -- Dikecilkan dari 15 ke 14
+        MainTitle.TextSize = 14
         MainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
         MainTitle.TextXAlignment = Enum.TextXAlignment.Left
         MainTitle.TextYAlignment = Enum.TextYAlignment.Top
         MainTitle.BackgroundTransparency = 1
-        MainTitle.Position = UDim2.new(0, 10, 0, 8) -- Adjusted position
-        MainTitle.Size = UDim2.new(1, -50, 0, 16)
+        MainTitle.Position = UDim2.new(0, 10, 0, 8)
+        MainTitle.Size = UDim2.new(1, -80, 0, 16) -- Beri ruang untuk badge
         MainTitle.Name = "MainTitle"
         MainTitle.Parent = Button
 
@@ -389,13 +439,13 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local SubTitle = Instance.new("TextLabel")
         SubTitle.Font = Enum.Font.Gotham
         SubTitle.Text = config.Title2
-        SubTitle.TextSize = 11 -- Dikecilkan dari 12 ke 11
+        SubTitle.TextSize = 11
         SubTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
         SubTitle.TextXAlignment = Enum.TextXAlignment.Left
         SubTitle.TextYAlignment = Enum.TextYAlignment.Top
         SubTitle.BackgroundTransparency = 1
-        SubTitle.Position = UDim2.new(0, 10, 0, 24) -- Adjusted position
-        SubTitle.Size = UDim2.new(1, -50, 0, 14)
+        SubTitle.Position = UDim2.new(0, 10, 0, 24)
+        SubTitle.Size = UDim2.new(1, -80, 0, 14) -- Beri ruang untuk badge
         SubTitle.Name = "SubTitle"
         SubTitle.Parent = Button
 
@@ -404,22 +454,25 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             local BadgeFrame = Instance.new("Frame")
             BadgeFrame.BackgroundColor3 = MainColor
             BadgeFrame.BackgroundTransparency = 0.2
-            BadgeFrame.Size = UDim2.new(0, 34, 0, 16) -- Dikecilkan dari 40x18 ke 34x16
-            BadgeFrame.Position = UDim2.new(1, -60, 0, 8) -- Adjusted position
+            BadgeFrame.Size = UDim2.new(0, 34, 0, 16)
+            BadgeFrame.Position = UDim2.new(1, -60, 0, 8)
             BadgeFrame.Parent = Button
+            BadgeFrame.Name = "BadgeFrame"
+            BadgeFrame.ZIndex = 5
 
             local BadgeCorner = Instance.new("UICorner")
-            BadgeCorner.CornerRadius = UDim.new(0, 8) -- Dikecilkan dari 9 ke 8
+            BadgeCorner.CornerRadius = UDim.new(0, 8)
             BadgeCorner.Parent = BadgeFrame
 
             local BadgeText = Instance.new("TextLabel")
             BadgeText.Font = Enum.Font.GothamBold
             BadgeText.Text = "NEW"
-            BadgeText.TextSize = 9 -- Dikecilkan dari 10 ke 9
+            BadgeText.TextSize = 9
             BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
             BadgeText.BackgroundTransparency = 1
             BadgeText.Size = UDim2.new(1, 0, 1, 0)
             BadgeText.Parent = BadgeFrame
+            BadgeText.ZIndex = 6
         end
 
         -- Tombol utama (cover seluruh area)
@@ -434,24 +487,24 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         MainButton.MouseEnter:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
         end)
 
         MainButton.MouseLeave:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0.3}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play()
         end)
 
         -- Click effect
         MainButton.MouseButton1Down:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.8}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play()
         end)
 
         MainButton.MouseButton1Up:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
         end)
 
         MainButton.MouseButton1Click:Connect(config.Callback)
@@ -471,6 +524,12 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local UICorner = Instance.new("UICorner")
         UICorner.CornerRadius = UDim.new(0, 4)
         UICorner.Parent = Button
+
+        -- Buat badge
+        local Badge = createBadge(Button, config)
+        if Badge then
+            Badge.Position = UDim2.new(1, -45, 0, 5) -- Sesuaikan posisi untuk button kecil
+        end
 
         local MainButton = Instance.new("TextButton")
         MainButton.Font = Enum.Font.GothamBold
@@ -544,6 +603,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     config.Content = config.Content or ""
     config.Default = config.Default or false
     config.Callback = config.Callback or function() end
+    config.New = config.New or "false" -- Tambahkan properti New
 
     local configKey = "Toggle_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -581,9 +641,15 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     ToggleTitle.TextYAlignment = Enum.TextYAlignment.Top
     ToggleTitle.BackgroundTransparency = 1
     ToggleTitle.Position = UDim2.new(0, 10, 0, 10)
-    ToggleTitle.Size = UDim2.new(1, -100, 0, 13)
+    ToggleTitle.Size = UDim2.new(1, -120, 0, 13) -- Beri ruang untuk badge
     ToggleTitle.Name = "ToggleTitle"
     ToggleTitle.Parent = Toggle
+
+    -- Buat badge
+    local Badge = createBadge(Toggle, config)
+    if Badge then
+        Badge.Position = UDim2.new(1, -70, 0, 8) -- Sesuaikan posisi
+    end
 
     local ToggleTitle2 = Instance.new("TextLabel")
     ToggleTitle2.Font = Enum.Font.GothamBold
@@ -594,7 +660,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     ToggleTitle2.TextYAlignment = Enum.TextYAlignment.Top
     ToggleTitle2.BackgroundTransparency = 1
     ToggleTitle2.Position = UDim2.new(0, 10, 0, 23)
-    ToggleTitle2.Size = UDim2.new(1, -100, 0, 12)
+    ToggleTitle2.Size = UDim2.new(1, -120, 0, 12)
     ToggleTitle2.Name = "ToggleTitle2"
     ToggleTitle2.Parent = Toggle
 
@@ -606,7 +672,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     ToggleContent.TextXAlignment = Enum.TextXAlignment.Left
     ToggleContent.TextYAlignment = Enum.TextYAlignment.Bottom
     ToggleContent.BackgroundTransparency = 1
-    ToggleContent.Size = UDim2.new(1, -100, 0, 12)
+    ToggleContent.Size = UDim2.new(1, -120, 0, 12)
     ToggleContent.Name = "ToggleContent"
     ToggleContent.Parent = Toggle
 
@@ -620,7 +686,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
         ToggleTitle2.Visible = false
     end
 
-    ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+    ToggleContent.Size = UDim2.new(1, -120, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
     ToggleContent.TextWrapped = true
     if config.Title2 ~= "" then
         Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
@@ -630,7 +696,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
 
     ToggleContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         ToggleContent.TextWrapped = false
-        ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+        ToggleContent.Size = UDim2.new(1, -120, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
         if config.Title2 ~= "" then
             Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
         else
@@ -716,6 +782,7 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     config.Max = config.Max or 100
     config.Default = config.Default or 50
     config.Callback = config.Callback or function() end
+    config.New = config.New or "false" -- Tambahkan properti New
 
     local configKey = "Slider_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -764,9 +831,15 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SliderTitle.BorderSizePixel = 0
     SliderTitle.Position = UDim2.new(0, 10, 0, 10)
-    SliderTitle.Size = UDim2.new(1, -180, 0, 13)
+    SliderTitle.Size = UDim2.new(1, -200, 0, 13) -- Beri ruang untuk badge
     SliderTitle.Name = "SliderTitle"
     SliderTitle.Parent = Slider
+
+    -- Buat badge
+    local Badge = createBadge(Slider, config)
+    if Badge then
+        Badge.Position = UDim2.new(1, -170, 0, 8) -- Sesuaikan posisi (sebelum input box)
+    end
 
     SliderContent.Font = Enum.Font.GothamBold
     SliderContent.Text = config.Content
@@ -780,17 +853,17 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderContent.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SliderContent.BorderSizePixel = 0
     SliderContent.Position = UDim2.new(0, 10, 0, 25)
-    SliderContent.Size = UDim2.new(1, -180, 0, 12)
+    SliderContent.Size = UDim2.new(1, -200, 0, 12)
     SliderContent.Name = "SliderContent"
     SliderContent.Parent = Slider
 
-    SliderContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
+    SliderContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
     SliderContent.TextWrapped = true
     Slider.Size = UDim2.new(1, 0, 0, SliderContent.AbsoluteSize.Y + 33)
 
     SliderContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         SliderContent.TextWrapped = false
-        SliderContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
+        SliderContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
         Slider.Size = UDim2.new(1, 0, 0, SliderContent.AbsoluteSize.Y + 33)
         SliderContent.TextWrapped = true
         if updateSizeCallback then updateSizeCallback() end
@@ -948,6 +1021,7 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     config.Content = config.Content or ""
     config.Callback = config.Callback or function() end
     config.Default = config.Default or ""
+    config.New = config.New or "false" -- Tambahkan properti New
 
     local configKey = "Input_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -987,9 +1061,15 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     InputTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     InputTitle.BorderSizePixel = 0
     InputTitle.Position = UDim2.new(0, 10, 0, 10)
-    InputTitle.Size = UDim2.new(1, -180, 0, 13)
+    InputTitle.Size = UDim2.new(1, -200, 0, 13) -- Beri ruang untuk badge
     InputTitle.Name = "InputTitle"
     InputTitle.Parent = Input
+
+    -- Buat badge
+    local Badge = createBadge(Input, config)
+    if Badge then
+        Badge.Position = UDim2.new(1, -170, 0, 8) -- Sesuaikan posisi
+    end
 
     InputContent.Font = Enum.Font.GothamBold
     InputContent.Text = config.Content or "This is a TextBox"
@@ -1004,17 +1084,17 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     InputContent.BorderColor3 = Color3.fromRGB(0, 0, 0)
     InputContent.BorderSizePixel = 0
     InputContent.Position = UDim2.new(0, 10, 0, 25)
-    InputContent.Size = UDim2.new(1, -180, 0, 12)
+    InputContent.Size = UDim2.new(1, -200, 0, 12)
     InputContent.Name = "InputContent"
     InputContent.Parent = Input
 
-    InputContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
+    InputContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
     InputContent.TextWrapped = true
     Input.Size = UDim2.new(1, 0, 0, InputContent.AbsoluteSize.Y + 33)
 
     InputContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         InputContent.TextWrapped = false
-        InputContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
+        InputContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
         Input.Size = UDim2.new(1, 0, 0, InputContent.AbsoluteSize.Y + 33)
         InputContent.TextWrapped = true
         if updateSizeCallback then updateSizeCallback() end
@@ -1087,6 +1167,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     config.Options = config.Options or {}
     config.Default = config.Default or (config.Multi and {} or nil)
     config.Callback = config.Callback or function() end
+    config.New = config.New or "false" -- Tambahkan properti New
 
     local configKey = "Dropdown_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -1129,9 +1210,15 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     DropdownTitle.TextXAlignment = Enum.TextXAlignment.Left
     DropdownTitle.BackgroundTransparency = 1
     DropdownTitle.Position = UDim2.new(0, 10, 0, 10)
-    DropdownTitle.Size = UDim2.new(1, -180, 0, 13)
+    DropdownTitle.Size = UDim2.new(1, -180, 0, 13) -- Beri ruang untuk badge
     DropdownTitle.Name = "DropdownTitle"
     DropdownTitle.Parent = Dropdown
+
+    -- Buat badge
+    local Badge = createBadge(Dropdown, config)
+    if Badge then
+        Badge.Position = UDim2.new(1, -170, 0, 8) -- Sesuaikan posisi
+    end
 
     DropdownContent.Font = Enum.Font.GothamBold
     DropdownContent.Text = config.Content
