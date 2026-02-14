@@ -364,7 +364,7 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 		createClickEffect(button, Mouse.X, Mouse.Y)
 		
 		-- Tampilkan hint
-		hintLabel.Text = "Press any supported key"
+		hintLabel.Text = "Change key"
 		hintLabel.Visible = true
 		hintVisible = true
 		
