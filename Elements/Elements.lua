@@ -343,25 +343,25 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     local isV2 = config.New == "true" or config.Title2 ~= nil
 
     if isV2 then
-        -- Button V2 dengan tampilan lebih modern (seperti di gambar)
+        -- Button V2 dengan tampilan lebih modern (seperti di gambar) - VERSION KOMPAK
         config.Title2 = config.Title2 or "" -- Sub title
         config.New = config.New == "true" -- Convert ke boolean
         
         local Button = Instance.new("Frame")
         Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Button.BackgroundTransparency = 0.935
-        Button.Size = UDim2.new(1, 0, 0, 64) -- Tinggi lebih besar untuk V2
+        Button.Size = UDim2.new(1, 0, 0, 48) -- Dikecilkan dari 64 ke 48
         Button.LayoutOrder = countItem
         Button.Parent = parent
 
         local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 8) -- Radius lebih besar untuk V2
+        UICorner.CornerRadius = UDim.new(0, 6) -- Dikecilkan dari 8 ke 6
         UICorner.Parent = Button
 
         -- Icon panah (seperti di gambar)
         local ArrowIcon = Instance.new("ImageLabel")
-        ArrowIcon.Size = UDim2.new(0, 20, 0, 20)
-        ArrowIcon.Position = UDim2.new(1, -30, 0.5, 0)
+        ArrowIcon.Size = UDim2.new(0, 16, 0, 16) -- Dikecilkan dari 20 ke 16
+        ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0) -- Adjusted position
         ArrowIcon.AnchorPoint = Vector2.new(0, 0.5)
         ArrowIcon.BackgroundTransparency = 1
         ArrowIcon.Image = "rbxassetid://16851841101" -- Icon panah
@@ -375,13 +375,13 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local MainTitle = Instance.new("TextLabel")
         MainTitle.Font = Enum.Font.GothamBold
         MainTitle.Text = config.Title
-        MainTitle.TextSize = 15
+        MainTitle.TextSize = 14 -- Dikecilkan dari 15 ke 14
         MainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
         MainTitle.TextXAlignment = Enum.TextXAlignment.Left
         MainTitle.TextYAlignment = Enum.TextYAlignment.Top
         MainTitle.BackgroundTransparency = 1
-        MainTitle.Position = UDim2.new(0, 12, 0, 12)
-        MainTitle.Size = UDim2.new(1, -50, 0, 18)
+        MainTitle.Position = UDim2.new(0, 10, 0, 8) -- Adjusted position
+        MainTitle.Size = UDim2.new(1, -50, 0, 16)
         MainTitle.Name = "MainTitle"
         MainTitle.Parent = Button
 
@@ -389,13 +389,13 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local SubTitle = Instance.new("TextLabel")
         SubTitle.Font = Enum.Font.Gotham
         SubTitle.Text = config.Title2
-        SubTitle.TextSize = 12
+        SubTitle.TextSize = 11 -- Dikecilkan dari 12 ke 11
         SubTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
         SubTitle.TextXAlignment = Enum.TextXAlignment.Left
         SubTitle.TextYAlignment = Enum.TextYAlignment.Top
         SubTitle.BackgroundTransparency = 1
-        SubTitle.Position = UDim2.new(0, 12, 0, 32)
-        SubTitle.Size = UDim2.new(1, -50, 0, 16)
+        SubTitle.Position = UDim2.new(0, 10, 0, 24) -- Adjusted position
+        SubTitle.Size = UDim2.new(1, -50, 0, 14)
         SubTitle.Name = "SubTitle"
         SubTitle.Parent = Button
 
@@ -404,18 +404,18 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             local BadgeFrame = Instance.new("Frame")
             BadgeFrame.BackgroundColor3 = MainColor
             BadgeFrame.BackgroundTransparency = 0.2
-            BadgeFrame.Size = UDim2.new(0, 40, 0, 18)
-            BadgeFrame.Position = UDim2.new(1, -80, 0, 12)
+            BadgeFrame.Size = UDim2.new(0, 34, 0, 16) -- Dikecilkan dari 40x18 ke 34x16
+            BadgeFrame.Position = UDim2.new(1, -60, 0, 8) -- Adjusted position
             BadgeFrame.Parent = Button
 
             local BadgeCorner = Instance.new("UICorner")
-            BadgeCorner.CornerRadius = UDim.new(0, 9)
+            BadgeCorner.CornerRadius = UDim.new(0, 8) -- Dikecilkan dari 9 ke 8
             BadgeCorner.Parent = BadgeFrame
 
             local BadgeText = Instance.new("TextLabel")
             BadgeText.Font = Enum.Font.GothamBold
             BadgeText.Text = "NEW"
-            BadgeText.TextSize = 10
+            BadgeText.TextSize = 9 -- Dikecilkan dari 10 ke 9
             BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
             BadgeText.BackgroundTransparency = 1
             BadgeText.Size = UDim2.new(1, 0, 1, 0)
@@ -434,24 +434,24 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         MainButton.MouseEnter:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 22, 0, 22)}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play() -- Adjusted
         end)
 
         MainButton.MouseLeave:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0.3}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 20, 0, 20)}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play() -- Adjusted
         end)
 
         -- Click effect
         MainButton.MouseButton1Down:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.8}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play() -- Adjusted
         end)
 
         MainButton.MouseButton1Up:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 22, 0, 22)}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play() -- Adjusted
         end)
 
         MainButton.MouseButton1Click:Connect(config.Callback)
