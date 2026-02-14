@@ -11,7 +11,7 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 
 # New Update v1
 ```
-Added Profile Type
+Added Keybind
 ```
 # 📥 Load UI
 
@@ -509,6 +509,17 @@ Sec.Other:AddDivider()
 Sec.Other:AddSubSection("Example Sub Section")
 ```
 
+# Keybind
+```lau
+Sec.Section:AddKeybind({
+    Title = "Keybind",
+    Value = "V",  -- Default key
+    Placeholder = "Click to set key",
+    Callback = function(key)
+        print("Key pressed:", key)
+    end
+})
+```
 # 🔔 Notification
 ```lua
 -- Basic notification
