@@ -338,80 +338,203 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     config.Callback = config.Callback or function() end
     config.SubTitle = config.SubTitle or nil
     config.SubCallback = config.SubCallback or function() end
-
-    local Button = Instance.new("Frame")
-    Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Button.BackgroundTransparency = 0.935
-    Button.Size = UDim2.new(1, 0, 0, 40)
-    Button.LayoutOrder = countItem
-    Button.Parent = parent
-
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 4)
-    UICorner.Parent = Button
-
-    local MainButton = Instance.new("TextButton")
-    MainButton.Font = Enum.Font.GothamBold
-    MainButton.Text = config.Title
-    MainButton.TextSize = 12
-    MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    MainButton.TextTransparency = 0.3
-    MainButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    MainButton.BackgroundTransparency = 0.935
-    MainButton.Size = config.SubTitle and UDim2.new(0.5, -8, 1, -10) or UDim2.new(1, -12, 1, -10)
-    MainButton.Position = UDim2.new(0, 6, 0, 5)
-    MainButton.Parent = Button
-
-    local mainCorner = Instance.new("UICorner")
-    mainCorner.CornerRadius = UDim.new(0, 4)
-    mainCorner.Parent = MainButton
     
-    -- Hover effect
-    MainButton.MouseEnter:Connect(function()
-        TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-        TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
-    end)
-    
-    MainButton.MouseLeave:Connect(function()
-        TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-        TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
-    end)
+    -- Deteksi apakah ini button v2 (memiliki New atau Title2)
+    local isV2 = config.New == "true" or config.Title2 ~= nil
 
-    MainButton.MouseButton1Click:Connect(config.Callback)
+    if isV2 then
+        -- Button V2 dengan tampilan lebih modern (seperti di gambar)
+        config.Title2 = config.Title2 or "" -- Sub title
+        config.New = config.New == "true" -- Convert ke boolean
+        
+        local Button = Instance.new("Frame")
+        Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Button.BackgroundTransparency = 0.935
+        Button.Size = UDim2.new(1, 0, 0, 64) -- Tinggi lebih besar untuk V2
+        Button.LayoutOrder = countItem
+        Button.Parent = parent
 
-    if config.SubTitle then
-        local SubButton = Instance.new("TextButton")
-        SubButton.Font = Enum.Font.GothamBold
-        SubButton.Text = config.SubTitle
-        SubButton.TextSize = 12
-        SubButton.TextTransparency = 0.3
-        SubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SubButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        SubButton.BackgroundTransparency = 0.935
-        SubButton.Size = UDim2.new(0.5, -8, 1, -10)
-        SubButton.Position = UDim2.new(0.5, 2, 0, 5)
-        SubButton.Parent = Button
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 8) -- Radius lebih besar untuk V2
+        UICorner.Parent = Button
 
-        local subCorner = Instance.new("UICorner")
-        subCorner.CornerRadius = UDim.new(0, 4)
-        subCorner.Parent = SubButton
+        -- Icon panah (seperti di gambar)
+        local ArrowIcon = Instance.new("ImageLabel")
+        ArrowIcon.Size = UDim2.new(0, 20, 0, 20)
+        ArrowIcon.Position = UDim2.new(1, -30, 0.5, 0)
+        ArrowIcon.AnchorPoint = Vector2.new(0, 0.5)
+        ArrowIcon.BackgroundTransparency = 1
+        ArrowIcon.Image = "rbxassetid://16851841101" -- Icon panah
+        ArrowIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        ArrowIcon.ImageTransparency = 0.3
+        ArrowIcon.Rotation = -90 -- Putar panah ke kanan
+        ArrowIcon.Name = "ArrowIcon"
+        ArrowIcon.Parent = Button
+
+        -- Title utama
+        local MainTitle = Instance.new("TextLabel")
+        MainTitle.Font = Enum.Font.GothamBold
+        MainTitle.Text = config.Title
+        MainTitle.TextSize = 15
+        MainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+        MainTitle.TextXAlignment = Enum.TextXAlignment.Left
+        MainTitle.TextYAlignment = Enum.TextYAlignment.Top
+        MainTitle.BackgroundTransparency = 1
+        MainTitle.Position = UDim2.new(0, 12, 0, 12)
+        MainTitle.Size = UDim2.new(1, -50, 0, 18)
+        MainTitle.Name = "MainTitle"
+        MainTitle.Parent = Button
+
+        -- Sub title (Title2)
+        local SubTitle = Instance.new("TextLabel")
+        SubTitle.Font = Enum.Font.Gotham
+        SubTitle.Text = config.Title2
+        SubTitle.TextSize = 12
+        SubTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+        SubTitle.TextXAlignment = Enum.TextXAlignment.Left
+        SubTitle.TextYAlignment = Enum.TextYAlignment.Top
+        SubTitle.BackgroundTransparency = 1
+        SubTitle.Position = UDim2.new(0, 12, 0, 32)
+        SubTitle.Size = UDim2.new(1, -50, 0, 16)
+        SubTitle.Name = "SubTitle"
+        SubTitle.Parent = Button
+
+        -- Badge "NEW" (jika ada)
+        if config.New then
+            local BadgeFrame = Instance.new("Frame")
+            BadgeFrame.BackgroundColor3 = MainColor
+            BadgeFrame.BackgroundTransparency = 0.2
+            BadgeFrame.Size = UDim2.new(0, 40, 0, 18)
+            BadgeFrame.Position = UDim2.new(1, -80, 0, 12)
+            BadgeFrame.Parent = Button
+
+            local BadgeCorner = Instance.new("UICorner")
+            BadgeCorner.CornerRadius = UDim.new(0, 9)
+            BadgeCorner.Parent = BadgeFrame
+
+            local BadgeText = Instance.new("TextLabel")
+            BadgeText.Font = Enum.Font.GothamBold
+            BadgeText.Text = "NEW"
+            BadgeText.TextSize = 10
+            BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
+            BadgeText.BackgroundTransparency = 1
+            BadgeText.Size = UDim2.new(1, 0, 1, 0)
+            BadgeText.Parent = BadgeFrame
+        end
+
+        -- Tombol utama (cover seluruh area)
+        local MainButton = Instance.new("TextButton")
+        MainButton.Font = Enum.Font.SourceSans
+        MainButton.Text = ""
+        MainButton.BackgroundTransparency = 1
+        MainButton.Size = UDim2.new(1, 0, 1, 0)
+        MainButton.Parent = Button
+
+        -- Hover effect
+        MainButton.MouseEnter:Connect(function()
+            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 22, 0, 22)}):Play()
+        end)
+
+        MainButton.MouseLeave:Connect(function()
+            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0.3}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 20, 0, 20)}):Play()
+        end)
+
+        -- Click effect
+        MainButton.MouseButton1Down:Connect(function()
+            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.8}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
+        end)
+
+        MainButton.MouseButton1Up:Connect(function()
+            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 22, 0, 22)}):Play()
+        end)
+
+        MainButton.MouseButton1Click:Connect(config.Callback)
+
+        AllElements["Button_V2_" .. config.Title] = {Click = config.Callback}
+        return {Click = config.Callback}
+
+    else
+        -- Button V1 (original) dengan satu atau dua button
+        local Button = Instance.new("Frame")
+        Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Button.BackgroundTransparency = 0.935
+        Button.Size = UDim2.new(1, 0, 0, 40)
+        Button.LayoutOrder = countItem
+        Button.Parent = parent
+
+        local UICorner = Instance.new("UICorner")
+        UICorner.CornerRadius = UDim.new(0, 4)
+        UICorner.Parent = Button
+
+        local MainButton = Instance.new("TextButton")
+        MainButton.Font = Enum.Font.GothamBold
+        MainButton.Text = config.Title
+        MainButton.TextSize = 12
+        MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        MainButton.TextTransparency = 0.3
+        MainButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        MainButton.BackgroundTransparency = 0.935
+        MainButton.Size = config.SubTitle and UDim2.new(0.5, -8, 1, -10) or UDim2.new(1, -12, 1, -10)
+        MainButton.Position = UDim2.new(0, 6, 0, 5)
+        MainButton.Parent = Button
+
+        local mainCorner = Instance.new("UICorner")
+        mainCorner.CornerRadius = UDim.new(0, 4)
+        mainCorner.Parent = MainButton
         
         -- Hover effect
-        SubButton.MouseEnter:Connect(function()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
+        MainButton.MouseEnter:Connect(function()
+            TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+            TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
         end)
         
-        SubButton.MouseLeave:Connect(function()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
+        MainButton.MouseLeave:Connect(function()
+            TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+            TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
         end)
 
-        SubButton.MouseButton1Click:Connect(config.SubCallback)
-    end
+        MainButton.MouseButton1Click:Connect(config.Callback)
 
-    AllElements["Button_" .. config.Title] = {Click = config.Callback}
-    return {Click = config.Callback}
+        if config.SubTitle then
+            local SubButton = Instance.new("TextButton")
+            SubButton.Font = Enum.Font.GothamBold
+            SubButton.Text = config.SubTitle
+            SubButton.TextSize = 12
+            SubButton.TextTransparency = 0.3
+            SubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            SubButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            SubButton.BackgroundTransparency = 0.935
+            SubButton.Size = UDim2.new(0.5, -8, 1, -10)
+            SubButton.Position = UDim2.new(0.5, 2, 0, 5)
+            SubButton.Parent = Button
+
+            local subCorner = Instance.new("UICorner")
+            subCorner.CornerRadius = UDim.new(0, 4)
+            subCorner.Parent = SubButton
+            
+            -- Hover effect
+            SubButton.MouseEnter:Connect(function()
+                TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
+                TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
+            end)
+            
+            SubButton.MouseLeave:Connect(function()
+                TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
+                TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
+            end)
+
+            SubButton.MouseButton1Click:Connect(config.SubCallback)
+        end
+
+        AllElements["Button_" .. config.Title] = {Click = config.Callback}
+        return {Click = config.Callback}
+    end
 end
 
 function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
@@ -1049,6 +1172,12 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
             dropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder)
             TweenService:Create(moreBlur, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
             TweenService:Create(moreBlur:FindFirstChild("DropdownSelect"), TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
+            -- Rotasi arrow saat dibuka
+            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
+        else
+            moreBlur.Visible = false
+            -- Rotasi arrow kembali saat ditutup
+            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
         end
     end)
 
@@ -1073,15 +1202,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     OptionImg.Size = UDim2.new(0, 25, 0, 25)
     OptionImg.Name = "OptionImg"
     OptionImg.Parent = SelectOptionsFrame
-
-    -- Rotasi arrow saat dropdown dibuka
-    local function UpdateArrowRotation(open)
-        if open then
-            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
-        else
-            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
-        end
-    end
 
     local DropdownContainer = Instance.new("Frame")
     DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
@@ -1226,9 +1346,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
                 end
             else
                 DropdownFunc.Value = value
-                -- Tutup dropdown setelah memilih (untuk single select)
-                moreBlur.Visible = false
-                UpdateArrowRotation(false)
+                -- Tidak auto close untuk single select
             end
             DropdownFunc:Set(DropdownFunc.Value)
         end)
