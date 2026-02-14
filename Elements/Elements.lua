@@ -1,5 +1,5 @@
 -- Elements.lua - UI Elements Module
--- Version 1.1.0
+-- Version 1.1.1 new
 -- GitHub: https://github.com/Gato290/ui
 
 local TweenService = game:GetService("TweenService")
@@ -34,6 +34,9 @@ function ElementsModule.GetAll()
     return AllElements
 end
 
+-- =============================================
+-- PARAGRAPH (New Feature - Enhanced)
+-- =============================================
 function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
@@ -41,6 +44,7 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     config.Icon = config.Icon or nil
     config.ButtonText = config.ButtonText or nil
     config.ButtonCallback = config.ButtonCallback or function() end
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
 
     local ParagraphFunc = {}
 
@@ -156,6 +160,9 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     return ParagraphFunc
 end
 
+-- =============================================
+-- PANEL (New Feature - Enhanced)
+-- =============================================
 function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
@@ -166,6 +173,7 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     config.ButtonCallback = config.Callback or config.ButtonCallback or function() end
     config.SubButtonText = config.SubButton or config.SubButtonText or nil
     config.SubButtonCallback = config.SubCallback or config.SubButtonCallback or function() end
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
 
     local configKey = "Panel_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -332,12 +340,16 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     return PanelFunc
 end
 
+-- =============================================
+-- BUTTON (New Feature - V2 with Subtitle & Badge)
+-- =============================================
 function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Confirm"
     config.Callback = config.Callback or function() end
     config.SubTitle = config.SubTitle or nil
     config.SubCallback = config.SubCallback or function() end
+    config.New = config.New or "true" -- Menandai sebagai fitur baru untuk V2
     
     -- Deteksi apakah ini button v2 (memiliki New atau Title2)
     local isV2 = config.New == "true" or config.Title2 ~= nil
@@ -345,29 +357,28 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     if isV2 then
         -- Button V2 dengan tampilan lebih modern (seperti di gambar) - VERSION KOMPAK
         config.Title2 = config.Title2 or "" -- Sub title
-        config.New = config.New == "true" -- Convert ke boolean
         
         local Button = Instance.new("Frame")
         Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Button.BackgroundTransparency = 0.935
-        Button.Size = UDim2.new(1, 0, 0, 48) -- Dikecilkan dari 64 ke 48
+        Button.Size = UDim2.new(1, 0, 0, 48)
         Button.LayoutOrder = countItem
         Button.Parent = parent
 
         local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 6) -- Dikecilkan dari 8 ke 6
+        UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = Button
 
-        -- Icon panah (seperti di gambar)
+        -- Icon panah
         local ArrowIcon = Instance.new("ImageLabel")
-        ArrowIcon.Size = UDim2.new(0, 16, 0, 16) -- Dikecilkan dari 20 ke 16
-        ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0) -- Adjusted position
+        ArrowIcon.Size = UDim2.new(0, 16, 0, 16)
+        ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0)
         ArrowIcon.AnchorPoint = Vector2.new(0, 0.5)
         ArrowIcon.BackgroundTransparency = 1
-        ArrowIcon.Image = "rbxassetid://16851841101" -- Icon panah
+        ArrowIcon.Image = "rbxassetid://16851841101"
         ArrowIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
         ArrowIcon.ImageTransparency = 0.3
-        ArrowIcon.Rotation = -90 -- Putar panah ke kanan
+        ArrowIcon.Rotation = -90
         ArrowIcon.Name = "ArrowIcon"
         ArrowIcon.Parent = Button
 
@@ -375,12 +386,12 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local MainTitle = Instance.new("TextLabel")
         MainTitle.Font = Enum.Font.GothamBold
         MainTitle.Text = config.Title
-        MainTitle.TextSize = 14 -- Dikecilkan dari 15 ke 14
+        MainTitle.TextSize = 14
         MainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
         MainTitle.TextXAlignment = Enum.TextXAlignment.Left
         MainTitle.TextYAlignment = Enum.TextYAlignment.Top
         MainTitle.BackgroundTransparency = 1
-        MainTitle.Position = UDim2.new(0, 10, 0, 8) -- Adjusted position
+        MainTitle.Position = UDim2.new(0, 10, 0, 8)
         MainTitle.Size = UDim2.new(1, -50, 0, 16)
         MainTitle.Name = "MainTitle"
         MainTitle.Parent = Button
@@ -389,33 +400,33 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         local SubTitle = Instance.new("TextLabel")
         SubTitle.Font = Enum.Font.Gotham
         SubTitle.Text = config.Title2
-        SubTitle.TextSize = 11 -- Dikecilkan dari 12 ke 11
+        SubTitle.TextSize = 11
         SubTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
         SubTitle.TextXAlignment = Enum.TextXAlignment.Left
         SubTitle.TextYAlignment = Enum.TextYAlignment.Top
         SubTitle.BackgroundTransparency = 1
-        SubTitle.Position = UDim2.new(0, 10, 0, 24) -- Adjusted position
+        SubTitle.Position = UDim2.new(0, 10, 0, 24)
         SubTitle.Size = UDim2.new(1, -50, 0, 14)
         SubTitle.Name = "SubTitle"
         SubTitle.Parent = Button
 
-        -- Badge "NEW" (jika ada)
-        if config.New then
+        -- Badge "NEW" (jika config.New = "true")
+        if config.New == "true" then
             local BadgeFrame = Instance.new("Frame")
             BadgeFrame.BackgroundColor3 = MainColor
             BadgeFrame.BackgroundTransparency = 0.2
-            BadgeFrame.Size = UDim2.new(0, 34, 0, 16) -- Dikecilkan dari 40x18 ke 34x16
-            BadgeFrame.Position = UDim2.new(1, -60, 0, 8) -- Adjusted position
+            BadgeFrame.Size = UDim2.new(0, 34, 0, 16)
+            BadgeFrame.Position = UDim2.new(1, -60, 0, 8)
             BadgeFrame.Parent = Button
 
             local BadgeCorner = Instance.new("UICorner")
-            BadgeCorner.CornerRadius = UDim.new(0, 8) -- Dikecilkan dari 9 ke 8
+            BadgeCorner.CornerRadius = UDim.new(0, 8)
             BadgeCorner.Parent = BadgeFrame
 
             local BadgeText = Instance.new("TextLabel")
             BadgeText.Font = Enum.Font.GothamBold
             BadgeText.Text = "NEW"
-            BadgeText.TextSize = 9 -- Dikecilkan dari 10 ke 9
+            BadgeText.TextSize = 9
             BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
             BadgeText.BackgroundTransparency = 1
             BadgeText.Size = UDim2.new(1, 0, 1, 0)
@@ -434,24 +445,24 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         MainButton.MouseEnter:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
         end)
 
         MainButton.MouseLeave:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0.3}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play()
         end)
 
         -- Click effect
         MainButton.MouseButton1Down:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.8}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play()
         end)
 
         MainButton.MouseButton1Up:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play() -- Adjusted
+            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
         end)
 
         MainButton.MouseButton1Click:Connect(config.Callback)
@@ -537,6 +548,9 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     end
 end
 
+-- =============================================
+-- TOGGLE (New Feature - Enhanced with animations)
+-- =============================================
 function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
@@ -544,6 +558,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     config.Content = config.Content or ""
     config.Default = config.Default or false
     config.Callback = config.Callback or function() end
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
 
     local configKey = "Toggle_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -707,6 +722,9 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     return ToggleFunc
 end
 
+-- =============================================
+-- SLIDER (New Feature - Enhanced with smooth animations)
+-- =============================================
 function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Slider"
@@ -716,6 +734,7 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     config.Max = config.Max or 100
     config.Default = config.Default or 50
     config.Callback = config.Callback or function() end
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
 
     local configKey = "Slider_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -942,12 +961,16 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     return SliderFunc
 end
 
+-- =============================================
+-- INPUT (New Feature - Enhanced with focus effects)
+-- =============================================
 function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
     config.Content = config.Content or ""
     config.Callback = config.Callback or function() end
     config.Default = config.Default or ""
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
 
     local configKey = "Input_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -1079,6 +1102,9 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     return InputFunc
 end
 
+-- =============================================
+-- DROPDOWN (New Feature - Enhanced with animations)
+-- =============================================
 function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, moreBlur, dropPageLayout, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
@@ -1087,6 +1113,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     config.Options = config.Options or {}
     config.Default = config.Default or (config.Multi and {} or nil)
     config.Callback = config.Callback or function() end
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
 
     local configKey = "Dropdown_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -1424,7 +1451,13 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     return DropdownFunc
 end
 
+-- =============================================
+-- DIVIDER (New Feature - Enhanced with gradient)
+-- =============================================
 function ElementsModule.AddDivider(parent, countItem, updateSizeCallback)
+    config = config or {}
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
+    
     local Divider = Instance.new("Frame")
     Divider.Name = "Divider"
     Divider.Parent = parent
@@ -1451,8 +1484,13 @@ function ElementsModule.AddDivider(parent, countItem, updateSizeCallback)
     return Divider
 end
 
+-- =============================================
+-- SUB SECTION (New Feature - Enhanced with background)
+-- =============================================
 function ElementsModule.AddSubSection(parent, title, countItem, updateSizeCallback)
     title = title or "Sub Section"
+    config = config or {}
+    config.New = config.New or "true" -- Menandai sebagai fitur baru
 
     local SubSection = Instance.new("Frame")
     SubSection.Name = "SubSection"
