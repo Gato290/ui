@@ -1,11 +1,12 @@
--- keybind.lua V1.2.0
+-- keybind.lua V1.3.0
 -- Module untuk menangani fungsionalitas Keybind
--- Terintegrasi dengan Chloe X UI
--- Fitur: Player bisa mengubah key sesuai keinginan
+-- Support PC, Laptop, dan Mobile dengan keyboard
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local Players = game:GetService("Players")
+local ContextActionService = game:GetService("ContextActionService")
+local VirtualInputManager = game:GetService("VirtualInputManager")
 
 local KeybindModule = {}
 local LocalPlayer = Players.LocalPlayer
@@ -18,14 +19,14 @@ local Mouse = LocalPlayer:GetMouse()
 local DEFAULT_CONFIG = {
 	TITLE = "Keybind",
 	KEY = "V",
-	BUTTON_WIDTH = 80,  -- Diperbesar untuk menampung teks lebih panjang
+	BUTTON_WIDTH = 90,
 	BUTTON_HEIGHT = 22,
 	FRAME_HEIGHT = 30,
 	CORNER_RADIUS = 4,
 	FONT = Enum.Font.GothamBold,
 	TEXT_SIZE = {
 		TITLE = 13,
-		BUTTON = 11,  -- Diperkecil sedikit agar muat
+		BUTTON = 11,
 		HINT = 10
 	},
 	COLORS = {
@@ -62,24 +63,77 @@ local DEFAULT_CONFIG = {
 }
 
 -- ============================================================================
+-- DETECT DEVICE TYPE
+-- ============================================================================
+
+local function isMobile()
+	return UserInputService.TouchEnabled and not UserInputService.MouseEnabled and not UserInputService.KeyboardEnabled
+end
+
+local function hasKeyboard()
+	return UserInputService.KeyboardEnabled
+end
+
+local function hasMouse()
+	return UserInputService.MouseEnabled
+end
+
+-- ============================================================================
 -- INPUT UTILITY FUNCTIONS
 -- ============================================================================
 
 -- Konversi input ke string key yang konsisten
 local function getKeyString(input)
-	local inputType = input.UserInputType
-	
-	if inputType == Enum.UserInputType.Keyboard then
+	-- Handle keyboard input
+	if input.UserInputType == Enum.UserInputType.Keyboard then
 		return input.KeyCode.Name
 	end
 	
+	-- Handle mouse input
 	local MOUSE_BUTTON_MAP = {
 		[Enum.UserInputType.MouseButton1] = "LMB",
 		[Enum.UserInputType.MouseButton2] = "RMB",
 		[Enum.UserInputType.MouseButton3] = "MMB"
 	}
 	
-	return MOUSE_BUTTON_MAP[inputType] or ""
+	if MOUSE_BUTTON_MAP[input.UserInputType] then
+		return MOUSE_BUTTON_MAP[input.UserInputType]
+	end
+	
+	-- Handle touch input (untuk mobile on-screen keyboard)
+	if input.UserInputType == Enum.UserInputType.Touch then
+		-- Touch biasanya digunakan untuk UI, bukan untuk keybind
+		return ""
+	end
+	
+	return ""
+end
+
+-- Handle key press dari berbagai device
+local function setupKeyListener(callback, isBindingMode)
+	local connection
+	
+	if isBindingMode then
+		-- Mode binding: tangkap semua input termasuk yang diproses game
+		connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+			-- Di mode binding, kita tetap tangkap meskipun gameProcessed = true
+			local key = getKeyString(input)
+			if key ~= "" then
+				callback(key, input)
+			end
+		end)
+	else
+		-- Mode normal: hanya tangkap input yang tidak diproses game
+		connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
+			if gameProcessed then return end
+			local key = getKeyString(input)
+			if key ~= "" then
+				callback(key)
+			end
+		end)
+	end
+	
+	return connection
 end
 
 -- Validasi apakah key didukung
@@ -247,18 +301,17 @@ local function createKeybindButton(parent, initialText)
 	button.Size = UDim2.new(0, DEFAULT_CONFIG.BUTTON_WIDTH, 0, DEFAULT_CONFIG.BUTTON_HEIGHT)
 	button.Name = "KeybindButton"
 	button.Parent = parent
+	button.AutoButtonColor = false
+	button.SelectedObject = button
 	
 	local corner = Instance.new("UICorner")
 	corner.CornerRadius = UDim.new(0, DEFAULT_CONFIG.CORNER_RADIUS)
 	corner.Parent = button
 	
-	-- Add tooltip
-	button.ZIndex = 2
-	
 	return button
 end
 
--- Membuat hint label (opsional)
+-- Membuat hint label
 local function createHintLabel(parent, text)
 	local hint = Instance.new("TextLabel")
 	hint.Font = DEFAULT_CONFIG.FONT
@@ -290,6 +343,7 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 	
 	local isBinding = false
 	local connection = nil
+	local globalConnection = nil
 	local hintVisible = false
 	
 	-- Validasi initial key
@@ -312,7 +366,7 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 	local frame = createKeybindFrame(parent, title, countItem)
 	local titleLabel = createTitleLabel(frame, title)
 	local button = createKeybindButton(frame, currentKey)
-	local hintLabel = createHintLabel(frame, "Click to change")
+	local hintLabel = createHintLabel(frame, "Click to change key")
 	
 	-- ========================================================================
 	-- INTERNAL FUNCTIONS
@@ -331,7 +385,6 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 		button.BackgroundColor3 = DEFAULT_CONFIG.COLORS.BUTTON_BG
 		saveToConfig(key)
 		
-		-- Sembunyikan hint setelah selesai binding
 		if hintVisible then
 			hintLabel.Visible = false
 			hintVisible = false
@@ -352,6 +405,29 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 				hintLabel.Visible = false
 				hintVisible = false
 			end
+			
+			-- Kembalikan fokus ke game
+			UserInputService.OverrideMouseIconBehavior = Enum.OverrideMouseIconBehavior.None
+		end
+	end
+	
+	local function onBindingKeyPressed(key, input)
+		if key ~= "" and key ~= "Unknown" then
+			if isKeySupported(key) then
+				updateDisplay(key)
+				stopBinding()
+				
+				-- Beri feedback suara (opsional)
+				if hasKeyboard() then
+					-- Bisa tambahkan feedback suara atau getar
+				end
+			else
+				-- Key tidak didukung
+				button.Text = "Invalid!"
+				hintLabel.Text = "Key not supported!"
+				task.wait(0.5)
+				button.Text = "..."
+			end
 		end
 	end
 	
@@ -363,29 +439,26 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 		button.BackgroundColor3 = DEFAULT_CONFIG.COLORS.BUTTON_BINDING_BG
 		createClickEffect(button, Mouse.X, Mouse.Y)
 		
-		-- Tampilkan hint
-		hintLabel.Text = "Change key"
+		-- Tampilkan hint sesuai device
+		if isMobile() then
+			hintLabel.Text = "Use keyboard or tap here"
+		else
+			hintLabel.Text = "Press any supported key"
+		end
 		hintLabel.Visible = true
 		hintVisible = true
 		
-		connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-			if gameProcessed then return end
-			
-			local key = getKeyString(input)
-			
-			if key ~= "" and key ~= "Unknown" then
-				if isKeySupported(key) then
-					updateDisplay(key)
-					stopBinding()
-				else
-					-- Key tidak didukung, beri feedback
-					button.Text = "Invalid!"
-					task.wait(0.5)
-					button.Text = "..."
-					hintLabel.Text = "Key not supported!"
-				end
-			end
-		end)
+		-- Untuk mobile, pastikan keyboard muncul jika perlu
+		if isMobile() and hasKeyboard() then
+			-- Trigger keyboard muncul (jika diperlukan)
+			UserInputService.OverrideMouseIconBehavior = Enum.OverrideMouseIconBehavior.ForceShow
+		end
+		
+		-- Setup listener untuk mode binding
+		if connection then
+			connection:Disconnect()
+		end
+		connection = setupKeyListener(onBindingKeyPressed, true)
 	end
 	
 	-- ========================================================================
@@ -393,12 +466,23 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 	-- ========================================================================
 	
 	-- Handle button click untuk memulai binding
-	button.Activated:Connect(startBinding)
+	button.Activated:Connect(function()
+		startBinding()
+	end)
+	
+	-- Handle touch untuk mobile
+	button.TouchTap:Connect(function()
+		startBinding()
+	end)
 	
 	-- Handle mouse enter/leave untuk hint
 	button.MouseEnter:Connect(function()
 		if not isBinding then
-			hintLabel.Text = "Click to change key"
+			if isMobile() then
+				hintLabel.Text = "Tap to change key"
+			else
+				hintLabel.Text = "Click to change key"
+			end
 			hintLabel.Visible = true
 			hintVisible = true
 		end
@@ -411,19 +495,33 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 		end
 	end)
 	
-	-- Listener global untuk mendeteksi saat key ditekan
-	local globalConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed or isBinding then return end
-		
-		local pressedKey = getKeyString(input)
-		
-		if pressedKey == currentKey then
+	-- Handle focus loss (jika user klik di luar)
+	UserInputService.InputBegan:Connect(function(input)
+		if isBinding then
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or 
+			   input.UserInputType == Enum.UserInputType.Touch then
+				-- Cek apakah klik di luar button
+				local pos = Vector2.new(input.Position.X, input.Position.Y)
+				local absPos = button.AbsolutePosition
+				local absSize = button.AbsoluteSize
+				
+				if pos.X < absPos.X or pos.X > absPos.X + absSize.X or
+				   pos.Y < absPos.Y or pos.Y > absPos.Y + absSize.Y then
+					stopBinding()
+				end
+			end
+		end
+	end)
+	
+	-- Listener global untuk mode normal
+	globalConnection = setupKeyListener(function(key)
+		if not isBinding and key == currentKey then
 			local success, err = pcall(callback, currentKey)
 			if not success then
 				warn(string.format("[Keybind] Error in callback for '%s': %s", title, err))
 			end
 		end
-	end)
+	end, false)
 	
 	-- ========================================================================
 	-- PUBLIC API
@@ -473,13 +571,11 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 	function keybindFunctions:SetEnabled(enabled)
 		if enabled then
 			if not globalConnection then
-				globalConnection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-					if gameProcessed or isBinding then return end
-					local pressedKey = getKeyString(input)
-					if pressedKey == currentKey then
+				globalConnection = setupKeyListener(function(key)
+					if not isBinding and key == currentKey then
 						pcall(callback, currentKey)
 					end
-				end)
+				end, false)
 			end
 		else
 			if globalConnection then
@@ -499,6 +595,15 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 		return self
 	end
 	
+	function keybindFunctions:IsBinding()
+		return isBinding
+	end
+	
+	function keybindFunctions:StopBinding()
+		stopBinding()
+		return self
+	end
+	
 	if updateCallback then
 		updateCallback()
 	end
@@ -506,14 +611,13 @@ function KeybindModule.CreateKeybind(parent, config, countItem, updateCallback)
 	return keybindFunctions
 end
 
--- Membuat standalone keybind (tanpa UI element)
+-- Membuat standalone keybind
 function KeybindModule.CreateStandaloneKeybind(config)
 	config = config or {}
 	local currentKey = config.Key or DEFAULT_CONFIG.KEY
 	local callback = config.Callback or function() end
 	local name = config.Name or "StandaloneKeybind"
 	
-	-- Validasi key
 	if not isKeySupported(currentKey) then
 		warn(string.format("[StandaloneKeybind] Key '%s' tidak didukung, menggunakan default '%s'", currentKey, DEFAULT_CONFIG.KEY))
 		currentKey = DEFAULT_CONFIG.KEY
@@ -522,18 +626,14 @@ function KeybindModule.CreateStandaloneKeybind(config)
 	local isEnabled = true
 	local standaloneFunctions = {}
 	
-	local connection = UserInputService.InputBegan:Connect(function(input, gameProcessed)
-		if gameProcessed or not isEnabled then return end
-		
-		local pressedKey = getKeyString(input)
-		
-		if pressedKey == currentKey then
+	local connection = setupKeyListener(function(key)
+		if isEnabled and key == currentKey then
 			local success, err = pcall(callback, currentKey)
 			if not success then
 				warn(string.format("[StandaloneKeybind] Error in callback for '%s': %s", name, err))
 			end
 		end
-	end)
+	end, false)
 	
 	function standaloneFunctions:SetKey(key)
 		if key and type(key) == "string" then
@@ -593,12 +693,10 @@ end
 -- UTILITY FUNCTIONS
 -- ============================================================================
 
--- Mendapatkan daftar semua key yang didukung
 function KeybindModule.GetSupportedKeys()
 	return DEFAULT_CONFIG.SUPPORTED_KEYS
 end
 
--- Menambahkan key kustom ke daftar yang didukung
 function KeybindModule.AddSupportedKey(key)
 	if key and type(key) == "string" then
 		if not isKeySupported(key) then
@@ -607,6 +705,14 @@ function KeybindModule.AddSupportedKey(key)
 		end
 	end
 	return false
+end
+
+function KeybindModule.IsMobile()
+	return isMobile()
+end
+
+function KeybindModule.HasKeyboard()
+	return hasKeyboard()
 end
 
 return KeybindModule
