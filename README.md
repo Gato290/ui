@@ -17,12 +17,17 @@ Added Keybind
 
 # loadstring
 ```lua
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V1"))()
 ```
 
 # loadstring Beta Tester
 ```lua
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeXBetaTester"))()
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
+```
+
+# loadstring Optimize
+```lua
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V3"))()
 ```
 # Support Icon
 ```Lucide, Solar```
