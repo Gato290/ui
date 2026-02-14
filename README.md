@@ -145,6 +145,18 @@ Sec.Botton:AddButton({
 })
 ```
 
+## Button V2
+```lua
+Sec.Weapon:AddButton({
+    Title = "Example",
+    Title2 = "Example Sub Title",
+    Callback = function()
+        print("This is an example button")
+        Notify("Example clicked!", 2)
+    end
+})
+```
+
 # 🔁 Toggle
 ```lua
 Sec.Toggle = Tabs.Main:AddSection("Toggle")
