@@ -47,13 +47,13 @@ Contoh membuat tab UI.
 ## Default Icon
 ```lua
 local Tabs = {
-    Home = Window:AddTab({
-        Name = "Home",
+    Tabs1 = Window:AddTab({
+        Name = "Tabs 1",
         Icon = "home",
     }),
 
-    Main = Window:AddTab({
-        Name = "Main",
+    Tabs2 = Window:AddTab({
+        Name = "Tabs 2",
         Icon = "gamepad",
     }),
 }
@@ -61,13 +61,13 @@ local Tabs = {
 ## Lucide Icon
 ```lua
 local Tabs = {
-    Home = Window:AddTab({
-        Name = "Home",
+    Tabs1 = Window:AddTab({
+        Name = "Tabs 1",
         Icon = "lucide:house",
     }),
 
-    Main = Window:AddTab({
-        Name = "Main",
+    Tabs2 = Window:AddTab({
+        Name = "Tabs 2",
         Icon = "lucide:sword",
     }),
 }
@@ -76,13 +76,13 @@ local Tabs = {
 ## Solar Icon
 ```lua
 local Tabs = {
-    Home = Window:AddTab({
-        Name = "Home",
+    Tabs1 = Window:AddTab({
+        Name = "Tabs 1",
         Icon = "solar:home",
     }),
 
-    Main = Window:AddTab({
-        Name = "Main",
+    Tabs2 = Window:AddTab({
+        Name = "Tabs 2",
         Icon = "solar:gamepad",
     }),
 }
@@ -92,8 +92,8 @@ Section adalah container untuk button/toggle dll.
 ```lua
 local Sec = {}
 
-Sec.Section1 = Tabs.Main:AddSection("Section Example 1", true) -- true = selalu terbuka tidak bisa di tutup
-Sec.Section2 = Tabs.Main:AddSection("Section Example 2") -- tertutup secara default
+Sec.Section1 = Tabs.Tabs1:AddSection("Section Example 1", true) -- true = selalu terbuka tidak bisa di tutup
+Sec.Section2 = Tabs.Tabs1:AddSection("Section Example 2") -- tertutup secara default
 -- (Beta Tester Only)
 -- Icon
 --[[
