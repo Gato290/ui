@@ -1,4 +1,5 @@
-local HttpService = game:GetService("HttpService") -- V0.0.8 
+-- main.lua V0.0.9 - Chloe X UI with Keybind Support
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
 -- Load Color module dari file eksternal
@@ -9,7 +10,7 @@ end)
 if not successColor then
     warn("Failed to load Color module: " .. tostring(Colors))
     Colors = {
-        ["Default"] = Color3.fromRGB(0, 208, 255),
+        ["Default"] = Color3.fromRGB(20, 20, 25),
         ["Light"] = Color3.fromRGB(240, 240, 240)
     }
 end
@@ -72,6 +73,16 @@ else
     UserInfo = UserInfoModule
 end
 
+-- Load Keybind module dari file eksternal
+local successKeybind, KeybindModule = pcall(function()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/keybind.lua"))()
+end)
+
+if not successKeybind then
+    warn("Failed to load Keybind module: " .. tostring(KeybindModule))
+    KeybindModule = nil
+end
+
 -- Fungsi untuk mendapatkan icon berdasarkan format
 local function getIcon(iconString)
     if not iconString or iconString == "" then
@@ -96,22 +107,18 @@ local function getIcon(iconString)
     end
 end
 
--- Fungsi untuk mengkonversi string warna ke Color3 (Menggunakan Colors dari file terpisah)
+-- Fungsi untuk mengkonversi string warna ke Color3
 local function getColorFromString(colorString)
     if type(colorString) == "string" then
-        -- Cek apakah colorString ada dalam daftar warna
         if Colors[colorString] then
             return Colors[colorString]
         else
-            -- Jika tidak ditemukan, kembalikan warna default (Default)
             warn("Color '" .. colorString .. "' not found, using Default theme")
             return Colors["Default"] or Color3.fromRGB(20, 20, 25)
         end
     elseif type(colorString) == "userdata" and typeof(colorString) == "Color3" then
-        -- Jika sudah berupa Color3, kembalikan langsung
         return colorString
     else
-        -- Default ke Default jika input tidak valid
         return Colors["Default"] or Color3.fromRGB(20, 20, 25)
     end
 end
@@ -119,13 +126,13 @@ end
 local Elements = ElementsModule
 
 -- Variabel global untuk config
-local CURRENT_CONFIG_NAME = "NexaHub" -- Default value
+local CURRENT_CONFIG_NAME = "NexaHub"
 ConfigData = {}
 CURRENT_VERSION = nil
 local ConfigFile = ""
-local DEFAULT_NOTIFY_SIZE = 320 -- Default width untuk notifikasi
+local DEFAULT_NOTIFY_SIZE = 320
 
--- Fungsi-fungsi config yang akan diupdate berdasarkan Configname
+-- Fungsi-fungsi config
 function SaveConfig()
     if writefile and ConfigFile ~= "" then
         ConfigData._version = CURRENT_VERSION
@@ -213,8 +220,7 @@ local function MakeDraggable(topbarobject, object)
                     if input.UserInputState == Enum.UserInputState.End then
                         Dragging = false
                     end
-                end
-                )
+                end)
             end
         end)
 
@@ -342,7 +348,6 @@ function Chloex:MakeNotify(NotifyConfig)
     NotifyConfig.Description = NotifyConfig.Description or "Notification"
     NotifyConfig.Content = NotifyConfig.Content or "Content"
     
-    -- Konversi warna jika berupa string (menggunakan Colors dari file terpisah)
     if type(NotifyConfig.Color) == "string" then
         NotifyConfig.Color = getColorFromString(NotifyConfig.Color)
     elseif NotifyConfig.Color == nil then
@@ -671,9 +676,8 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
--- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME dan mendukung icon
+-- Fungsi Notify
 function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
-    -- Konversi warna jika berupa string (menggunakan Colors dari file terpisah)
     local notifyColor = color
     if type(color) == "string" then
         notifyColor = getColorFromString(color)
@@ -693,9 +697,8 @@ function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
     })
 end
 
--- Fungsi baru untuk notifikasi mini
+-- Fungsi MiniNotify
 function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
-    -- Konversi warna jika berupa string (menggunakan Colors dari file terpisah)
     local notifyColor = color
     if type(color) == "string" then
         notifyColor = getColorFromString(color)
@@ -715,7 +718,7 @@ function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
     })
 end
 
--- MODIFIKASI: Tambah fungsi untuk mengatur transparency UI (tanpa save ke config)
+-- Fungsi untuk mengatur transparency UI
 local function applyUITransparency(mainObject, transparency)
     if not mainObject then return end
     
@@ -733,7 +736,6 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
     GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
     
-    -- Konversi warna dari string ke Color3 jika diperlukan (menggunakan Colors dari file terpisah)
     local windowColor = GuiConfig.Color or "Default"
     GuiConfig.Color = getColorFromString(windowColor)
     
@@ -747,13 +749,9 @@ function Chloex:Window(GuiConfig)
     GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple"
     GuiConfig.NotifySize   = GuiConfig.NotifySize or 320
 
-    -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
     CURRENT_CONFIG_NAME = GuiConfig.Configname
-    
-    -- Update DEFAULT_NOTIFY_SIZE berdasarkan parameter NotifySize
     DEFAULT_NOTIFY_SIZE = GuiConfig.NotifySize
     
-    -- Proses folder dan file config berdasarkan Configname
     local configFolderName = GuiConfig.Configname:gsub("%s+", "_")
     
     if not isfolder(configFolderName) then
@@ -771,7 +769,6 @@ function Chloex:Window(GuiConfig)
     
     CURRENT_VERSION = GuiConfig.Version
     
-    -- Panggil fungsi LoadConfigFromFile
     LoadConfigFromFile()
     
     Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
@@ -997,7 +994,6 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
-    -- Gabungkan User Profile dengan LayersTab
     local CombinedLayersTab = Instance.new("Frame")
     CombinedLayersTab.Name = "CombinedLayersTab"
     CombinedLayersTab.BackgroundTransparency = 1
@@ -1010,7 +1006,6 @@ function Chloex:Window(GuiConfig)
     UICornerCombined.CornerRadius = UDim.new(0, 2)
     UICornerCombined.Parent = CombinedLayersTab
 
-    -- Bagian atas: Tab list
     local TabListSection = Instance.new("Frame")
     TabListSection.Name = "TabListSection"
     TabListSection.BackgroundTransparency = 1
@@ -1050,12 +1045,9 @@ function Chloex:Window(GuiConfig)
     ScrollTab.ChildAdded:Connect(UpdateSize1)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
-    -- MODIFIKASI: Buat user profile menggunakan module terpisah
     if GuiConfig.ShowUser then
-        -- Atur ukuran TabListSection untuk memberi ruang untuk user profile
         TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
         
-        -- Buat UserProfileSection
         local UserProfileSection = Instance.new("Frame")
         UserProfileSection.Name = "UserProfileSection"
         UserProfileSection.BackgroundTransparency = 1
@@ -1064,7 +1056,6 @@ function Chloex:Window(GuiConfig)
         UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
         UserProfileSection.Parent = CombinedLayersTab
 
-        -- Frame pembatas
         local Divider = Instance.new("Frame")
         Divider.Name = "Divider"
         Divider.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -1074,7 +1065,6 @@ function Chloex:Window(GuiConfig)
         Divider.Position = UDim2.new(0, 5, 0, 0)
         Divider.Parent = UserProfileSection
 
-        -- Buat user profile berdasarkan tipe yang dipilih
         local userProfile
         if GuiConfig.UserProfileType == "full" then
             userProfile = UserInfo.CreateUserProfile(UserProfileSection, true, GuiConfig.Uitransparent, GuiConfig.Color)
@@ -1082,7 +1072,6 @@ function Chloex:Window(GuiConfig)
             userProfile = UserInfo.CreateSimpleUserProfile(UserProfileSection, true, GuiConfig.Uitransparent, GuiConfig.Color)
         end
         
-        -- Simpan reference jika diperlukan
         GuiFunc.UserProfile = userProfile
     end
 
@@ -1092,7 +1081,6 @@ function Chloex:Window(GuiConfig)
         end
     end
     
-    -- MODIFIKASI: Tambah fungsi untuk mengubah transparency UI secara dinamis (tanpa save ke config)
     function GuiFunc:SetTransparency(transparency)
         if transparency and transparency >= 0 and transparency <= 1 then
             applyUITransparency(Main, transparency)
@@ -1101,12 +1089,10 @@ function Chloex:Window(GuiConfig)
         return false
     end
     
-    -- MODIFIKASI: Tambah fungsi untuk mengubah ukuran notifikasi
     function GuiFunc:SetNotifySize(size)
         if size and type(size) == "number" and size >= 200 and size <= 800 then
             DEFAULT_NOTIFY_SIZE = size
             
-            -- Update NotifyLayout yang sudah ada jika ada
             if CoreGui:FindFirstChild("NotifyGui") and CoreGui.NotifyGui:FindFirstChild("NotifyLayout") then
                 CoreGui.NotifyGui.NotifyLayout.Size = UDim2.new(0, size, 1, 0)
                 CoreGui.NotifyGui.NotifyLayout:SetAttribute("NotifySize", size)
@@ -1120,6 +1106,7 @@ function Chloex:Window(GuiConfig)
         CircleClick(Min, Mouse.X, Mouse.Y)
         DropShadowHolder.Visible = false
     end)
+    
     Close.Activated:Connect(function()
         CircleClick(Close, Mouse.X, Mouse.Y)
 
@@ -1408,10 +1395,11 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
 
-    --// Tabs
+    -- Tabs
     local Tabs = {}
     local CountTab = 0
     local CountDropdown = 0
+    
     function Tabs:AddTab(TabConfig)
         local TabConfig = TabConfig or {}
         TabConfig.Name = TabConfig.Name or "Tab"
@@ -1496,7 +1484,6 @@ function Chloex:Window(GuiConfig)
         FeatureImg.Name = "FeatureImg"
         FeatureImg.Parent = Tab
         
-        -- Menggunakan fungsi getIcon untuk mendapatkan icon di Tab
         local iconImage = getIcon(TabConfig.Icon)
         if iconImage ~= "" then
             FeatureImg.Image = iconImage
@@ -1568,7 +1555,8 @@ function Chloex:Window(GuiConfig)
                 ):Play()
             end
         end)
-        --// Section
+        
+        -- Section
         local Sections = {}
         local CountSection = 0
         
@@ -1849,6 +1837,22 @@ function Chloex:Window(GuiConfig)
                 return Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
             end
 
+            -- KEYBIND IMPLEMENTATION USING MODULE
+            function Items:AddKeybind(KeybindConfig)
+                if KeybindModule then
+                    KeybindConfig = KeybindConfig or {}
+                    KeybindConfig.SaveKey = true
+                    KeybindConfig.ConfigData = ConfigData
+                    KeybindConfig.SaveFunction = SaveConfig
+                    
+                    CountItem = CountItem + 1
+                    return KeybindModule.CreateKeybind(SectionAdd, KeybindConfig, CountItem, UpdateSizeSection)
+                else
+                    warn("Keybind module not loaded! Cannot create keybind.")
+                    return nil
+                end
+            end
+
             function Items:AddDivider()
                 return Elements.AddDivider(SectionAdd, CountItem, UpdateSizeSection)
             end
@@ -1871,4 +1875,3 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
-
