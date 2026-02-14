@@ -510,7 +510,7 @@ Sec.Other:AddSubSection("Example Sub Section")
 ```
 
 # Keybind
-```lau
+```lua
 Sec.Section:AddKeybind({
     Title = "Keybind",
     Value = "V",  -- Default key
@@ -520,6 +520,56 @@ Sec.Section:AddKeybind({
     end
 })
 ```
+
+## Funcion Keybind
+### 1️⃣ `:Set(key)`
+
+Ganti key manual
+
+```lua
+keybind:Set("F")
+```
+
+---
+
+### 2️⃣ `:Get()`
+
+Ambil key sekarang
+
+```lua
+print(keybind:Get())
+```
+
+---
+
+### 3️⃣ `:Enable()`
+
+Aktifkan keybind
+
+```lua
+keybind:Enable()
+```
+
+---
+
+### 4️⃣ `:Disable()`
+
+Nonaktifkan
+
+```lua
+keybind:Disable()
+```
+
+---
+
+### 5️⃣ `:Destroy()`
+
+Hapus & disconnect semua
+
+```lua
+keybind:Destroy()
+```
+
 # 🔔 Notification
 ```lua
 -- Basic notification
