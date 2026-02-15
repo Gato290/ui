@@ -1,5 +1,4 @@
--- Complete Main.lua dengan Dropdown Model Lama (Fixed)
--- Version: Compatible dengan dropdown di dalam window + search
+-- Complete Fixed Script with Dropdown Fixed
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -93,6 +92,7 @@ local function getIcon(iconString)
         return ""
     end
     
+    -- Cek format dengan prefix
     if iconString:find("^lucide:") then
         local iconName = iconString:sub(8)
         return LucideIcons[iconName] or ""
@@ -761,6 +761,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple"
     GuiConfig.NotifySize   = GuiConfig.NotifySize or 320
 
+    -- Set config settings
     if GuiConfig.Config then
         CONFIG_SETTINGS.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
         CONFIG_SETTINGS.AutoLoad = GuiConfig.Config.AutoLoad ~= nil and GuiConfig.Config.AutoLoad or true
@@ -1301,6 +1302,7 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
     MakeDraggable(Top, DropShadowHolder)
 
+    -- Auto load config after initialization
     if CONFIG_SETTINGS.AutoLoad then
         task.wait(0.5)
         LoadConfigElements()
@@ -1751,39 +1753,38 @@ function Chloex:Window(GuiConfig)
             end
 
             -- ============================================
-            -- DROPDOWN MODEL LAMA - FIXED (Di dalam window + search)
+            -- DROPDOWN FIXED - SETIAP DROPDOWN PUNYA KOMPONEN SENDIRI
             -- ============================================
             function Items:AddDropdown(DropdownConfig)
                 CountItem = CountItem + 1
                 
-                -- BUAT KOMPONEN UNTUK DROPDOWN INI
-                -- 1. Blur Container (di dalam SectionAdd, bukan Main)
+                -- PERBAIKAN 1: Buat container di Main UI, bukan di SectionAdd
                 local DropdownBlur = Instance.new("Frame")
                 DropdownBlur.Name = "DropdownBlur_" .. CountItem
-                DropdownBlur.AnchorPoint = Vector2.new(1, 1)
+                DropdownBlur.AnchorPoint = Vector2.new(0.5, 0.5)
                 DropdownBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                DropdownBlur.BackgroundTransparency = 0.999
+                DropdownBlur.BackgroundTransparency = 0.3  -- UBAH: dari 0.999 ke 0.3 untuk visible blur
                 DropdownBlur.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownBlur.BorderSizePixel = 0
-                DropdownBlur.ClipsDescendants = true
-                DropdownBlur.Position = UDim2.new(1, 8, 1, 8)
-                DropdownBlur.Size = UDim2.new(1, 154, 1, 54)
+                DropdownBlur.Position = UDim2.new(0.5, 0, 0.5, 0)
+                DropdownBlur.Size = UDim2.new(1, 0, 1, 0)  -- UBAH: full screen overlay
                 DropdownBlur.Visible = false
-                DropdownBlur.Parent = SectionAdd
+                DropdownBlur.ZIndex = 100  -- TAMBAH: Z-Index tinggi agar di atas semua
+                DropdownBlur.Parent = Main  -- PERBAIKAN: Parent ke Main, bukan SectionAdd
                 
                 -- DropShadow untuk blur
                 local DropShadowHolder1 = Instance.new("Frame")
                 DropShadowHolder1.BackgroundTransparency = 1
                 DropShadowHolder1.BorderSizePixel = 0
                 DropShadowHolder1.Size = UDim2.new(1, 0, 1, 0)
-                DropShadowHolder1.ZIndex = 0
+                DropShadowHolder1.ZIndex = 100
                 DropShadowHolder1.Name = "DropShadowHolder"
                 DropShadowHolder1.Parent = DropdownBlur
                 
                 local DropShadow1 = Instance.new("ImageLabel")
                 DropShadow1.Image = "rbxassetid://6015897843"
                 DropShadow1.ImageColor3 = Color3.fromRGB(0, 0, 0)
-                DropShadow1.ImageTransparency = 0.5
+                DropShadow1.ImageTransparency = 0.5  -- UBAH: dari 1 ke 0.5
                 DropShadow1.ScaleType = Enum.ScaleType.Slice
                 DropShadow1.SliceCenter = Rect.new(49, 49, 450, 450)
                 DropShadow1.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1791,114 +1792,179 @@ function Chloex:Window(GuiConfig)
                 DropShadow1.BorderSizePixel = 0
                 DropShadow1.Position = UDim2.new(0.5, 0, 0.5, 0)
                 DropShadow1.Size = UDim2.new(1, 35, 1, 35)
-                DropShadow1.ZIndex = 0
+                DropShadow1.ZIndex = 100
                 DropShadow1.Name = "DropShadow"
                 DropShadow1.Parent = DropShadowHolder1
                 
                 local UICorner28 = Instance.new("UICorner")
+                UICorner28.CornerRadius = UDim.new(0, 8)
                 UICorner28.Parent = DropdownBlur
                 
-                -- 2. Close Button (untuk menutup dropdown)
+                -- Close Button (untuk menutup dropdown)
                 local CloseButton = Instance.new("TextButton")
                 CloseButton.Font = Enum.Font.SourceSans
                 CloseButton.Text = ""
                 CloseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
                 CloseButton.TextSize = 14
                 CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                CloseButton.BackgroundTransparency = 0.999
+                CloseButton.BackgroundTransparency = 1  -- UBAH: dari 0.999 ke 1
                 CloseButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 CloseButton.BorderSizePixel = 0
                 CloseButton.Size = UDim2.new(1, 0, 1, 0)
+                CloseButton.ZIndex = 101  -- TAMBAH: Di atas blur
                 CloseButton.Name = "CloseButton_" .. CountItem
                 CloseButton.Parent = DropdownBlur
                 
-                -- 3. DropdownSelect (container utama)
+                -- PERBAIKAN 2: DropdownSelect dengan positioning yang benar (UKURAN LEBIH KECIL)
                 local DropdownSelect = Instance.new("Frame")
-                DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
+                DropdownSelect.AnchorPoint = Vector2.new(0.5, 0.5)
                 DropdownSelect.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
                 DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownSelect.BorderSizePixel = 0
-                DropdownSelect.LayoutOrder = 1
-                DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
-                DropdownSelect.Size = UDim2.new(0, 160, 1, -16)
+                DropdownSelect.Position = UDim2.new(0.5, 0, 0.5, 0)
+                DropdownSelect.Size = UDim2.new(0, 280, 0, 350)  -- UBAH: lebih kecil (dari 300x400 ke 280x350)
                 DropdownSelect.Name = "DropdownSelect_" .. CountItem
                 DropdownSelect.ClipsDescendants = true
+                DropdownSelect.ZIndex = 102
                 DropdownSelect.Parent = DropdownBlur
                 
                 local UICorner36 = Instance.new("UICorner")
-                UICorner36.CornerRadius = UDim.new(0, 6)
+                UICorner36.CornerRadius = UDim.new(0, 8)
                 UICorner36.Parent = DropdownSelect
                 
                 local UIStroke14 = Instance.new("UIStroke")
                 UIStroke14.Color = GuiConfig.Color or Color3.fromRGB(12, 159, 255)
-                UIStroke14.Thickness = 1.5
-                UIStroke14.Transparency = 0.7
+                UIStroke14.Thickness = 2
+                UIStroke14.Transparency = 0.5  -- UBAH: dari 0.8 ke 0.5
                 UIStroke14.Parent = DropdownSelect
                 
-                -- 4. Real Dropdown dengan Search
-                local DropdownSelectReal = Instance.new("Frame")
-                DropdownSelectReal.AnchorPoint = Vector2.new(0.5, 0.5)
+                -- Header untuk dropdown (LEBIH TINGGI UNTUK SEARCH)
+                local DropdownHeader = Instance.new("Frame")
+                DropdownHeader.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+                DropdownHeader.BorderSizePixel = 0
+                DropdownHeader.Size = UDim2.new(1, 0, 0, 80)  -- UBAH: 80px untuk header + search
+                DropdownHeader.ZIndex = 103
+                DropdownHeader.Name = "DropdownHeader"
+                DropdownHeader.Parent = DropdownSelect
+                
+                local HeaderCorner = Instance.new("UICorner")
+                HeaderCorner.CornerRadius = UDim.new(0, 8)
+                HeaderCorner.Parent = DropdownHeader
+                
+                local HeaderTitle = Instance.new("TextLabel")
+                HeaderTitle.BackgroundTransparency = 1
+                HeaderTitle.Size = UDim2.new(1, -50, 0, 30)
+                HeaderTitle.Position = UDim2.new(0, 15, 0, 5)
+                HeaderTitle.Font = Enum.Font.GothamBold
+                HeaderTitle.Text = DropdownConfig.Name or "Select Option"
+                HeaderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+                HeaderTitle.TextSize = 15
+                HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
+                HeaderTitle.TextYAlignment = Enum.TextYAlignment.Top
+                HeaderTitle.ZIndex = 104
+                HeaderTitle.Parent = DropdownHeader
+                
+                -- TAMBAH: Search Box
+                local SearchBox = Instance.new("TextBox")
+                SearchBox.AnchorPoint = Vector2.new(0.5, 0)
+                SearchBox.Position = UDim2.new(0.5, 0, 0, 40)
+                SearchBox.Size = UDim2.new(1, -20, 0, 30)
+                SearchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
+                SearchBox.BackgroundTransparency = 0.3
+                SearchBox.BorderSizePixel = 0
+                SearchBox.Font = Enum.Font.Gotham
+                SearchBox.PlaceholderText = "Search..."
+                SearchBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
+                SearchBox.Text = ""
+                SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+                SearchBox.TextSize = 12
+                SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+                SearchBox.ClearTextOnFocus = false
+                SearchBox.ZIndex = 104
+                SearchBox.Name = "SearchBox"
+                SearchBox.Parent = DropdownHeader
+                
+                local SearchCorner = Instance.new("UICorner")
+                SearchCorner.CornerRadius = UDim.new(0, 6)
+                SearchCorner.Parent = SearchBox
+                
+                -- Search icon
+                local SearchIcon = Instance.new("TextLabel")
+                SearchIcon.AnchorPoint = Vector2.new(0, 0.5)
+                SearchIcon.Position = UDim2.new(0, 8, 0.5, 0)
+                SearchIcon.Size = UDim2.new(0, 20, 0, 20)
+                SearchIcon.BackgroundTransparency = 1
+                SearchIcon.Font = Enum.Font.GothamBold
+                SearchIcon.Text = "🔍"
+                SearchIcon.TextSize = 14
+                SearchIcon.TextColor3 = Color3.fromRGB(120, 120, 120)
+                SearchIcon.ZIndex = 105
+                SearchIcon.Parent = SearchBox
+                
+                -- Adjust textbox padding untuk icon
+                local SearchPadding = Instance.new("UIPadding")
+                SearchPadding.PaddingLeft = UDim.new(0, 30)
+                SearchPadding.PaddingRight = UDim.new(0, 10)
+                SearchPadding.Parent = SearchBox
+                
+                -- Close X button
+                local CloseX = Instance.new("TextButton")
+                CloseX.AnchorPoint = Vector2.new(1, 0)
+                CloseX.Position = UDim2.new(1, -10, 0, 5)
+                CloseX.Size = UDim2.new(0, 30, 0, 30)
+                CloseX.BackgroundTransparency = 1
+                CloseX.Font = Enum.Font.GothamBold
+                CloseX.Text = "×"
+                CloseX.TextColor3 = Color3.fromRGB(255, 255, 255)
+                CloseX.TextSize = 24
+                CloseX.ZIndex = 104
+                CloseX.Parent = DropdownHeader
+                
+                -- Real Dropdown Container dengan ScrollingFrame (POSISI ADJUSTED)
+                local DropdownSelectReal = Instance.new("ScrollingFrame")
+                DropdownSelectReal.AnchorPoint = Vector2.new(0.5, 0)
                 DropdownSelectReal.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
                 DropdownSelectReal.BackgroundTransparency = 0
-                DropdownSelectReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownSelectReal.BorderSizePixel = 0
-                DropdownSelectReal.LayoutOrder = 1
-                DropdownSelectReal.Position = UDim2.new(0.5, 0, 0.5, 0)
-                DropdownSelectReal.Size = UDim2.new(1, 0, 1, 0)
+                DropdownSelectReal.Position = UDim2.new(0.5, 0, 0, 85)  -- UBAH: 85px (header 80 + padding 5)
+                DropdownSelectReal.Size = UDim2.new(1, -10, 1, -95)  -- UBAH: height adjusted
+                DropdownSelectReal.CanvasSize = UDim2.new(0, 0, 0, 0)
+                DropdownSelectReal.ScrollBarThickness = 4
+                DropdownSelectReal.ScrollBarImageColor3 = GuiConfig.Color or Color3.fromRGB(12, 159, 255)
+                DropdownSelectReal.ZIndex = 103
                 DropdownSelectReal.Name = "DropdownSelectReal_" .. CountItem
                 DropdownSelectReal.Parent = DropdownSelect
                 
-                -- 5. Search Box
-                local SearchBox = Instance.new("TextBox")
-                SearchBox.PlaceholderText = "Search..."
-                SearchBox.Font = Enum.Font.Gotham
-                SearchBox.Text = ""
-                SearchBox.TextSize = 11
-                SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SearchBox.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-                SearchBox.BackgroundTransparency = 0.5
-                SearchBox.BorderSizePixel = 0
-                SearchBox.Size = UDim2.new(1, -10, 0, 25)
-                SearchBox.Position = UDim2.new(0, 5, 0, 5)
-                SearchBox.ClearTextOnFocus = false
-                SearchBox.Name = "SearchBox"
-                SearchBox.Parent = DropdownSelectReal
+                local RealCorner = Instance.new("UICorner")
+                RealCorner.CornerRadius = UDim.new(0, 6)
+                RealCorner.Parent = DropdownSelectReal
                 
-                local SearchCorner = Instance.new("UICorner")
-                SearchCorner.CornerRadius = UDim.new(0, 4)
-                SearchCorner.Parent = SearchBox
+                -- UIListLayout untuk items
+                local DropdownLayout = Instance.new("UIListLayout")
+                DropdownLayout.Padding = UDim.new(0, 5)
+                DropdownLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                DropdownLayout.Parent = DropdownSelectReal
                 
-                -- 6. ScrollingFrame untuk options
-                local ScrollSelect = Instance.new("ScrollingFrame")
-                ScrollSelect.Size = UDim2.new(1, -10, 1, -35)
-                ScrollSelect.Position = UDim2.new(0, 5, 0, 32)
-                ScrollSelect.ScrollBarImageTransparency = 0.5
-                ScrollSelect.BorderSizePixel = 0
-                ScrollSelect.BackgroundTransparency = 1
-                ScrollSelect.ScrollBarThickness = 3
-                ScrollSelect.ScrollBarImageColor3 = GuiConfig.Color or Color3.fromRGB(12, 159, 255)
-                ScrollSelect.CanvasSize = UDim2.new(0, 0, 0, 0)
-                ScrollSelect.Name = "ScrollSelect"
-                ScrollSelect.Parent = DropdownSelectReal
-                
-                local UIListLayout4 = Instance.new("UIListLayout")
-                UIListLayout4.Padding = UDim.new(0, 3)
-                UIListLayout4.SortOrder = Enum.SortOrder.LayoutOrder
-                UIListLayout4.Parent = ScrollSelect
-                
-                UIListLayout4:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-                    ScrollSelect.CanvasSize = UDim2.new(0, 0, 0, UIListLayout4.AbsoluteContentSize.Y + 5)
+                -- Update canvas size when items added
+                DropdownLayout:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+                    DropdownSelectReal.CanvasSize = UDim2.new(0, 0, 0, DropdownLayout.AbsoluteContentSize.Y + 10)
                 end)
                 
-                -- Search functionality
+                -- TAMBAH: Search functionality
                 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
-                    local query = string.lower(SearchBox.Text)
-                    for _, option in pairs(ScrollSelect:GetChildren()) do
-                        if option.Name == "Option" and option:FindFirstChild("OptionText") then
-                            local text = string.lower(option.OptionText.Text)
-                            option.Visible = query == "" or string.find(text, query, 1, true)
+                    local query = SearchBox.Text:lower()
+                    for _, option in pairs(DropdownSelectReal:GetChildren()) do
+                        if option:IsA("Frame") and option.Name == "Option" then
+                            local optionText = option:FindFirstChild("OptionText")
+                            if optionText then
+                                local text = optionText.Text:lower()
+                                option.Visible = (query == "" or text:find(query, 1, true) ~= nil)
+                            end
                         end
                     end
+                    -- Update canvas size after filtering
+                    task.wait()
+                    DropdownSelectReal.CanvasSize = UDim2.new(0, 0, 0, DropdownLayout.AbsoluteContentSize.Y + 10)
                 end)
                 
                 -- Function untuk menutup dropdown
@@ -1906,24 +1972,47 @@ function Chloex:Window(GuiConfig)
                     if DropdownBlur and DropdownBlur.Visible then
                         TweenService:Create(
                             DropdownBlur, 
-                            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
-                            { BackgroundTransparency = 0.999 }
+                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+                            { BackgroundTransparency = 1 }
                         ):Play()
                         
                         TweenService:Create(
                             DropdownSelect, 
-                            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
-                            { Position = UDim2.new(1, 172, 0.5, 0) }
+                            TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), 
+                            { Size = UDim2.new(0, 280, 0, 0) }  -- UBAH: ukuran close lebih kecil
                         ):Play()
                         
-                        task.wait(0.3)
+                        task.wait(0.2)
                         if DropdownBlur then
                             DropdownBlur.Visible = false
+                            DropdownSelect.Size = UDim2.new(0, 280, 0, 350)  -- UBAH: reset size lebih kecil
+                            SearchBox.Text = ""  -- TAMBAH: Clear search saat close
                         end
                     end
                 end
                 
+                -- Function untuk membuka dropdown
+                local function OpenThisDropdown()
+                    if DropdownBlur then
+                        DropdownBlur.Visible = true
+                        DropdownSelect.Size = UDim2.new(0, 280, 0, 0)  -- UBAH: ukuran start lebih kecil
+                        
+                        TweenService:Create(
+                            DropdownBlur, 
+                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+                            { BackgroundTransparency = 0.3 }
+                        ):Play()
+                        
+                        TweenService:Create(
+                            DropdownSelect, 
+                            TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), 
+                            { Size = UDim2.new(0, 280, 0, 350) }  -- UBAH: ukuran end lebih kecil
+                        ):Play()
+                    end
+                end
+                
                 CloseButton.MouseButton1Click:Connect(CloseThisDropdown)
+                CloseX.MouseButton1Click:Connect(CloseThisDropdown)
                 
                 -- PAKAI PCALL UNTUK HINDARI ERROR
                 local success, dropdownObj = pcall(function()
@@ -1932,16 +2021,18 @@ function Chloex:Window(GuiConfig)
                         DropdownConfig,
                         CountItem,
                         CountDropdown,
-                        DropdownBlur,
-                        ScrollSelect,
-                        UIListLayout4,
+                        OpenThisDropdown,  -- UBAH: Pass open function instead of blur
+                        DropdownSelectReal,  -- UBAH: Pass ScrollingFrame instead of PageLayout
+                        DropdownLayout,  -- TAMBAH: Pass layout
                         UpdateSizeSection
                     )
                 end)
                 
                 if not success then
                     warn("Failed to create dropdown:", dropdownObj)
+                    -- BUAT DROPDOWN DUMMY
                     dropdownObj = {
+                        Open = OpenThisDropdown,
                         Close = CloseThisDropdown,
                         Set = function() end,
                         Get = function() return nil end,
@@ -1953,6 +2044,7 @@ function Chloex:Window(GuiConfig)
                     }
                 end
                 
+                dropdownObj.Open = OpenThisDropdown
                 dropdownObj.Close = CloseThisDropdown
                 
                 CountDropdown = CountDropdown + 1
