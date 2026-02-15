@@ -1,5 +1,5 @@
--- Elements.lua - UI Elements Module (FIXED VERSION)
--- Version 1.2.1 (dengan perbaikan dropdown)
+-- Elements.lua - UI Elements Module (COMPATIBLE VERSION)
+-- Version 1.2.2 - Compatible dengan Main.lua independen
 -- GitHub: https://github.com/Gato290/ui
 
 local TweenService = game:GetService("TweenService")
@@ -32,7 +32,7 @@ local function createBadge(parent, config)
     BadgeFrame.BackgroundColor3 = MainColor
     BadgeFrame.BackgroundTransparency = 0.2
     BadgeFrame.Size = UDim2.new(0, 34, 0, 16)
-    BadgeFrame.Position = UDim2.new(1, -50, 0, 8) -- Posisi default di kanan atas
+    BadgeFrame.Position = UDim2.new(1, -50, 0, 8)
     BadgeFrame.Parent = parent
     BadgeFrame.Name = "BadgeFrame"
     BadgeFrame.ZIndex = 5
@@ -76,7 +76,7 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     config.Icon = config.Icon or nil
     config.ButtonText = config.ButtonText or nil
     config.ButtonCallback = config.ButtonCallback or function() end
-    config.New = config.New or "false" -- Tambahkan properti New
+    config.New = config.New or "false"
 
     local ParagraphFunc = {}
 
@@ -117,7 +117,7 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     ParagraphTitle.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphTitle.BackgroundTransparency = 1
     ParagraphTitle.Position = UDim2.new(0, iconOffset, 0, 10)
-    ParagraphTitle.Size = UDim2.new(1, -80, 0, 13) -- Beri ruang untuk badge
+    ParagraphTitle.Size = UDim2.new(1, -80, 0, 13)
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Parent = Paragraph
 
@@ -139,7 +139,7 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
     -- Buat badge
     local Badge = createBadge(Paragraph, config)
     if Badge then
-        Badge.Position = UDim2.new(1, -90, 0, 8) -- Sesuaikan posisi
+        Badge.Position = UDim2.new(1, -90, 0, 8)
     end
 
     local ParagraphButton
@@ -160,7 +160,6 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
         
-        -- Hover effect untuk button
         ParagraphButton.MouseEnter:Connect(function()
             TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -208,7 +207,7 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     config.ButtonCallback = config.Callback or config.ButtonCallback or function() end
     config.SubButtonText = config.SubButton or config.SubButtonText or nil
     config.SubButtonCallback = config.SubCallback or config.SubButtonCallback or function() end
-    config.New = config.New or "false" -- Tambahkan properti New
+    config.New = config.New or "false"
 
     local configKey = "Panel_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -240,13 +239,12 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.BackgroundTransparency = 1
     Title.Position = UDim2.new(0, 10, 0, 10)
-    Title.Size = UDim2.new(1, -80, 0, 13) -- Beri ruang untuk badge
+    Title.Size = UDim2.new(1, -80, 0, 13)
     Title.Parent = Panel
 
-    -- Buat badge
     local Badge = createBadge(Panel, config)
     if Badge then
-        Badge.Position = UDim2.new(1, -60, 0, 8) -- Sesuaikan posisi
+        Badge.Position = UDim2.new(1, -60, 0, 8)
     end
 
     local Content = Instance.new("TextLabel")
@@ -289,7 +287,6 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
         InputBox.Position = UDim2.new(0, 5, 0, 3)
         InputBox.Parent = InputFrame
         
-        -- Focus effect
         InputBox.Focused:Connect(function()
             TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
         end)
@@ -317,7 +314,6 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = ButtonMain
     
-    -- Hover effect
     ButtonMain.MouseEnter:Connect(function()
         TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
         TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -349,7 +345,6 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
         subCorner.CornerRadius = UDim.new(0, 6)
         subCorner.Parent = SubButton
         
-        -- Hover effect
         SubButton.MouseEnter:Connect(function()
             TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -387,15 +382,13 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     config.Callback = config.Callback or function() end
     config.SubTitle = config.SubTitle or nil
     config.SubCallback = config.SubCallback or function() end
-    config.New = config.New or "false" -- Tambahkan properti New
+    config.New = config.New or "false"
     
-    -- Deteksi apakah ini button v2 (memiliki New atau Title2)
     local isV2 = config.New == "true" or config.Title2 ~= nil
 
     if isV2 then
-        -- Button V2 dengan tampilan lebih modern (seperti di gambar) - VERSION KOMPAK
-        config.Title2 = config.Title2 or "" -- Sub title
-        config.New = config.New == "true" -- Convert ke boolean
+        config.Title2 = config.Title2 or ""
+        config.New = config.New == "true"
         
         local Button = Instance.new("Frame")
         Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -408,7 +401,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = Button
 
-        -- Icon panah (seperti di gambar)
         local ArrowIcon = Instance.new("ImageLabel")
         ArrowIcon.Size = UDim2.new(0, 16, 0, 16)
         ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0)
@@ -421,7 +413,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         ArrowIcon.Name = "ArrowIcon"
         ArrowIcon.Parent = Button
 
-        -- Title utama
         local MainTitle = Instance.new("TextLabel")
         MainTitle.Font = Enum.Font.GothamBold
         MainTitle.Text = config.Title
@@ -431,11 +422,10 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         MainTitle.TextYAlignment = Enum.TextYAlignment.Top
         MainTitle.BackgroundTransparency = 1
         MainTitle.Position = UDim2.new(0, 10, 0, 8)
-        MainTitle.Size = UDim2.new(1, -80, 0, 16) -- Beri ruang untuk badge
+        MainTitle.Size = UDim2.new(1, -80, 0, 16)
         MainTitle.Name = "MainTitle"
         MainTitle.Parent = Button
 
-        -- Sub title (Title2)
         local SubTitle = Instance.new("TextLabel")
         SubTitle.Font = Enum.Font.Gotham
         SubTitle.Text = config.Title2
@@ -445,11 +435,10 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         SubTitle.TextYAlignment = Enum.TextYAlignment.Top
         SubTitle.BackgroundTransparency = 1
         SubTitle.Position = UDim2.new(0, 10, 0, 24)
-        SubTitle.Size = UDim2.new(1, -80, 0, 14) -- Beri ruang untuk badge
+        SubTitle.Size = UDim2.new(1, -80, 0, 14)
         SubTitle.Name = "SubTitle"
         SubTitle.Parent = Button
 
-        -- Badge "NEW" (jika ada)
         if config.New then
             local BadgeFrame = Instance.new("Frame")
             BadgeFrame.BackgroundColor3 = MainColor
@@ -475,7 +464,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             BadgeText.ZIndex = 6
         end
 
-        -- Tombol utama (cover seluruh area)
         local MainButton = Instance.new("TextButton")
         MainButton.Font = Enum.Font.SourceSans
         MainButton.Text = ""
@@ -483,7 +471,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         MainButton.Size = UDim2.new(1, 0, 1, 0)
         MainButton.Parent = Button
 
-        -- Hover effect
         MainButton.MouseEnter:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0}):Play()
@@ -496,7 +483,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play()
         end)
 
-        -- Click effect
         MainButton.MouseButton1Down:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.8}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play()
@@ -513,7 +499,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         return {Click = config.Callback}
 
     else
-        -- Button V1 (original) dengan satu atau dua button
         local Button = Instance.new("Frame")
         Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Button.BackgroundTransparency = 0.935
@@ -525,10 +510,9 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         UICorner.CornerRadius = UDim.new(0, 4)
         UICorner.Parent = Button
 
-        -- Buat badge
         local Badge = createBadge(Button, config)
         if Badge then
-            Badge.Position = UDim2.new(1, -45, 0, 5) -- Sesuaikan posisi untuk button kecil
+            Badge.Position = UDim2.new(1, -45, 0, 5)
         end
 
         local MainButton = Instance.new("TextButton")
@@ -547,7 +531,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         mainCorner.CornerRadius = UDim.new(0, 4)
         mainCorner.Parent = MainButton
         
-        -- Hover effect
         MainButton.MouseEnter:Connect(function()
             TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -577,7 +560,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             subCorner.CornerRadius = UDim.new(0, 4)
             subCorner.Parent = SubButton
             
-            -- Hover effect
             SubButton.MouseEnter:Connect(function()
                 TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
                 TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -603,7 +585,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     config.Content = config.Content or ""
     config.Default = config.Default or false
     config.Callback = config.Callback or function() end
-    config.New = config.New or "false" -- Tambahkan properti New
+    config.New = config.New or "false"
 
     local configKey = "Toggle_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -641,14 +623,13 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     ToggleTitle.TextYAlignment = Enum.TextYAlignment.Top
     ToggleTitle.BackgroundTransparency = 1
     ToggleTitle.Position = UDim2.new(0, 10, 0, 10)
-    ToggleTitle.Size = UDim2.new(1, -120, 0, 13) -- Beri ruang untuk badge
+    ToggleTitle.Size = UDim2.new(1, -120, 0, 13)
     ToggleTitle.Name = "ToggleTitle"
     ToggleTitle.Parent = Toggle
 
-    -- Buat badge
     local Badge = createBadge(Toggle, config)
     if Badge then
-        Badge.Position = UDim2.new(1, -70, 0, 8) -- Sesuaikan posisi
+        Badge.Position = UDim2.new(1, -70, 0, 8)
     end
 
     local ToggleTitle2 = Instance.new("TextLabel")
@@ -782,7 +763,7 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     config.Max = config.Max or 100
     config.Default = config.Default or 50
     config.Callback = config.Callback or function() end
-    config.New = config.New or "false" -- Tambahkan properti New
+    config.New = config.New or "false"
 
     local configKey = "Slider_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -831,14 +812,13 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     SliderTitle.BorderSizePixel = 0
     SliderTitle.Position = UDim2.new(0, 10, 0, 10)
-    SliderTitle.Size = UDim2.new(1, -200, 0, 13) -- Beri ruang untuk badge
+    SliderTitle.Size = UDim2.new(1, -200, 0, 13)
     SliderTitle.Name = "SliderTitle"
     SliderTitle.Parent = Slider
 
-    -- Buat badge
     local Badge = createBadge(Slider, config)
     if Badge then
-        Badge.Position = UDim2.new(1, -170, 0, 8) -- Sesuaikan posisi (sebelum input box)
+        Badge.Position = UDim2.new(1, -170, 0, 8)
     end
 
     SliderContent.Font = Enum.Font.GothamBold
@@ -946,11 +926,9 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
         SliderFunc.Value = Value
         TextBox.Text = tostring(Value)
         
-        -- Smooth animation untuk slider
         local targetSize = UDim2.fromScale((Value - config.Min) / (config.Max - config.Min), 1)
         TweenService:Create(SliderDraggable, TweenInfoPresets.Slow, { Size = targetSize }):Play()
         
-        -- Callback dengan pcall untuk keamanan
         local success, err = pcall(function()
             config.Callback(Value)
         end)
@@ -963,7 +941,6 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderFrame.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
-            -- Smooth circle expansion
             TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 14, 0, 14) }):Play()
             
             local SizeScale = math.clamp(
@@ -978,10 +955,8 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderFrame.InputEnded:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = false
-            -- Smooth circle shrink
             TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 8, 0, 8) }):Play()
             
-            -- Final callback
             local success, err = pcall(function()
                 config.Callback(SliderFunc.Value)
             end)
@@ -1021,7 +996,7 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     config.Content = config.Content or ""
     config.Callback = config.Callback or function() end
     config.Default = config.Default or ""
-    config.New = config.New or "false" -- Tambahkan properti New
+    config.New = config.New or "false"
 
     local configKey = "Input_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -1061,14 +1036,13 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     InputTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     InputTitle.BorderSizePixel = 0
     InputTitle.Position = UDim2.new(0, 10, 0, 10)
-    InputTitle.Size = UDim2.new(1, -200, 0, 13) -- Beri ruang untuk badge
+    InputTitle.Size = UDim2.new(1, -200, 0, 13)
     InputTitle.Name = "InputTitle"
     InputTitle.Parent = Input
 
-    -- Buat badge
     local Badge = createBadge(Input, config)
     if Badge then
-        Badge.Position = UDim2.new(1, -170, 0, 8) -- Sesuaikan posisi
+        Badge.Position = UDim2.new(1, -170, 0, 8)
     end
 
     InputContent.Font = Enum.Font.GothamBold
@@ -1132,7 +1106,6 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     InputTextBox.Name = "InputTextBox"
     InputTextBox.Parent = InputFrame
     
-    -- Focus effect
     InputTextBox.Focused:Connect(function()
         TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
     end)
@@ -1159,8 +1132,8 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     return InputFunc
 end
 
--- ============== DROPDOWN FIXED VERSION ==============
-function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, moreBlur, dropPageLayout, updateSizeCallback)
+-- DROPDOWN - Compatible dengan Main.lua independen
+function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, blurContainer, dropPageLayout, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
     config.Content = config.Content or ""
@@ -1177,10 +1150,9 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
 
     local DropdownFunc = { Value = config.Default, Options = config.Options }
 
-    -- SAFETY CHECK: Pastikan moreBlur dan dropPageLayout valid
-    if not moreBlur or not dropPageLayout then
-        warn("Dropdown Error: moreBlur or dropPageLayout is nil")
-        -- Return dummy object biar ga error
+    -- SAFETY CHECK
+    if not blurContainer or not dropPageLayout then
+        warn("Dropdown Error: blurContainer or dropPageLayout is nil")
         return {
             Clear = function() end,
             AddOption = function() end,
@@ -1228,7 +1200,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     DropdownTitle.Name = "DropdownTitle"
     DropdownTitle.Parent = Dropdown
 
-    -- Buat badge
     local Badge = createBadge(Dropdown, config)
     if Badge then
         Badge.Position = UDim2.new(1, -170, 0, 8)
@@ -1258,7 +1229,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     UICorner11.CornerRadius = UDim.new(0, 4)
     UICorner11.Parent = SelectOptionsFrame
 
-    -- Hover effect
     SelectOptionsFrame.MouseEnter:Connect(function()
         TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.9}):Play()
     end)
@@ -1267,43 +1237,44 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
     end)
 
-    -- FIXED: Dropdown button click handler dengan safety checks
+    -- Dropdown button click handler
     DropdownButton.Activated:Connect(function()
-        -- Safety check
-        if not moreBlur then 
-            warn("Dropdown Error: moreBlur is nil")
+        if not blurContainer then 
+            warn("Dropdown Error: blurContainer is nil")
             return 
         end
         
-        if not moreBlur.Visible then
-            moreBlur.Visible = true
+        if not blurContainer.Visible then
+            blurContainer.Visible = true
             
-            -- Safety check untuk dropPageLayout
             if dropPageLayout then
                 dropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder or 0)
             end
             
-            -- Safety check untuk tween
-            local success1, err1 = pcall(function()
-                TweenService:Create(moreBlur, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
+            pcall(function()
+                TweenService:Create(blurContainer, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
             end)
-            if not success1 then warn("Tween error 1:", err1) end
             
-            -- SAFETY CHECK: Cari DropdownSelect dengan aman
-            local dropdownSelect = moreBlur:FindFirstChild("DropdownSelect")
-            if dropdownSelect then
-                local success2, err2 = pcall(function()
-                    TweenService:Create(dropdownSelect, TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
-                end)
-                if not success2 then warn("Tween error 2:", err2) end
-            else
-                warn("Dropdown Error: DropdownSelect not found in moreBlur")
+            -- Cari DropdownSelect - untuk mode independen, namanya "DropdownSelect_" .. countItem
+            local dropdownSelectName = "DropdownSelect_" .. countItem
+            local dropdownSelect = blurContainer:FindFirstChild(dropdownSelectName)
+            
+            -- Fallback ke pencarian umum
+            if not dropdownSelect then
+                dropdownSelect = blurContainer:FindFirstChild("DropdownSelect")
             end
             
-            -- Rotasi arrow
+            if dropdownSelect then
+                pcall(function()
+                    TweenService:Create(dropdownSelect, TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
+                end)
+            else
+                warn("DropdownSelect not found in", blurContainer.Name)
+            end
+            
             TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
         else
-            moreBlur.Visible = false
+            blurContainer.Visible = false
             TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
         end
     end)
@@ -1330,35 +1301,34 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     OptionImg.Name = "OptionImg"
     OptionImg.Parent = SelectOptionsFrame
 
-    -- SAFETY CHECK: Cari DropdownContainer dengan aman
-    local dropdownSelect = moreBlur:FindFirstChild("DropdownSelect")
-    if not dropdownSelect then
-        warn("Dropdown Error: Cannot find DropdownSelect in moreBlur")
-        -- Return dummy object
-        return {
-            Clear = function() end,
-            AddOption = function() end,
-            Set = function() end,
-            SetValues = function() end,
-            GetValue = function() return nil end
-        }
+    -- Cari folder untuk dropdown items
+    local dropdownFolder
+    if blurContainer then
+        -- Coba cari dengan nama spesifik dulu
+        local dropdownSelectName = "DropdownSelect_" .. countItem
+        local dropdownSelect = blurContainer:FindFirstChild(dropdownSelectName)
+        
+        if dropdownSelect then
+            local dropdownSelectReal = dropdownSelect:FindFirstChild("DropdownSelectReal_" .. countItem)
+            if dropdownSelectReal then
+                dropdownFolder = dropdownSelectReal:FindFirstChild("DropdownFolder_" .. countItem)
+            end
+        end
+        
+        -- Fallback ke pencarian umum
+        if not dropdownFolder then
+            local dropdownSelect = blurContainer:FindFirstChild("DropdownSelect")
+            if dropdownSelect then
+                local dropdownSelectReal = dropdownSelect:FindFirstChild("DropdownSelectReal")
+                if dropdownSelectReal then
+                    dropdownFolder = dropdownSelectReal:FindFirstChild("DropdownFolder")
+                end
+            end
+        end
     end
 
-    local dropdownSelectReal = dropdownSelect:FindFirstChild("DropdownSelectReal")
-    if not dropdownSelectReal then
-        warn("Dropdown Error: Cannot find DropdownSelectReal")
-        return {
-            Clear = function() end,
-            AddOption = function() end,
-            Set = function() end,
-            SetValues = function() end,
-            GetValue = function() return nil end
-        }
-    end
-
-    local dropdownFolder = dropdownSelectReal:FindFirstChild("DropdownFolder")
     if not dropdownFolder then
-        warn("Dropdown Error: Cannot find DropdownFolder")
+        warn("Dropdown Error: Cannot find dropdown folder")
         return {
             Clear = function() end,
             AddOption = function() end,
@@ -1462,7 +1432,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
         
-        -- Hover effect
         OptionButton.MouseEnter:Connect(function()
             TweenService:Create(Option, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
         end)
@@ -1533,7 +1502,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
                 local selected = config.Multi and table.find(DropdownFunc.Value, v) or DropdownFunc.Value == v
 
                 if selected then
-                    -- Smooth animation untuk selection
                     TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Slow,
                         { Size = UDim2.new(0, 1, 0, 12) }):Play()
                     TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfoPresets.Normal, { Transparency = 0 }):Play()
