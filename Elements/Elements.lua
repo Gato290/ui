@@ -1,5 +1,5 @@
--- Elements.lua - UI Elements Module
--- Version 1.2.0 (dengan Badge untuk semua elemen)
+-- Elements.lua - UI Elements Module (FIXED VERSION)
+-- Version 1.2.1 (dengan perbaikan dropdown)
 -- GitHub: https://github.com/Gato290/ui
 
 local TweenService = game:GetService("TweenService")
@@ -1159,6 +1159,7 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     return InputFunc
 end
 
+-- ============== DROPDOWN FIXED VERSION ==============
 function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, moreBlur, dropPageLayout, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
@@ -1167,7 +1168,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     config.Options = config.Options or {}
     config.Default = config.Default or (config.Multi and {} or nil)
     config.Callback = config.Callback or function() end
-    config.New = config.New or "false" -- Tambahkan properti New
+    config.New = config.New or "false"
 
     local configKey = "Dropdown_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -1175,6 +1176,19 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     end
 
     local DropdownFunc = { Value = config.Default, Options = config.Options }
+
+    -- SAFETY CHECK: Pastikan moreBlur dan dropPageLayout valid
+    if not moreBlur or not dropPageLayout then
+        warn("Dropdown Error: moreBlur or dropPageLayout is nil")
+        -- Return dummy object biar ga error
+        return {
+            Clear = function() end,
+            AddOption = function() end,
+            Set = function() end,
+            SetValues = function() end,
+            GetValue = function() return nil end
+        }
+    end
 
     local Dropdown = Instance.new("Frame")
     local DropdownButton = Instance.new("TextButton")
@@ -1210,14 +1224,14 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     DropdownTitle.TextXAlignment = Enum.TextXAlignment.Left
     DropdownTitle.BackgroundTransparency = 1
     DropdownTitle.Position = UDim2.new(0, 10, 0, 10)
-    DropdownTitle.Size = UDim2.new(1, -180, 0, 13) -- Beri ruang untuk badge
+    DropdownTitle.Size = UDim2.new(1, -180, 0, 13)
     DropdownTitle.Name = "DropdownTitle"
     DropdownTitle.Parent = Dropdown
 
     -- Buat badge
     local Badge = createBadge(Dropdown, config)
     if Badge then
-        Badge.Position = UDim2.new(1, -170, 0, 8) -- Sesuaikan posisi
+        Badge.Position = UDim2.new(1, -170, 0, 8)
     end
 
     DropdownContent.Font = Enum.Font.GothamBold
@@ -1244,7 +1258,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     UICorner11.CornerRadius = UDim.new(0, 4)
     UICorner11.Parent = SelectOptionsFrame
 
-    -- Hover effect untuk SelectOptionsFrame
+    -- Hover effect
     SelectOptionsFrame.MouseEnter:Connect(function()
         TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.9}):Play()
     end)
@@ -1253,17 +1267,43 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
     end)
 
+    -- FIXED: Dropdown button click handler dengan safety checks
     DropdownButton.Activated:Connect(function()
+        -- Safety check
+        if not moreBlur then 
+            warn("Dropdown Error: moreBlur is nil")
+            return 
+        end
+        
         if not moreBlur.Visible then
             moreBlur.Visible = true
-            dropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder)
-            TweenService:Create(moreBlur, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
-            TweenService:Create(moreBlur:FindFirstChild("DropdownSelect"), TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
-            -- Rotasi arrow saat dibuka
+            
+            -- Safety check untuk dropPageLayout
+            if dropPageLayout then
+                dropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder or 0)
+            end
+            
+            -- Safety check untuk tween
+            local success1, err1 = pcall(function()
+                TweenService:Create(moreBlur, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
+            end)
+            if not success1 then warn("Tween error 1:", err1) end
+            
+            -- SAFETY CHECK: Cari DropdownSelect dengan aman
+            local dropdownSelect = moreBlur:FindFirstChild("DropdownSelect")
+            if dropdownSelect then
+                local success2, err2 = pcall(function()
+                    TweenService:Create(dropdownSelect, TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
+                end)
+                if not success2 then warn("Tween error 2:", err2) end
+            else
+                warn("Dropdown Error: DropdownSelect not found in moreBlur")
+            end
+            
+            -- Rotasi arrow
             TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
         else
             moreBlur.Visible = false
-            -- Rotasi arrow kembali saat ditutup
             TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
         end
     end)
@@ -1290,10 +1330,48 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     OptionImg.Name = "OptionImg"
     OptionImg.Parent = SelectOptionsFrame
 
+    -- SAFETY CHECK: Cari DropdownContainer dengan aman
+    local dropdownSelect = moreBlur:FindFirstChild("DropdownSelect")
+    if not dropdownSelect then
+        warn("Dropdown Error: Cannot find DropdownSelect in moreBlur")
+        -- Return dummy object
+        return {
+            Clear = function() end,
+            AddOption = function() end,
+            Set = function() end,
+            SetValues = function() end,
+            GetValue = function() return nil end
+        }
+    end
+
+    local dropdownSelectReal = dropdownSelect:FindFirstChild("DropdownSelectReal")
+    if not dropdownSelectReal then
+        warn("Dropdown Error: Cannot find DropdownSelectReal")
+        return {
+            Clear = function() end,
+            AddOption = function() end,
+            Set = function() end,
+            SetValues = function() end,
+            GetValue = function() return nil end
+        }
+    end
+
+    local dropdownFolder = dropdownSelectReal:FindFirstChild("DropdownFolder")
+    if not dropdownFolder then
+        warn("Dropdown Error: Cannot find DropdownFolder")
+        return {
+            Clear = function() end,
+            AddOption = function() end,
+            Set = function() end,
+            SetValues = function() end,
+            GetValue = function() return nil end
+        }
+    end
+
     local DropdownContainer = Instance.new("Frame")
     DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
     DropdownContainer.BackgroundTransparency = 1
-    DropdownContainer.Parent = moreBlur:FindFirstChild("DropdownSelect"):FindFirstChild("DropdownSelectReal"):FindFirstChild("DropdownFolder")
+    DropdownContainer.Parent = dropdownFolder
 
     local SearchBox = Instance.new("TextBox")
     SearchBox.PlaceholderText = "Search"
@@ -1384,7 +1462,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
         
-        -- Hover effect untuk option
+        -- Hover effect
         OptionButton.MouseEnter:Connect(function()
             TweenService:Create(Option, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
         end)
@@ -1433,7 +1511,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
                 end
             else
                 DropdownFunc.Value = value
-                -- Tidak auto close untuk single select
             end
             DropdownFunc:Set(DropdownFunc.Value)
         end)
