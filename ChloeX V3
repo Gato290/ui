@@ -1,4 +1,4 @@
--- New with Old Dropdown
+-- New (with old dropdown)
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -86,49 +86,7 @@ if not successKeybind then
     KeybindModule = nil
 end
 
--- Old Icons table for dropdown (from old version)
-local OldIcons = {
-    alert     = "rbxassetid://73186275216515",
-    bag       = "rbxassetid://8601111810",
-    boss      = "rbxassetid://13132186360",
-    cart      = "rbxassetid://128874923961846",
-    compas    = "rbxassetid://125300760963399",
-    crosshair = "rbxassetid://12614416478",
-    dcs       = "rbxassetid://15310731934",
-    discord   = "rbxassetid://94434236999817",
-    eyes      = "rbxassetid://14321059114",
-    fish      = "rbxassetid://97167558235554",
-    folder      = "rbxassetid://111411260968321",
-    gamepad   = "rbxassetid://84173963561612",
-    gps       = "rbxassetid://17824309485",
-    home       = "rbxassetid://70416927963252",
-    idea      = "rbxassetid://16833255748",
-    lexshub   = "rbxassetid://71947103252559",
-    loop      = "rbxassetid://122032243989747",
-    menu      = "rbxassetid://6340513838",
-    next      = "rbxassetid://12662718374",
-    Notify        = "rbxassetid://70884221600423",
-    payment   = "rbxassetid://18747025078",
-    player    = "rbxassetid://12120698352",
-    plug      = "rbxassetid://137601480983962",
-    question  = "rbxassetid://17510196486",
-    rod       = "rbxassetid://103247953194129",
-    scan      = "rbxassetid://109869955247116",
-    scroll    = "rbxassetid://114127804740858",
-    settings  = "rbxassetid://70386228443175",
-    shop      = "rbxassetid://4985385964",
-    skeleton  = "rbxassetid://17313330026",
-    star      = "rbxassetid://107005941750079",
-    start     = "rbxassetid://108886429866687",
-    stat      = "rbxassetid://12094445329",
-    strom     = "rbxassetid://13321880293",
-    sword     = "rbxassetid://82472368671405",
-    user      = "rbxassetid://108483430622128",
-    water     = "rbxassetid://100076212630732",
-    web       = "rbxassetid://137601480983962",
-}
-
--- Fungsi untuk mendapatkan icon berdasarkan format (NEW VERSION)
+-- Fungsi untuk mendapatkan icon berdasarkan format
 local function getIcon(iconString)
     if not iconString or iconString == "" then
         return ""
@@ -149,18 +107,6 @@ local function getIcon(iconString)
             -- Jika bukan key di Icons, anggap sebagai asset ID langsung
             return iconString
         end
-    end
-end
-
--- Fungsi untuk icon dropdown (OLD VERSION)
-local function getOldIcon(iconString)
-    if not iconString or iconString == "" then
-        return ""
-    end
-    if OldIcons[iconString] then
-        return OldIcons[iconString]
-    else
-        return iconString
     end
 end
 
@@ -799,268 +745,6 @@ local function applyUITransparency(mainObject, transparency)
     end
 end
 
--- OLD DROPDOWN FUNCTION (untuk digunakan di dalam window)
-local function CreateOldDropdown(parent, config, itemCount, countDropdown, moreBlur, dropPageLayout, updateSizeCallback)
-    config = config or {}
-    config.Name = config.Name or "Dropdown"
-    config.Options = config.Options or {}
-    config.Default = config.Default or ""
-    config.Callback = config.Callback or function() end
-    config.Icon = config.Icon or ""
-    
-    local dropdownItem = Instance.new("Frame")
-    dropdownItem.Name = "DropdownItem"
-    dropdownItem.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    dropdownItem.BackgroundTransparency = 0.9990000128746033
-    dropdownItem.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    dropdownItem.BorderSizePixel = 0
-    dropdownItem.Size = UDim2.new(1, 0, 0, 30)
-    dropdownItem.LayoutOrder = itemCount
-    dropdownItem.Parent = parent
-    
-    local dropdownFrame = Instance.new("Frame")
-    dropdownFrame.Name = "DropdownFrame"
-    dropdownFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    dropdownFrame.BackgroundTransparency = 0.9350000023841858
-    dropdownFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    dropdownFrame.BorderSizePixel = 0
-    dropdownFrame.Size = UDim2.new(1, 0, 0, 30)
-    dropdownFrame.Parent = dropdownItem
-    
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 4)
-    UICorner.Parent = dropdownFrame
-    
-    local dropdownButton = Instance.new("TextButton")
-    dropdownButton.Name = "DropdownButton"
-    dropdownButton.Font = Enum.Font.SourceSans
-    dropdownButton.Text = ""
-    dropdownButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    dropdownButton.TextSize = 14
-    dropdownButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    dropdownButton.BackgroundTransparency = 0.9990000128746033
-    dropdownButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    dropdownButton.BorderSizePixel = 0
-    dropdownButton.Size = UDim2.new(1, 0, 1, 0)
-    dropdownButton.Parent = dropdownFrame
-    
-    local iconLabel
-    if config.Icon and config.Icon ~= "" then
-        local iconImage = getOldIcon(config.Icon)
-        if iconImage and iconImage ~= "" then
-            iconLabel = Instance.new("ImageLabel")
-            iconLabel.Name = "IconLabel"
-            iconLabel.Image = iconImage
-            iconLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            iconLabel.BackgroundTransparency = 0.9990000128746033
-            iconLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            iconLabel.BorderSizePixel = 0
-            iconLabel.Position = UDim2.new(0, 10, 0, 7)
-            iconLabel.Size = UDim2.new(0, 16, 0, 16)
-            iconLabel.Parent = dropdownFrame
-        end
-    end
-    
-    local nameLabel = Instance.new("TextLabel")
-    nameLabel.Name = "NameLabel"
-    nameLabel.Font = Enum.Font.GothamBold
-    nameLabel.Text = config.Name
-    nameLabel.TextColor3 = Color3.fromRGB(230.77499270439148, 230.77499270439148, 230.77499270439148)
-    nameLabel.TextSize = 13
-    nameLabel.TextXAlignment = Enum.TextXAlignment.Left
-    nameLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    nameLabel.BackgroundTransparency = 0.9990000128746033
-    nameLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    nameLabel.BorderSizePixel = 0
-    
-    if iconLabel then
-        nameLabel.Position = UDim2.new(0, 35, 0, 0)
-        nameLabel.Size = UDim2.new(1, -95, 1, 0)
-    else
-        nameLabel.Position = UDim2.new(0, 10, 0, 0)
-        nameLabel.Size = UDim2.new(1, -70, 1, 0)
-    end
-    nameLabel.Parent = dropdownFrame
-    
-    local valueLabel = Instance.new("TextLabel")
-    valueLabel.Name = "ValueLabel"
-    valueLabel.Font = Enum.Font.Gotham
-    valueLabel.Text = config.Default or "Select..."
-    valueLabel.TextColor3 = Color3.fromRGB(150.0000062584877, 150.0000062584877, 150.0000062584877)
-    valueLabel.TextSize = 12
-    valueLabel.TextXAlignment = Enum.TextXAlignment.Right
-    valueLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    valueLabel.BackgroundTransparency = 0.9990000128746033
-    valueLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    valueLabel.BorderSizePixel = 0
-    valueLabel.Position = UDim2.new(0, 0, 0, 0)
-    valueLabel.Size = UDim2.new(1, -15, 1, 0)
-    valueLabel.Parent = dropdownFrame
-    
-    local arrowLabel = Instance.new("ImageLabel")
-    arrowLabel.Name = "ArrowLabel"
-    arrowLabel.Image = "rbxassetid://16851841101"
-    arrowLabel.AnchorPoint = Vector2.new(1, 0.5)
-    arrowLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    arrowLabel.BackgroundTransparency = 0.9990000128746033
-    arrowLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    arrowLabel.BorderSizePixel = 0
-    arrowLabel.Position = UDim2.new(1, -5, 0.5, 0)
-    arrowLabel.Size = UDim2.new(0, 15, 0, 15)
-    arrowLabel.Parent = dropdownFrame
-    
-    -- Dropdown selection panel
-    local selectionPanel = Instance.new("ScrollingFrame")
-    selectionPanel.Name = "SelectionPanel"
-    selectionPanel.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
-    selectionPanel.BackgroundTransparency = 0.1
-    selectionPanel.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    selectionPanel.BorderSizePixel = 0
-    selectionPanel.Position = UDim2.new(0, 0, 1, 5)
-    selectionPanel.Size = UDim2.new(1, 0, 0, 120)
-    selectionPanel.Visible = false
-    selectionPanel.ZIndex = 10
-    selectionPanel.Parent = dropdownFrame
-    
-    local panelCorner = Instance.new("UICorner")
-    panelCorner.CornerRadius = UDim.new(0, 4)
-    panelCorner.Parent = selectionPanel
-    
-    local optionsLayout = Instance.new("UIListLayout")
-    optionsLayout.Padding = UDim.new(0, 2)
-    optionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    optionsLayout.Parent = selectionPanel
-    
-    local function updateOptionsLayout()
-        local height = 0
-        for _, option in pairs(selectionPanel:GetChildren()) do
-            if option:IsA("TextButton") then
-                height = height + 25 + 2
-            end
-        end
-        selectionPanel.CanvasSize = UDim2.new(0, 0, 0, height)
-    end
-    
-    local selectedValue = config.Default or ""
-    
-    local function createOption(optionText)
-        local optionButton = Instance.new("TextButton")
-        optionButton.Name = "Option"
-        optionButton.Font = Enum.Font.Gotham
-        optionButton.Text = optionText
-        optionButton.TextColor3 = Color3.fromRGB(200, 200, 200)
-        optionButton.TextSize = 12
-        optionButton.TextXAlignment = Enum.TextXAlignment.Left
-        optionButton.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-        optionButton.BackgroundTransparency = 0.5
-        optionButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        optionButton.BorderSizePixel = 0
-        optionButton.Size = UDim2.new(1, -10, 0, 25)
-        optionButton.Position = UDim2.new(0, 5, 0, 0)
-        optionButton.ZIndex = 11
-        optionButton.Parent = selectionPanel
-        
-        local optionCorner = Instance.new("UICorner")
-        optionCorner.CornerRadius = UDim.new(0, 3)
-        optionCorner.Parent = optionButton
-        
-        optionButton.MouseEnter:Connect(function()
-            TweenService:Create(optionButton, TweenInfo.new(0.2), { BackgroundTransparency = 0.2 }):Play()
-        end)
-        
-        optionButton.MouseLeave:Connect(function()
-            TweenService:Create(optionButton, TweenInfo.new(0.2), { BackgroundTransparency = 0.5 }):Play()
-        end)
-        
-        optionButton.MouseButton1Click:Connect(function()
-            selectedValue = optionText
-            valueLabel.Text = optionText
-            selectionPanel.Visible = false
-            arrowLabel.Rotation = 0
-            config.Callback(optionText)
-            
-            -- Simpan ke config
-            if config.SaveKey and config.SaveKey ~= "" then
-                ConfigData[config.SaveKey] = optionText
-                AutoSave()
-            end
-        end)
-    end
-    
-    for _, option in pairs(config.Options) do
-        createOption(option)
-    end
-    
-    updateOptionsLayout()
-    
-    dropdownButton.MouseButton1Click:Connect(function()
-        selectionPanel.Visible = not selectionPanel.Visible
-        arrowLabel.Rotation = selectionPanel.Visible and 90 or 0
-    end)
-    
-    -- Close dropdown when clicking outside
-    UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local pos = UserInputService.GetMouseLocation(input)
-            local absPos = dropdownFrame.AbsolutePosition
-            local absSize = dropdownFrame.AbsoluteSize
-            
-            if not (pos.X >= absPos.X and pos.X <= absPos.X + absSize.X and
-                   pos.Y >= absPos.Y and pos.Y <= absPos.Y + absSize.Y + 125) then
-                selectionPanel.Visible = false
-                arrowLabel.Rotation = 0
-            end
-        end
-    end)
-    
-    local dropdownObject = {}
-    
-    function dropdownObject:Set(value)
-        selectedValue = value
-        valueLabel.Text = value
-        config.Callback(value)
-    end
-    
-    function dropdownObject:Get()
-        return selectedValue
-    end
-    
-    function dropdownObject:Add(option)
-        createOption(option)
-        updateOptionsLayout()
-    end
-    
-    function dropdownObject:Remove(option)
-        for _, child in pairs(selectionPanel:GetChildren()) do
-            if child:IsA("TextButton") and child.Text == option then
-                child:Destroy()
-                break
-            end
-        end
-        updateOptionsLayout()
-    end
-    
-    function dropdownObject:Clear()
-        for _, child in pairs(selectionPanel:GetChildren()) do
-            if child:IsA("TextButton") then
-                child:Destroy()
-            end
-        end
-        selectedValue = ""
-        valueLabel.Text = "Select..."
-        updateOptionsLayout()
-    end
-    
-    function dropdownObject:Refresh(newOptions)
-        self:Clear()
-        for _, option in pairs(newOptions) do
-            self:Add(option)
-        end
-    end
-    
-    return dropdownObject
-end
-
 function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
@@ -1124,6 +808,8 @@ function Chloex:Window(GuiConfig)
     local ImageLabel1 = Instance.new("ImageLabel");
     local Min = Instance.new("TextButton");
     local ImageLabel2 = Instance.new("ImageLabel");
+    local LayersTab = Instance.new("Frame"); -- Diganti dari DecideFrame
+    local UICorner2 = Instance.new("UICorner");
     local DecideFrame = Instance.new("Frame");
     local Layers = Instance.new("Frame");
     local UICorner6 = Instance.new("UICorner");
@@ -1273,6 +959,18 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
+    LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Background transparan untuk tab container
+    LayersTab.BackgroundTransparency = 0.9990000128746033
+    LayersTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    LayersTab.BorderSizePixel = 0
+    LayersTab.Position = UDim2.new(0, 9, 0, 50)
+    LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59)
+    LayersTab.Name = "LayersTab"
+    LayersTab.Parent = Main
+
+    UICorner2.CornerRadius = UDim.new(0, 2)
+    UICorner2.Parent = LayersTab
+
     DecideFrame.AnchorPoint = Vector2.new(0.5, 0)
     DecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DecideFrame.BackgroundTransparency = 0.85
@@ -1330,26 +1028,6 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
-    local CombinedLayersTab = Instance.new("Frame")
-    CombinedLayersTab.Name = "CombinedLayersTab"
-    CombinedLayersTab.BackgroundTransparency = 1
-    CombinedLayersTab.BorderSizePixel = 0
-    CombinedLayersTab.Position = UDim2.new(0, 9, 0, 50)
-    CombinedLayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59)
-    CombinedLayersTab.Parent = Main
-
-    local UICornerCombined = Instance.new("UICorner")
-    UICornerCombined.CornerRadius = UDim.new(0, 2)
-    UICornerCombined.Parent = CombinedLayersTab
-
-    local TabListSection = Instance.new("Frame")
-    TabListSection.Name = "TabListSection"
-    TabListSection.BackgroundTransparency = 1
-    TabListSection.BorderSizePixel = 0
-    TabListSection.Size = UDim2.new(1, 0, 1, 0)
-    TabListSection.Position = UDim2.new(0, 0, 0, 0)
-    TabListSection.Parent = CombinedLayersTab
-
     local ScrollTab = Instance.new("ScrollingFrame");
     local UIListLayout = Instance.new("UIListLayout");
 
@@ -1363,7 +1041,7 @@ function Chloex:Window(GuiConfig)
     ScrollTab.BorderSizePixel = 0
     ScrollTab.Size = UDim2.new(1, 0, 1, 0)
     ScrollTab.Name = "ScrollTab"
-    ScrollTab.Parent = TabListSection
+    ScrollTab.Parent = LayersTab
 
     UIListLayout.Padding = UDim.new(0, 3)
     UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1382,7 +1060,7 @@ function Chloex:Window(GuiConfig)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
     if GuiConfig.ShowUser then
-        TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
+        LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 0.7, 0) -- Sesuaikan ukuran tab
         
         local UserProfileSection = Instance.new("Frame")
         UserProfileSection.Name = "UserProfileSection"
@@ -1390,7 +1068,7 @@ function Chloex:Window(GuiConfig)
         UserProfileSection.BorderSizePixel = 0
         UserProfileSection.Size = UDim2.new(1, 0, 0.3, 0)
         UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
-        UserProfileSection.Parent = CombinedLayersTab
+        UserProfileSection.Parent = LayersTab
 
         local Divider = Instance.new("Frame")
         Divider.Name = "Divider"
@@ -1620,6 +1298,7 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
     MakeDraggable(Top, DropShadowHolder)
 
+    -- Dropdown System (OLD VERSION)
     local MoreBlur = Instance.new("Frame");
     local DropShadowHolder1 = Instance.new("Frame");
     local DropShadow1 = Instance.new("ImageLabel");
@@ -1902,12 +1581,8 @@ function Chloex:Window(GuiConfig)
         local Sections = {}
         local CountSection = 0
         
-        function Sections:AddSection(SectionConfig)
-            local SectionConfig = SectionConfig or {}
-            local Title = SectionConfig.Title or "Title"
-            local AlwaysOpen = SectionConfig.AlwaysOpen
-            local Icon = SectionConfig.Icon or ""
-            
+        function Sections:AddSection(Title, AlwaysOpen)
+            local Title = Title or "Title"
             local Section = Instance.new("Frame");
             local SectionDecideFrame = Instance.new("Frame");
             local UICorner1 = Instance.new("UICorner");
@@ -1930,8 +1605,6 @@ function Chloex:Window(GuiConfig)
             local SectionButton = Instance.new("TextButton");
             local FeatureFrame = Instance.new("Frame");
             local FeatureImg = Instance.new("ImageLabel");
-            
-            local SectionIcon = Instance.new("ImageLabel");
             local SectionTitle = Instance.new("TextLabel");
 
             SectionReal.AnchorPoint = Vector2.new(0.5, 0)
@@ -1982,22 +1655,6 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
-            SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionIcon.BackgroundTransparency = 0.9990000128746033
-            SectionIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
-            SectionIcon.BorderSizePixel = 0
-            SectionIcon.Position = UDim2.new(0, 10, 0, 7)
-            SectionIcon.Size = UDim2.new(0, 16, 0, 16)
-            SectionIcon.Name = "SectionIcon"
-            SectionIcon.Parent = SectionReal
-            
-            local sectionIconImage = getIcon(Icon)
-            if sectionIconImage ~= "" then
-                SectionIcon.Image = sectionIconImage
-            else
-                SectionIcon.Visible = false
-            end
-
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = Title
             SectionTitle.TextColor3 = Color3.fromRGB(230.77499270439148, 230.77499270439148, 230.77499270439148)
@@ -2009,15 +1666,8 @@ function Chloex:Window(GuiConfig)
             SectionTitle.BackgroundTransparency = 0.9990000128746033
             SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionTitle.BorderSizePixel = 0
-            
-            if sectionIconImage ~= "" then
-                SectionTitle.Position = UDim2.new(0, 35, 0.5, 0)
-                SectionTitle.Size = UDim2.new(1, -70, 0, 13)
-            else
-                SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
-                SectionTitle.Size = UDim2.new(1, -50, 0, 13)
-            end
-            
+            SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
+            SectionTitle.Size = UDim2.new(1, -50, 0, 13)
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionReal
 
@@ -2176,11 +1826,10 @@ function Chloex:Window(GuiConfig)
             end
 
             function Items:AddDropdown(DropdownConfig)
-                CountItem = CountItem + 1
-                -- Menggunakan dropdown versi lama
-                return CreateOldDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
+                return Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
             end
 
+            -- KEYBIND IMPLEMENTATION USING MODULE
             function Items:AddKeybind(KeybindConfig)
                 if KeybindModule then
                     KeybindConfig = KeybindConfig or {}
