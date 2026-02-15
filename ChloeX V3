@@ -1,4 +1,4 @@
--- main.lua V0.0.11 - Chloe X UI with Keybind Support & Enhanced Window Methods
+-- main.lua V0.0.9 - Chloe X UI with Keybind Support
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 
@@ -17,7 +17,7 @@ end
 
 -- Load Elements dari file eksternal
 local success, ElementsModule = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/ElementV2.lua"))()
 end)
 
 if not success then
@@ -131,9 +131,12 @@ ConfigData = {}
 CURRENT_VERSION = nil
 local ConfigFile = ""
 local DEFAULT_NOTIFY_SIZE = 320
-local AUTO_SAVE = true
-local AUTO_LOAD = true
-local UI_VISIBLE = true
+
+-- Config settings
+local CONFIG_SETTINGS = {
+    AutoSave = true,
+    AutoLoad = true
+}
 
 -- Fungsi-fungsi config
 function SaveConfig()
@@ -171,6 +174,13 @@ function LoadConfigElements()
     end
 end
 
+-- Auto save function
+local function AutoSave()
+    if CONFIG_SETTINGS.AutoSave then
+        SaveConfig()
+    end
+end
+
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -198,7 +208,7 @@ local function safeSize(pxWidth, pxHeight)
     return UDim2.new(scaleX, 0, scaleY, 0)
 end
 
-local function MakeDraggable(topbarobject, object, minSize, maxSize)
+local function MakeDraggable(topbarobject, object)
     local function CustomPos(topbarobject, object)
         local Dragging, DragInput, DragStart, StartPosition
 
@@ -210,15 +220,7 @@ local function MakeDraggable(topbarobject, object, minSize, maxSize)
                 StartPosition.Y.Scale,
                 StartPosition.Y.Offset + Delta.Y
             )
-            
-            -- Batasi posisi agar tidak keluar layar
-            local screenSize = viewport
-            local objectSize = object.AbsoluteSize
-            local newX = math.clamp(pos.X.Offset, 0, screenSize.X - objectSize.X)
-            local newY = math.clamp(pos.Y.Offset, 0, screenSize.Y - objectSize.Y)
-            
-            local clampedPos = UDim2.new(0, newX, 0, newY)
-            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Position = clampedPos })
+            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Position = pos })
             Tween:Play()
         end
 
@@ -251,20 +253,18 @@ local function MakeDraggable(topbarobject, object, minSize, maxSize)
     local function CustomSize(object)
         local Dragging, DragInput, DragStart, StartSize
 
-        local minSizeX, minSizeY = minSize or 400, minSize or 300
-        local maxSizeX, maxSizeY = maxSize or viewport.X, maxSize or viewport.Y
+        local minSizeX, minSizeY
+        local defSizeX, defSizeY
 
-        local function UpdateSize(input)
-            local Delta = input.Position - DragStart
-            local newWidth = StartSize.X.Offset + Delta.X
-            local newHeight = StartSize.Y.Offset + Delta.Y
-
-            newWidth = math.clamp(newWidth, minSizeX, maxSizeX)
-            newHeight = math.clamp(newHeight, minSizeY, maxSizeY)
-
-            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Size = UDim2.new(0, newWidth, 0, newHeight) })
-            Tween:Play()
+        if isMobile then
+            minSizeX, minSizeY = 100, 100
+            defSizeX, defSizeY = 470, 270
+        else
+            minSizeX, minSizeY = 100, 100
+            defSizeX, defSizeY = 640, 400
         end
+
+        object.Size = UDim2.new(0, defSizeX, 0, defSizeY)
 
         local changesizeobject = Instance.new("Frame")
         changesizeobject.AnchorPoint = Vector2.new(1, 1)
@@ -273,6 +273,18 @@ local function MakeDraggable(topbarobject, object, minSize, maxSize)
         changesizeobject.Position = UDim2.new(1, 20, 1, 20)
         changesizeobject.Name = "changesizeobject"
         changesizeobject.Parent = object
+
+        local function UpdateSize(input)
+            local Delta = input.Position - DragStart
+            local newWidth = StartSize.X.Offset + Delta.X
+            local newHeight = StartSize.Y.Offset + Delta.Y
+
+            newWidth = math.max(newWidth, minSizeX)
+            newHeight = math.max(newHeight, minSizeY)
+
+            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Size = UDim2.new(0, newWidth, 0, newHeight) })
+            Tween:Play()
+        end
 
         changesizeobject.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
@@ -360,20 +372,9 @@ function Chloex:MakeNotify(NotifyConfig)
     NotifyConfig.Icon = NotifyConfig.Icon or ""
     NotifyConfig.NotifySize = NotifyConfig.NotifySize or DEFAULT_NOTIFY_SIZE
     NotifyConfig.Mini = NotifyConfig.Mini or false
-    NotifyConfig.Sound = NotifyConfig.Sound or false
-    NotifyConfig.SoundId = NotifyConfig.SoundId or "rbxassetid://9120385098"
     
     local NotifyFunction = {}
     spawn(function()
-        if NotifyConfig.Sound then
-            local sound = Instance.new("Sound")
-            sound.SoundId = NotifyConfig.SoundId
-            sound.Volume = 0.5
-            sound.Parent = game:GetService("SoundService")
-            sound:Play()
-            game:GetService("Debris"):AddItem(sound, 2)
-        end
-        
         if not CoreGui:FindFirstChild("NotifyGui") then
             local NotifyGui = Instance.new("ScreenGui");
             NotifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -674,32 +675,6 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyFrame:Destroy()
         end
 
-        function NotifyFunction:Update(newContent)
-            if newContent then
-                TextLabel2.Text = newContent
-                -- Recalculate size
-                local newBoundsX = TextLabel2.TextBounds.X
-                local newLinesNeeded = math.ceil(newBoundsX / frameWidth)
-                
-                if newLinesNeeded > 1 then
-                    TextLabel2.Size = UDim2.new(1, -20, 0, lineHeight * newLinesNeeded)
-                else
-                    TextLabel2.Size = UDim2.new(1, -20, 0, lineHeight)
-                end
-                
-                local newContentHeight = TextLabel2.AbsoluteSize.Y
-                local newFinalHeight = newContentHeight + headerHeight + 4
-                
-                if newFinalHeight < minHeight then
-                    newFinalHeight = minHeight
-                elseif newFinalHeight > maxHeight then
-                    newFinalHeight = maxHeight
-                end
-                
-                NotifyFrame.Size = UDim2.new(1, 0, 0, newFinalHeight)
-            end
-        end
-
         Close.Activated:Connect(function()
             NotifyFunction:Close()
         end)
@@ -715,7 +690,7 @@ function Chloex:MakeNotify(NotifyConfig)
 end
 
 -- Fungsi Notify
-function Notify(msg, delay, color, title, desc, icon, notifySize, mini, sound)
+function Notify(msg, delay, color, title, desc, icon, notifySize, mini)
     local notifyColor = color
     if type(color) == "string" then
         notifyColor = getColorFromString(color)
@@ -731,13 +706,12 @@ function Notify(msg, delay, color, title, desc, icon, notifySize, mini, sound)
         Delay = delay or 4,
         Icon = icon or "",
         NotifySize = notifySize or DEFAULT_NOTIFY_SIZE,
-        Mini = mini or false,
-        Sound = sound or false
+        Mini = mini or false
     })
 end
 
 -- Fungsi MiniNotify
-function MiniNotify(msg, delay, color, title, desc, icon, notifySize, sound)
+function MiniNotify(msg, delay, color, title, desc, icon, notifySize)
     local notifyColor = color
     if type(color) == "string" then
         notifyColor = getColorFromString(color)
@@ -753,8 +727,7 @@ function MiniNotify(msg, delay, color, title, desc, icon, notifySize, sound)
         Delay = delay or 3,
         Icon = icon or "",
         NotifySize = notifySize or 200,
-        Mini = true,
-        Sound = sound or false
+        Mini = true
     })
 end
 
@@ -767,23 +740,6 @@ local function applyUITransparency(mainObject, transparency)
             mainObject.ImageTransparency = transparency
         else
             mainObject.BackgroundTransparency = transparency
-        end
-    end
-end
-
--- Fungsi untuk mengatur semua element transparency
-local function setAllTransparency(parent, transparency)
-    if not parent then return end
-    
-    for _, child in pairs(parent:GetDescendants()) do
-        if child:IsA("ImageLabel") or child:IsA("ImageButton") then
-            child.ImageTransparency = transparency
-        elseif child:IsA("Frame") or child:IsA("TextButton") or child:IsA("ScrollingFrame") then
-            if child.Name ~= "DropShadow" and child.Name ~= "DropShadowHolder" then
-                child.BackgroundTransparency = math.min(1, child.BackgroundTransparency + (1 - transparency))
-            end
-        elseif child:IsA("TextLabel") or child:IsA("TextBox") then
-            child.TextTransparency = transparency
         end
     end
 end
@@ -805,24 +761,15 @@ function Chloex:Window(GuiConfig)
     GuiConfig.ShowUser     = GuiConfig.ShowUser or false
     GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple"
     GuiConfig.NotifySize   = GuiConfig.NotifySize or 320
-    GuiConfig.Size         = GuiConfig.Size or UDim2.fromOffset(640, 400) -- Default size
-    GuiConfig.MinSize      = GuiConfig.MinSize or Vector2.new(400, 300)
-    GuiConfig.MaxSize      = GuiConfig.MaxSize or Vector2.new(viewport.X, viewport.Y)
-    GuiConfig.Keybind      = GuiConfig.Keybind or Enum.KeyCode.RightShift
-    GuiConfig.Resizable    = GuiConfig.Resizable ~= nil and GuiConfig.Resizable or true
-    GuiConfig.Closable     = GuiConfig.Closable ~= nil and GuiConfig.Closable or true
-    GuiConfig.Minimizable  = GuiConfig.Minimizable ~= nil and GuiConfig.Minimizable or true
-    
-    -- Config settings
-    GuiConfig.Config = GuiConfig.Config or {}
-    GuiConfig.Config.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
-    GuiConfig.Config.AutoLoad = GuiConfig.Config.AutoLoad ~= nil and GuiConfig.Config.AutoLoad or true
+
+    -- Set config settings
+    if GuiConfig.Config then
+        CONFIG_SETTINGS.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
+        CONFIG_SETTINGS.AutoLoad = GuiConfig.Config.AutoLoad ~= nil and GuiConfig.Config.AutoLoad or true
+    end
 
     CURRENT_CONFIG_NAME = GuiConfig.Configname
     DEFAULT_NOTIFY_SIZE = GuiConfig.NotifySize
-    AUTO_SAVE = GuiConfig.Config.AutoSave
-    AUTO_LOAD = GuiConfig.Config.AutoLoad
-    UI_VISIBLE = true
     
     local configFolderName = GuiConfig.Configname:gsub("%s+", "_")
     
@@ -841,13 +788,9 @@ function Chloex:Window(GuiConfig)
     
     CURRENT_VERSION = GuiConfig.Version
     
-    if AUTO_LOAD then
-        LoadConfigFromFile()
-    else
-        ConfigData = { _version = CURRENT_VERSION }
-    end
+    LoadConfigFromFile()
     
-    Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData, AUTO_SAVE)
+    Elements.Initialize(GuiConfig.Color, AutoSave, ConfigData, CONFIG_SETTINGS.AutoSave)
 
     local GuiFunc = {}
 
@@ -881,7 +824,11 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.BorderSizePixel = 0
     DropShadowHolder.AnchorPoint = Vector2.new(0.5, 0.5)
     DropShadowHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DropShadowHolder.Size = GuiConfig.Size
+    if isMobile then
+        DropShadowHolder.Size = safeSize(470, 270)
+    else
+        DropShadowHolder.Size = safeSize(640, 400)
+    end
     DropShadowHolder.ZIndex = 0
     DropShadowHolder.Name = "DropShadowHolder"
     DropShadowHolder.Parent = Chloeex
@@ -960,7 +907,6 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
 
-    -- Close button
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
     Close.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -974,7 +920,6 @@ function Chloex:Window(GuiConfig)
     Close.Size = UDim2.new(0, 25, 0, 25)
     Close.Name = "Close"
     Close.Parent = Top
-    Close.Visible = GuiConfig.Closable
 
     ImageLabel1.Image = "rbxassetid://9886659671"
     ImageLabel1.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -986,7 +931,6 @@ function Chloex:Window(GuiConfig)
     ImageLabel1.Size = UDim2.new(1, -8, 1, -8)
     ImageLabel1.Parent = Close
 
-    -- Minimize button
     Min.Font = Enum.Font.SourceSans
     Min.Text = ""
     Min.TextColor3 = Color3.fromRGB(0, 0, 0)
@@ -1000,7 +944,6 @@ function Chloex:Window(GuiConfig)
     Min.Size = UDim2.new(0, 25, 0, 25)
     Min.Name = "Min"
     Min.Parent = Top
-    Min.Visible = GuiConfig.Minimizable
 
     ImageLabel2.Image = "rbxassetid://9886659276"
     ImageLabel2.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -1151,130 +1094,18 @@ function Chloex:Window(GuiConfig)
         GuiFunc.UserProfile = userProfile
     end
 
-    -- ========== WINDOW METHODS ==========
-    
-    function GuiFunc:Destroy()
-        if Chloeex then
+    function GuiFunc:DestroyGui()
+        if CoreGui:FindFirstChild("Chloeex") then
             Chloeex:Destroy()
         end
-        if CoreGui:FindFirstChild("ToggleUIButton") then
-            CoreGui.ToggleUIButton:Destroy()
-        end
-    end
-    
-    function GuiFunc:SetVisible(visible)
-        UI_VISIBLE = visible
-        DropShadowHolder.Visible = visible
-    end
-    
-    function GuiFunc:GetVisible()
-        return UI_VISIBLE
-    end
-    
-    function GuiFunc:Toggle()
-        UI_VISIBLE = not UI_VISIBLE
-        DropShadowHolder.Visible = UI_VISIBLE
-        return UI_VISIBLE
-    end
-    
-    function GuiFunc:SetTitle(newTitle)
-        TextLabel.Text = newTitle or "Chloe X"
-        -- Update footer position
-        TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
-        TextLabel1.Size = UDim2.new(1, -(TextLabel.TextBounds.X + 104), 1, 0)
-    end
-    
-    function GuiFunc:GetTitle()
-        return TextLabel.Text
-    end
-    
-    function GuiFunc:SetFooter(newFooter)
-        TextLabel1.Text = newFooter or "Chloee :3"
-    end
-    
-    function GuiFunc:GetFooter()
-        return TextLabel1.Text
-    end
-    
-    function GuiFunc:SetColor(newColor)
-        local color = getColorFromString(newColor)
-        TextLabel.TextColor3 = color
-        TextLabel1.TextColor3 = color
-        
-        -- Update ChooseFrame color in tabs
-        for _, tabFrame in pairs(ScrollTab:GetChildren()) do
-            if tabFrame.Name == "Tab" then
-                for _, child in pairs(tabFrame:GetChildren()) do
-                    if child.Name == "ChooseFrame" then
-                        child.BackgroundColor3 = color
-                        for _, stroke in pairs(child:GetChildren()) do
-                            if stroke:IsA("UIStroke") then
-                                stroke.Color = color
-                            end
-                        end
-                    end
-                end
-            end
-        end
-        
-        GuiConfig.Color = color
-        Elements.UpdateColor(color)
-    end
-    
-    function GuiFunc:GetColor()
-        return GuiConfig.Color
     end
     
     function GuiFunc:SetTransparency(transparency)
         if transparency and transparency >= 0 and transparency <= 1 then
             applyUITransparency(Main, transparency)
-            setAllTransparency(Main, transparency)
             return true
         end
         return false
-    end
-    
-    function GuiFunc:SetSize(width, height)
-        if width and height then
-            local newSize = UDim2.new(0, width, 0, height)
-            DropShadowHolder.Size = newSize
-            return true
-        elseif type(width) == "UDim2" then
-            DropShadowHolder.Size = width
-            return true
-        end
-        return false
-    end
-    
-    function GuiFunc:GetSize()
-        return DropShadowHolder.Size
-    end
-    
-    function GuiFunc:SetPosition(x, y)
-        if x and y then
-            DropShadowHolder.Position = UDim2.new(0, x, 0, y)
-            return true
-        end
-        return false
-    end
-    
-    function GuiFunc:GetPosition()
-        return DropShadowHolder.Position
-    end
-    
-    function GuiFunc:Center()
-        local screenSize = viewport
-        local windowSize = DropShadowHolder.AbsoluteSize
-        local newX = (screenSize.X - windowSize.X) / 2
-        local newY = (screenSize.Y - windowSize.Y) / 2
-        DropShadowHolder.Position = UDim2.new(0, newX, 0, newY)
-    end
-    
-    function GuiFunc:SetKeybind(keyCode)
-        if type(keyCode) == "string" then
-            keyCode = Enum.KeyCode[keyCode]
-        end
-        GuiConfig.Keybind = keyCode
     end
     
     function GuiFunc:SetNotifySize(size)
@@ -1289,107 +1120,10 @@ function Chloex:Window(GuiConfig)
         end
         return false
     end
-    
-    function GuiFunc:SetAutoSave(enabled)
-        AUTO_SAVE = enabled
-        Elements.SetAutoSave(enabled)
-        return true
-    end
 
-    function GuiFunc:SetAutoLoad(enabled)
-        AUTO_LOAD = enabled
-        return true
-    end
-    
-    function GuiFunc:SaveConfig()
-        SaveConfig()
-        Notify("Configuration saved!", 2, GuiConfig.Color, GuiConfig.Title, "Success", "save", DEFAULT_NOTIFY_SIZE, true, true)
-    end
-    
-    function GuiFunc:LoadConfig()
-        LoadConfigFromFile()
-        LoadConfigElements()
-        Notify("Configuration loaded!", 2, GuiConfig.Color, GuiConfig.Title, "Success", "refresh", DEFAULT_NOTIFY_SIZE, true, true)
-    end
-    
-    function GuiFunc:ResetConfig()
-        ConfigData = { _version = CURRENT_VERSION }
-        Elements.ResetAll()
-        Notify("Configuration reset!", 2, GuiConfig.Color, GuiConfig.Title, "Info", "alert", DEFAULT_NOTIFY_SIZE, true, true)
-    end
-    
-    function GuiFunc:Minimize()
-        DropShadowHolder.Visible = false
-    end
-    
-    function GuiFunc:Restore()
-        DropShadowHolder.Visible = true
-    end
-    
-    function GuiFunc:SetResizable(enabled)
-        GuiConfig.Resizable = enabled
-        -- Find and enable/disable resize handle
-        for _, child in pairs(DropShadowHolder:GetDescendants()) do
-            if child.Name == "changesizeobject" then
-                child.Active = enabled
-                child.Visible = enabled
-            end
-        end
-    end
-    
-    function GuiFunc:SetClosable(enabled)
-        GuiConfig.Closable = enabled
-        Close.Visible = enabled
-    end
-    
-    function GuiFunc:SetMinimizable(enabled)
-        GuiConfig.Minimizable = enabled
-        Min.Visible = enabled
-    end
-    
-    function GuiFunc:GetTabs()
-        local tabs = {}
-        for _, tabFrame in pairs(ScrollTab:GetChildren()) do
-            if tabFrame.Name == "Tab" then
-                for _, child in pairs(tabFrame:GetChildren()) do
-                    if child:IsA("TextLabel") and child.Name == "TabName" then
-                        table.insert(tabs, child.Text:gsub("| ", ""))
-                    end
-                end
-            end
-        end
-        return tabs
-    end
-    
-    function GuiFunc:SwitchToTab(tabName)
-        for _, tabFrame in pairs(ScrollTab:GetChildren()) do
-            if tabFrame.Name == "Tab" then
-                for _, child in pairs(tabFrame:GetChildren()) do
-                    if child:IsA("TextLabel") and child.Name == "TabName" and child.Text == "| " .. tabName then
-                        -- Trigger tab button click
-                        local button = tabFrame:FindFirstChild("TabButton")
-                        if button then
-                            button.Activated:Fire()
-                        end
-                        return true
-                    end
-                end
-            end
-        end
-        return false
-    end
-
-    -- Keybind handler
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == GuiConfig.Keybind then
-            GuiFunc:Toggle()
-        end
-    end)
-
-    -- Window controls
     Min.Activated:Connect(function()
         CircleClick(Min, Mouse.X, Mouse.Y)
-        GuiFunc:Minimize()
+        DropShadowHolder.Visible = false
     end)
     
     Close.Activated:Connect(function()
@@ -1490,7 +1224,10 @@ function Chloex:Window(GuiConfig)
         Instance.new("UICorner", Cancel).CornerRadius = UDim.new(0, 6)
 
         Yes.MouseButton1Click:Connect(function()
-            GuiFunc:Destroy()
+            if Chloeex then Chloeex:Destroy() end
+            if game.CoreGui:FindFirstChild("ToggleUIButton") then
+                game.CoreGui.ToggleUIButton:Destroy()
+            end
         end)
 
         Cancel.MouseButton1Click:Connect(function()
@@ -1498,7 +1235,7 @@ function Chloex:Window(GuiConfig)
         end)
     end)
 
-    function GuiFunc:CreateToggleButton()
+    function GuiFunc:ToggleUI()
         local ScreenGui = Instance.new("ScreenGui")
         ScreenGui.Parent = game:GetService("CoreGui")
         ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -1523,7 +1260,9 @@ function Chloex:Window(GuiConfig)
         Button.Text = ""
 
         Button.MouseButton1Click:Connect(function()
-            GuiFunc:Toggle()
+            if DropShadowHolder then
+                DropShadowHolder.Visible = not DropShadowHolder.Visible
+            end
         end)
 
         local dragging = false
@@ -1548,24 +1287,22 @@ function Chloex:Window(GuiConfig)
                     if input.UserInputState == Enum.UserInputState.End then
                         dragging = false
                     end
-                end)
+                end
+                )
             end
         end)
 
-        UserInputService.InputChanged:Connect(function(input)
+        game:GetService("UserInputService").InputChanged:Connect(function(input)
             if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
                 update(input)
             end
         end)
-        
-        return MainButton
     end
 
-    -- Create toggle button
-    GuiFunc.ToggleButton = GuiFunc:CreateToggleButton()
+    GuiFunc:ToggleUI()
 
-    -- Make window draggable and resizable
-    MakeDraggable(Top, DropShadowHolder, GuiConfig.MinSize, GuiConfig.MaxSize)
+    DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
+    MakeDraggable(Top, DropShadowHolder)
 
     local MoreBlur = Instance.new("Frame");
     local DropShadowHolder1 = Instance.new("Frame");
@@ -1676,6 +1413,12 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.Archivable = false
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
+
+    -- Auto load config after initialization
+    if CONFIG_SETTINGS.AutoLoad then
+        task.wait(0.5) -- Wait for UI to fully initialize
+        LoadConfigElements()
+    end
 
     -- Tabs
     local Tabs = {}
@@ -2125,7 +1868,7 @@ function Chloex:Window(GuiConfig)
                     KeybindConfig = KeybindConfig or {}
                     KeybindConfig.SaveKey = true
                     KeybindConfig.ConfigData = ConfigData
-                    KeybindConfig.SaveFunction = SaveConfig
+                    KeybindConfig.SaveFunction = AutoSave
                     
                     CountItem = CountItem + 1
                     return KeybindModule.CreateKeybind(SectionAdd, KeybindConfig, CountItem, UpdateSizeSection)
@@ -2153,7 +1896,7 @@ function Chloex:Window(GuiConfig)
         return Sections
     end
 
-    return Tabs, GuiFunc
+    return Tabs
 end
 
 return Chloex
