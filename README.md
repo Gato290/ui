@@ -34,16 +34,21 @@ local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato29
 # Window
 ```lua
 local Window = Chloex:Window({
-    Title = "Title",           -- Judul window
-    Footer = "Footer",          -- Footer text
-    Color = Color3.fromRGB(0, 208, 255), --  Or "Light" Color = "Light",
-    Version = 1.0,                -- Versi config
-    ["Tab Width"] = 120,          -- Lebar sidebar tab
-    Image = "70884221600423", -- Icon untuk toggle button
-   -- Configname = "MyCustomConfig"  -- Nama folder config
-   -- Uitransparent = 0.15,  -- 15% transparan (Beta Tester Only)
-   -- ShowUser = true,  -- Tampilkan user profile (Beta Tester Only)
-   -- UserProfileType = "full" -- atau "simple"
+    Title = "Title", -- Main title displayed at the top of the window
+    Footer = "Footer", -- Footer text shown at the bottom
+    Color = "Default", -- UI theme color (Default or custom theme)
+    Version = 1.0, -- Script/UI version number
+    ["Tab Width"] = 120, -- Width size of the tab section
+    Image = "70884221600423", -- Window icon asset ID (replace with your own)
+    Configname = "MyCustomConfig", -- Configuration file name for saving settings
+    Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
+   -- ShowUser = true, -- Enable player profile display
+   -- UserProfileType = "simple", -- Profile display style
+   --[[ Config = {
+        AutoSave = true, -- Automatically save settings
+        AutoLoad = true -- Automatically load saved settings 
+     ]]
+    }
 })
 ```
 
