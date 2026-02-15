@@ -1,6 +1,6 @@
-local HttpService = game:GetService("HttpService") -- V0.0.4
+local HttpService = game:GetService("HttpService") -- V0.0.3
 
--- Load Elements dari file eksternal
+-- Load Elements from external file
 local success, ElementsModule = pcall(function()
     return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
 end)
@@ -10,84 +10,33 @@ if not success then
     return
 end
 
--- Load Icons base dari file eksternal
-local successIcons, IconsModule = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Icon.lua"))()
-end)
-
-if not successIcons then
-    warn("Failed to load Icons module: " .. tostring(IconsModule))
-    Icons = {}
-else
-    Icons = IconsModule
-end
-
--- Load Lucide Icons dari file eksternal
-local successLucide, LucideIconsModule = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/LucideIcon.lua"))()
-end)
-
-if not successLucide then
-    warn("Failed to load Lucide Icons module: " .. tostring(LucideIconsModule))
-    LucideIcons = {}
-else
-    LucideIcons = LucideIconsModule
-end
-
--- Load Solar Icons dari file eksternal
-local successSolar, SolarIconsModule = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/SolarIcon.lua"))()
-end)
-
-if not successSolar then
-    warn("Failed to load Solar Icons module: " .. tostring(SolarIconsModule))
-    SolarIcons = {}
-else
-    SolarIcons = SolarIconsModule
-end
-
--- Fungsi untuk mendapatkan icon berdasarkan format
-local function getIcon(iconString)
-    if not iconString or iconString == "" then
-        return ""
-    end
-    
-    -- Cek format dengan prefix
-    if iconString:find("^lucide:") then
-        local iconName = iconString:sub(8) -- Hilangkan "lucide:" (7 karakter + :)
-        return LucideIcons[iconName] or ""
-    elseif iconString:find("^solar:") then
-        local iconName = iconString:sub(7) -- Hilangkan "solar:" (6 karakter + :)
-        return SolarIcons[iconName] or ""
-    else
-        -- Cek di Icons biasa (default)
-        if Icons[iconString] then
-            return Icons[iconString]
-        else
-            -- Jika bukan key di Icons, anggap sebagai asset ID langsung
-            return iconString
-        end
-    end
-end
-
 local Elements = ElementsModule
 
--- Variabel global untuk config
-local CURRENT_CONFIG_NAME = "NexaHub" -- Default value
-ConfigData = {}
-CURRENT_VERSION = nil
-local ConfigFile = ""
+if not isfolder("NexaHub") then
+    makefolder("NexaHub")
+end
+if not isfolder("NexaHub/Config") then
+    makefolder("NexaHub/Config")
+end
 
--- Fungsi-fungsi config yang akan diupdate berdasarkan Configname
+local gameName   = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+gameName         = gameName:gsub("[^%w_ ]", "")
+gameName         = gameName:gsub("%s+", "_")
+
+local ConfigFile = "NexaHub/Config/CHX_" .. gameName .. ".json"
+
+ConfigData       = {}
+CURRENT_VERSION  = nil
+
 function SaveConfig()
-    if writefile and ConfigFile ~= "" then
+    if writefile then
         ConfigData._version = CURRENT_VERSION
         writefile(ConfigFile, HttpService:JSONEncode(ConfigData))
     end
 end
 
 function LoadConfigFromFile()
-    if not CURRENT_VERSION or ConfigFile == "" then return end
+    if not CURRENT_VERSION then return end
     if isfile and isfile(ConfigFile) then
         local success, result = pcall(function()
             return HttpService:JSONDecode(readfile(ConfigFile))
@@ -113,6 +62,47 @@ function LoadConfigElements()
         end
     end
 end
+
+local Icons = {
+    alert     = "rbxassetid://73186275216515",
+    bag       = "rbxassetid://8601111810",
+    boss      = "rbxassetid://13132186360",
+    cart      = "rbxassetid://128874923961846",
+    compas    = "rbxassetid://125300760963399",
+    crosshair = "rbxassetid://12614416478",
+    dcs       = "rbxassetid://15310731934",
+    discord   = "rbxassetid://94434236999817",
+    eyes      = "rbxassetid://14321059114",
+    fish      = "rbxassetid://97167558235554",
+    folder      = "rbxassetid://111411260968321",
+    gamepad   = "rbxassetid://84173963561612",
+    gps       = "rbxassetid://17824309485",
+    home       = "rbxassetid://70416927963252",
+    idea      = "rbxassetid://16833255748",
+    lexshub   = "rbxassetid://71947103252559",
+    loop      = "rbxassetid://122032243989747",
+    menu      = "rbxassetid://6340513838",
+    next      = "rbxassetid://12662718374",
+    Nt        = "rbxassetid://70884221600423",
+    payment   = "rbxassetid://18747025078",
+    player    = "rbxassetid://12120698352",
+    plug      = "rbxassetid://137601480983962",
+    question  = "rbxassetid://17510196486",
+    rod       = "rbxassetid://103247953194129",
+    scan      = "rbxassetid://109869955247116",
+    scroll    = "rbxassetid://114127804740858",
+    settings  = "rbxassetid://70386228443175",
+    shop      = "rbxassetid://4985385964",
+    skeleton  = "rbxassetid://17313330026",
+    star      = "rbxassetid://107005941750079",
+    start     = "rbxassetid://108886429866687",
+    stat      = "rbxassetid://12094445329",
+    strom     = "rbxassetid://13321880293",
+    sword     = "rbxassetid://82472368671405",
+    user      = "rbxassetid://108483430622128",
+    water     = "rbxassetid://100076212630732",
+    web       = "rbxassetid://137601480983962",
+}
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
@@ -484,10 +474,9 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
--- Perbarui fungsi Notify untuk menggunakan CURRENT_CONFIG_NAME
-function Notify(msg, delay, color, title, desc)
+function Nt(msg, delay, color, title, desc)
     return Chloex:MakeNotify({
-        Title = title or CURRENT_CONFIG_NAME, -- Menggunakan CURRENT_CONFIG_NAME sebagai default
+        Title = title or "NexaHub",
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
@@ -502,31 +491,8 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
-    GuiConfig.Configname   = GuiConfig.Configname or "NexaHub" -- Parameter baru
-    GuiConfig.Image        = GuiConfig.Image or "71947103252559"
 
-    -- Update CURRENT_CONFIG_NAME berdasarkan parameter yang diberikan
-    CURRENT_CONFIG_NAME = GuiConfig.Configname
-    
-    -- Proses folder dan file config berdasarkan Configname
-    local configFolderName = GuiConfig.Configname:gsub("%s+", "_")
-    
-    if not isfolder(configFolderName) then
-        makefolder(configFolderName)
-    end
-    if not isfolder(configFolderName .. "/Config") then
-        makefolder(configFolderName .. "/Config")
-    end
-    
-    local gameName = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-    gameName = gameName:gsub("[^%w_ ]", "")
-    gameName = gameName:gsub("%s+", "_")
-    
-    ConfigFile = configFolderName .. "/Config/CHX_" .. gameName .. ".json"
-    
-    CURRENT_VERSION = GuiConfig.Version
-    
-    -- Panggil fungsi LoadConfigFromFile
+    CURRENT_VERSION        = GuiConfig.Version
     LoadConfigFromFile()
     Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
 
@@ -850,13 +816,12 @@ function Chloex:Window(GuiConfig)
         Gradient.Rotation = 90
         Gradient.Parent = DialogGlow
 
-        -- Perbarui judul dialog untuk menggunakan CURRENT_CONFIG_NAME
         local Title = Instance.new("TextLabel")
         Title.Size = UDim2.new(1, 0, 0, 40)
         Title.Position = UDim2.new(0, 0, 0, 4)
         Title.BackgroundTransparency = 1
         Title.Font = Enum.Font.GothamBold
-        Title.Text = CURRENT_CONFIG_NAME .. " Window"
+        Title.Text = "NexaHub Window"
         Title.TextSize = 22
         Title.TextColor3 = Color3.fromRGB(255, 255, 255)
         Title.ZIndex = 52
@@ -1180,13 +1145,6 @@ function Chloex:Window(GuiConfig)
         FeatureImg.Size = UDim2.new(0, 16, 0, 16)
         FeatureImg.Name = "FeatureImg"
         FeatureImg.Parent = Tab
-        
-        -- Menggunakan fungsi getIcon untuk mendapatkan icon
-        local iconImage = getIcon(TabConfig.Icon)
-        if iconImage ~= "" then
-            FeatureImg.Image = iconImage
-        end
-
         if CountTab == 0 then
             LayersPageLayout:JumpToIndex(0)
             NameTab.Text = TabConfig.Name
@@ -1204,6 +1162,14 @@ function Chloex:Window(GuiConfig)
             UIStroke2.Parent = ChooseFrame
 
             UICorner4.Parent = ChooseFrame
+        end
+
+        if TabConfig.Icon ~= "" then
+            if Icons[TabConfig.Icon] then
+                FeatureImg.Image = Icons[TabConfig.Icon]
+            else
+                FeatureImg.Image = TabConfig.Icon
+            end
         end
 
         TabButton.Activated:Connect(function()
