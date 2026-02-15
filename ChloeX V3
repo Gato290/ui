@@ -1753,50 +1753,26 @@ function Chloex:Window(GuiConfig)
             end
 
             -- ============================================
-            -- DROPDOWN FIXED - LEBIH KECIL DAN DI DALAM WINDOW
+            -- DROPDOWN PROFESIONAL - FIXED
             -- ============================================
             function Items:AddDropdown(DropdownConfig)
                 CountItem = CountItem + 1
                 
-                -- PERBAIKAN 1: Buat overlay di dalam Main window (bukan full screen)
+                -- Overlay untuk dropdown (semi-transparent)
                 local DropdownOverlay = Instance.new("Frame")
                 DropdownOverlay.Name = "DropdownOverlay_" .. CountItem
                 DropdownOverlay.AnchorPoint = Vector2.new(0.5, 0.5)
                 DropdownOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-                DropdownOverlay.BackgroundTransparency = 0.3
+                DropdownOverlay.BackgroundTransparency = 0.4
                 DropdownOverlay.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownOverlay.BorderSizePixel = 0
                 DropdownOverlay.Position = UDim2.new(0.5, 0, 0.5, 0)
-                DropdownOverlay.Size = UDim2.new(1, 0, 1, 0)  -- Full size of Main
+                DropdownOverlay.Size = UDim2.new(1, 0, 1, 0)
                 DropdownOverlay.Visible = false
                 DropdownOverlay.ZIndex = 100
-                DropdownOverlay.Parent = Main  -- Parent ke Main agar di dalam window
+                DropdownOverlay.Parent = Main
                 
-                -- DropShadow untuk overlay
-                local OverlayShadow = Instance.new("Frame")
-                OverlayShadow.BackgroundTransparency = 1
-                OverlayShadow.BorderSizePixel = 0
-                OverlayShadow.Size = UDim2.new(1, 0, 1, 0)
-                OverlayShadow.ZIndex = 100
-                OverlayShadow.Name = "OverlayShadow"
-                OverlayShadow.Parent = DropdownOverlay
-                
-                local OverlayShadowImg = Instance.new("ImageLabel")
-                OverlayShadowImg.Image = "rbxassetid://6015897843"
-                OverlayShadowImg.ImageColor3 = Color3.fromRGB(0, 0, 0)
-                OverlayShadowImg.ImageTransparency = 0.5
-                OverlayShadowImg.ScaleType = Enum.ScaleType.Slice
-                OverlayShadowImg.SliceCenter = Rect.new(49, 49, 450, 450)
-                OverlayShadowImg.AnchorPoint = Vector2.new(0.5, 0.5)
-                OverlayShadowImg.BackgroundTransparency = 1
-                OverlayShadowImg.BorderSizePixel = 0
-                OverlayShadowImg.Position = UDim2.new(0.5, 0, 0.5, 0)
-                OverlayShadowImg.Size = UDim2.new(1, 35, 1, 35)
-                OverlayShadowImg.ZIndex = 100
-                OverlayShadowImg.Name = "OverlayShadow"
-                OverlayShadowImg.Parent = OverlayShadow
-                
-                -- Close button untuk menutup dropdown
+                -- Close overlay button
                 local CloseOverlay = Instance.new("TextButton")
                 CloseOverlay.Font = Enum.Font.SourceSans
                 CloseOverlay.Text = ""
@@ -1811,119 +1787,185 @@ function Chloex:Window(GuiConfig)
                 CloseOverlay.Name = "CloseOverlay_" .. CountItem
                 CloseOverlay.Parent = DropdownOverlay
                 
-                -- PERBAIKAN 2: Dropdown container - LEBIH KECIL
+                -- Dropdown container dengan desain modern
                 local DropdownContainer = Instance.new("Frame")
                 DropdownContainer.AnchorPoint = Vector2.new(0.5, 0.5)
-                DropdownContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 25)
+                DropdownContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
                 DropdownContainer.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownContainer.BorderSizePixel = 0
                 DropdownContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
-                DropdownContainer.Size = UDim2.new(0, 240, 0, 280)  -- LEBIH KECIL: 240x280
+                DropdownContainer.Size = UDim2.new(0, 280, 0, 320)
                 DropdownContainer.Name = "DropdownContainer_" .. CountItem
                 DropdownContainer.ClipsDescendants = true
                 DropdownContainer.ZIndex = 102
                 DropdownContainer.Parent = DropdownOverlay
                 
+                -- Shadow effect
+                local ContainerShadow = Instance.new("ImageLabel")
+                ContainerShadow.Image = "rbxassetid://6015897843"
+                ContainerShadow.ImageColor3 = Color3.fromRGB(0, 0, 0)
+                ContainerShadow.ImageTransparency = 0.5
+                ContainerShadow.ScaleType = Enum.ScaleType.Slice
+                ContainerShadow.SliceCenter = Rect.new(49, 49, 450, 450)
+                ContainerShadow.AnchorPoint = Vector2.new(0.5, 0.5)
+                ContainerShadow.BackgroundTransparency = 1
+                ContainerShadow.BorderSizePixel = 0
+                ContainerShadow.Position = UDim2.new(0.5, 0, 0.5, 0)
+                ContainerShadow.Size = UDim2.new(1, 25, 1, 25)
+                ContainerShadow.ZIndex = 101
+                ContainerShadow.Parent = DropdownContainer
+                
                 local ContainerCorner = Instance.new("UICorner")
-                ContainerCorner.CornerRadius = UDim.new(0, 8)
+                ContainerCorner.CornerRadius = UDim.new(0, 12)
                 ContainerCorner.Parent = DropdownContainer
                 
-                local ContainerStroke = Instance.new("UIStroke")
-                ContainerStroke.Color = GuiConfig.Color or Color3.fromRGB(12, 159, 255)
-                ContainerStroke.Thickness = 2
-                ContainerStroke.Transparency = 0.5
-                ContainerStroke.Parent = DropdownContainer
-                
-                -- Header untuk dropdown (dengan search)
+                -- Header dengan gradient
                 local DropdownHeader = Instance.new("Frame")
-                DropdownHeader.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
+                DropdownHeader.BackgroundColor3 = GuiConfig.Color or Color3.fromRGB(12, 159, 255)
+                DropdownHeader.BackgroundTransparency = 0.9
                 DropdownHeader.BorderSizePixel = 0
-                DropdownHeader.Size = UDim2.new(1, 0, 0, 70)  -- Header lebih pendek: 70px
+                DropdownHeader.Size = UDim2.new(1, 0, 0, 65)
                 DropdownHeader.ZIndex = 103
                 DropdownHeader.Name = "DropdownHeader"
                 DropdownHeader.Parent = DropdownContainer
                 
+                local HeaderGradient = Instance.new("UIGradient")
+                HeaderGradient.Color = ColorSequence.new({
+                    ColorSequenceKeypoint.new(0, GuiConfig.Color or Color3.fromRGB(12, 159, 255)),
+                    ColorSequenceKeypoint.new(1, Color3.fromRGB(10, 10, 15))
+                })
+                HeaderGradient.Rotation = 90
+                HeaderGradient.Parent = DropdownHeader
+                
                 local HeaderCorner = Instance.new("UICorner")
-                HeaderCorner.CornerRadius = UDim.new(0, 8)
+                HeaderCorner.CornerRadius = UDim.new(0, 12)
                 HeaderCorner.Parent = DropdownHeader
                 
+                -- Header Title dengan icon
                 local HeaderTitle = Instance.new("TextLabel")
                 HeaderTitle.BackgroundTransparency = 1
-                HeaderTitle.Size = UDim2.new(1, -40, 0, 20)
-                HeaderTitle.Position = UDim2.new(0, 15, 0, 5)
+                HeaderTitle.Size = UDim2.new(1, -50, 0, 22)
+                HeaderTitle.Position = UDim2.new(0, 15, 0, 8)
                 HeaderTitle.Font = Enum.Font.GothamBold
                 HeaderTitle.Text = DropdownConfig.Name or "Select Option"
                 HeaderTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-                HeaderTitle.TextSize = 14  -- Font lebih kecil
+                HeaderTitle.TextSize = 16
                 HeaderTitle.TextXAlignment = Enum.TextXAlignment.Left
                 HeaderTitle.TextYAlignment = Enum.TextYAlignment.Top
                 HeaderTitle.ZIndex = 104
                 HeaderTitle.Parent = DropdownHeader
                 
-                -- Search Box
+                -- Subtitle (jumlah options)
+                local HeaderSubtitle = Instance.new("TextLabel")
+                HeaderSubtitle.BackgroundTransparency = 1
+                HeaderSubtitle.Size = UDim2.new(1, -50, 0, 16)
+                HeaderSubtitle.Position = UDim2.new(0, 15, 0, 32)
+                HeaderSubtitle.Font = Enum.Font.Gotham
+                HeaderSubtitle.Text = "Choose an option below"
+                HeaderSubtitle.TextColor3 = Color3.fromRGB(180, 180, 180)
+                HeaderSubtitle.TextSize = 12
+                HeaderSubtitle.TextXAlignment = Enum.TextXAlignment.Left
+                HeaderSubtitle.TextYAlignment = Enum.TextYAlignment.Top
+                HeaderSubtitle.ZIndex = 104
+                HeaderSubtitle.Parent = DropdownHeader
+                
+                -- Close button dengan desain elegan
+                local CloseBtn = Instance.new("TextButton")
+                CloseBtn.AnchorPoint = Vector2.new(1, 0)
+                CloseBtn.Position = UDim2.new(1, -12, 0, 10)
+                CloseBtn.Size = UDim2.new(0, 28, 0, 28)
+                CloseBtn.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                CloseBtn.BackgroundTransparency = 0.9
+                CloseBtn.Font = Enum.Font.GothamBold
+                CloseBtn.Text = "✕"
+                CloseBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+                CloseBtn.TextSize = 16
+                CloseBtn.ZIndex = 105
+                CloseBtn.Parent = DropdownHeader
+                
+                local CloseBtnCorner = Instance.new("UICorner")
+                CloseBtnCorner.CornerRadius = UDim.new(1, 0)
+                CloseBtnCorner.Parent = CloseBtn
+                
+                -- Search container
+                local SearchContainer = Instance.new("Frame")
+                SearchContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
+                SearchContainer.BorderSizePixel = 0
+                SearchContainer.Position = UDim2.new(0, 12, 0, 75)
+                SearchContainer.Size = UDim2.new(1, -24, 0, 40)
+                SearchContainer.ZIndex = 103
+                SearchContainer.Parent = DropdownContainer
+                
+                local SearchCorner = Instance.new("UICorner")
+                SearchCorner.CornerRadius = UDim.new(0, 8)
+                SearchCorner.Parent = SearchContainer
+                
+                -- Search icon
+                local SearchIcon = Instance.new("TextLabel")
+                SearchIcon.AnchorPoint = Vector2.new(0, 0.5)
+                SearchIcon.Position = UDim2.new(0, 12, 0.5, 0)
+                SearchIcon.Size = UDim2.new(0, 20, 0, 20)
+                SearchIcon.BackgroundTransparency = 1
+                SearchIcon.Font = Enum.Font.GothamBold
+                SearchIcon.Text = "🔍"
+                SearchIcon.TextSize = 14
+                SearchIcon.TextColor3 = Color3.fromRGB(150, 150, 150)
+                SearchIcon.ZIndex = 104
+                SearchIcon.Parent = SearchContainer
+                
+                -- Search box
                 local SearchBox = Instance.new("TextBox")
-                SearchBox.AnchorPoint = Vector2.new(0.5, 0)
-                SearchBox.Position = UDim2.new(0.5, 0, 0, 30)  -- Posisi lebih ke bawah
-                SearchBox.Size = UDim2.new(1, -20, 0, 25)  -- Tinggi lebih kecil: 25px
-                SearchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 45)
-                SearchBox.BackgroundTransparency = 0.3
-                SearchBox.BorderSizePixel = 0
+                SearchBox.AnchorPoint = Vector2.new(0, 0.5)
+                SearchBox.Position = UDim2.new(0, 40, 0.5, 0)
+                SearchBox.Size = UDim2.new(1, -52, 1, -8)
+                SearchBox.BackgroundTransparency = 1
                 SearchBox.Font = Enum.Font.Gotham
                 SearchBox.PlaceholderText = "Search..."
                 SearchBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
                 SearchBox.Text = ""
                 SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-                SearchBox.TextSize = 12
+                SearchBox.TextSize = 13
                 SearchBox.TextXAlignment = Enum.TextXAlignment.Left
                 SearchBox.ClearTextOnFocus = false
                 SearchBox.ZIndex = 104
                 SearchBox.Name = "SearchBox"
-                SearchBox.Parent = DropdownHeader
+                SearchBox.Parent = SearchContainer
                 
-                local SearchCorner = Instance.new("UICorner")
-                SearchCorner.CornerRadius = UDim.new(0, 6)
-                SearchCorner.Parent = SearchBox
+                -- Clear search button
+                local ClearSearch = Instance.new("TextButton")
+                ClearSearch.AnchorPoint = Vector2.new(1, 0.5)
+                ClearSearch.Position = UDim2.new(1, -8, 0.5, 0)
+                ClearSearch.Size = UDim2.new(0, 22, 0, 22)
+                ClearSearch.BackgroundTransparency = 1
+                ClearSearch.Font = Enum.Font.GothamBold
+                ClearSearch.Text = "✕"
+                ClearSearch.TextColor3 = Color3.fromRGB(150, 150, 150)
+                ClearSearch.TextSize = 14
+                ClearSearch.Visible = false
+                ClearSearch.ZIndex = 104
+                ClearSearch.Parent = SearchContainer
                 
-                -- Search icon
-                local SearchIcon = Instance.new("TextLabel")
-                SearchIcon.AnchorPoint = Vector2.new(0, 0.5)
-                SearchIcon.Position = UDim2.new(0, 8, 0.5, 0)
-                SearchIcon.Size = UDim2.new(0, 18, 0, 18)  -- Icon lebih kecil
-                SearchIcon.BackgroundTransparency = 1
-                SearchIcon.Font = Enum.Font.GothamBold
-                SearchIcon.Text = "🔍"
-                SearchIcon.TextSize = 12
-                SearchIcon.TextColor3 = Color3.fromRGB(120, 120, 120)
-                SearchIcon.ZIndex = 105
-                SearchIcon.Parent = SearchBox
-                
-                -- Adjust textbox padding untuk icon
-                local SearchPadding = Instance.new("UIPadding")
-                SearchPadding.PaddingLeft = UDim.new(0, 28)
-                SearchPadding.PaddingRight = UDim.new(0, 8)
-                SearchPadding.Parent = SearchBox
-                
-                -- Close X button
-                local CloseX = Instance.new("TextButton")
-                CloseX.AnchorPoint = Vector2.new(1, 0)
-                CloseX.Position = UDim2.new(1, -8, 0, 5)
-                CloseX.Size = UDim2.new(0, 24, 0, 24)  -- Button lebih kecil
-                CloseX.BackgroundTransparency = 1
-                CloseX.Font = Enum.Font.GothamBold
-                CloseX.Text = "×"
-                CloseX.TextColor3 = Color3.fromRGB(255, 255, 255)
-                CloseX.TextSize = 20
-                CloseX.ZIndex = 104
-                CloseX.Parent = DropdownHeader
+                -- Options label
+                local OptionsLabel = Instance.new("TextLabel")
+                OptionsLabel.Position = UDim2.new(0, 15, 0, 125)
+                OptionsLabel.Size = UDim2.new(1, -30, 0, 20)
+                OptionsLabel.BackgroundTransparency = 1
+                OptionsLabel.Font = Enum.Font.GothamBold
+                OptionsLabel.Text = "OPTIONS"
+                OptionsLabel.TextColor3 = Color3.fromRGB(150, 150, 150)
+                OptionsLabel.TextSize = 11
+                OptionsLabel.TextXAlignment = Enum.TextXAlignment.Left
+                OptionsLabel.ZIndex = 103
+                OptionsLabel.Parent = DropdownContainer
                 
                 -- ScrollingFrame untuk options
                 local OptionsFrame = Instance.new("ScrollingFrame")
                 OptionsFrame.AnchorPoint = Vector2.new(0.5, 0)
-                OptionsFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+                OptionsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
                 OptionsFrame.BackgroundTransparency = 0
                 OptionsFrame.BorderSizePixel = 0
-                OptionsFrame.Position = UDim2.new(0.5, 0, 0, 75)  -- Posisi setelah header
-                OptionsFrame.Size = UDim2.new(1, -10, 1, -85)  -- Sisa space
+                OptionsFrame.Position = UDim2.new(0.5, 0, 0, 145)
+                OptionsFrame.Size = UDim2.new(1, -20, 1, -155)
                 OptionsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
                 OptionsFrame.ScrollBarThickness = 4
                 OptionsFrame.ScrollBarImageColor3 = GuiConfig.Color or Color3.fromRGB(12, 159, 255)
@@ -1932,12 +1974,12 @@ function Chloex:Window(GuiConfig)
                 OptionsFrame.Parent = DropdownContainer
                 
                 local OptionsCorner = Instance.new("UICorner")
-                OptionsCorner.CornerRadius = UDim.new(0, 6)
+                OptionsCorner.CornerRadius = UDim.new(0, 8)
                 OptionsCorner.Parent = OptionsFrame
                 
                 -- UIListLayout untuk items
                 local OptionsLayout = Instance.new("UIListLayout")
-                OptionsLayout.Padding = UDim.new(0, 4)  -- Padding lebih kecil
+                OptionsLayout.Padding = UDim.new(0, 2)
                 OptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
                 OptionsLayout.Parent = OptionsFrame
                 
@@ -1949,67 +1991,110 @@ function Chloex:Window(GuiConfig)
                 -- Search functionality
                 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
                     local query = SearchBox.Text:lower()
+                    local hasResults = false
+                    
                     for _, option in pairs(OptionsFrame:GetChildren()) do
                         if option:IsA("Frame") and option.Name == "Option" then
                             local optionText = option:FindFirstChild("OptionText")
                             if optionText then
                                 local text = optionText.Text:lower()
-                                option.Visible = (query == "" or text:find(query, 1, true) ~= nil)
+                                local visible = (query == "" or text:find(query, 1, true) ~= nil)
+                                option.Visible = visible
+                                if visible then hasResults = true end
                             end
                         end
                     end
+                    
+                    ClearSearch.Visible = query ~= ""
+                    
+                    -- Show "No results" jika tidak ada hasil
+                    local noResults = OptionsFrame:FindFirstChild("NoResults")
+                    if not hasResults and query ~= "" then
+                        if not noResults then
+                            noResults = Instance.new("TextLabel")
+                            noResults.Name = "NoResults"
+                            noResults.Size = UDim2.new(1, 0, 0, 40)
+                            noResults.BackgroundTransparency = 1
+                            noResults.Font = Enum.Font.Gotham
+                            noResults.Text = "No options found"
+                            noResults.TextColor3 = Color3.fromRGB(120, 120, 120)
+                            noResults.TextSize = 13
+                            noResults.ZIndex = 104
+                            noResults.Parent = OptionsFrame
+                        end
+                    elseif noResults then
+                        noResults:Destroy()
+                    end
+                    
                     task.wait()
                     OptionsFrame.CanvasSize = UDim2.new(0, 0, 0, OptionsLayout.AbsoluteContentSize.Y + 10)
                 end)
                 
-                -- Function untuk menutup dropdown
+                ClearSearch.MouseButton1Click:Connect(function()
+                    SearchBox.Text = ""
+                    ClearSearch.Visible = false
+                end)
+                
+                -- Close button functions
                 local function CloseThisDropdown()
                     if DropdownOverlay and DropdownOverlay.Visible then
                         TweenService:Create(
                             DropdownOverlay, 
-                            TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
                             { BackgroundTransparency = 1 }
                         ):Play()
                         
                         TweenService:Create(
                             DropdownContainer, 
-                            TweenInfo.new(0.15, Enum.EasingStyle.Back, Enum.EasingDirection.In), 
-                            { Size = UDim2.new(0, 240, 0, 0) }
+                            TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), 
+                            { Size = UDim2.new(0, 280, 0, 0) }
                         ):Play()
                         
-                        task.wait(0.15)
+                        task.wait(0.2)
                         if DropdownOverlay then
                             DropdownOverlay.Visible = false
-                            DropdownContainer.Size = UDim2.new(0, 240, 0, 280)  -- Reset ke ukuran kecil
-                            SearchBox.Text = ""  -- Clear search
+                            DropdownContainer.Size = UDim2.new(0, 280, 0, 320)
+                            SearchBox.Text = ""
+                            ClearSearch.Visible = false
                         end
                     end
                 end
                 
-                -- Function untuk membuka dropdown
                 local function OpenThisDropdown()
                     if DropdownOverlay then
                         DropdownOverlay.Visible = true
-                        DropdownContainer.Size = UDim2.new(0, 240, 0, 0)  -- Start dari ukuran 0
+                        DropdownContainer.Size = UDim2.new(0, 280, 0, 0)
                         
                         TweenService:Create(
                             DropdownOverlay, 
-                            TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
-                            { BackgroundTransparency = 0.3 }
+                            TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), 
+                            { BackgroundTransparency = 0.4 }
                         ):Play()
                         
                         TweenService:Create(
                             DropdownContainer, 
-                            TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), 
-                            { Size = UDim2.new(0, 240, 0, 280) }  -- End ke ukuran kecil
+                            TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), 
+                            { Size = UDim2.new(0, 280, 0, 320) }
                         ):Play()
+                        
+                        -- Focus ke search box
+                        task.wait(0.1)
+                        SearchBox:CaptureFocus()
                     end
                 end
                 
                 CloseOverlay.MouseButton1Click:Connect(CloseThisDropdown)
-                CloseX.MouseButton1Click:Connect(CloseThisDropdown)
+                CloseBtn.MouseButton1Click:Connect(CloseThisDropdown)
                 
-                -- Buat dropdown element dengan pcall
+                -- Hover effect untuk close button
+                CloseBtn.MouseEnter:Connect(function()
+                    TweenService:Create(CloseBtn, TweenInfo.new(0.2), { BackgroundTransparency = 0.7 }):Play()
+                end)
+                CloseBtn.MouseLeave:Connect(function()
+                    TweenService:Create(CloseBtn, TweenInfo.new(0.2), { BackgroundTransparency = 0.9 }):Play()
+                end)
+                
+                -- Buat dropdown element
                 local success, dropdownObj = pcall(function()
                     return Elements.AddDropdown(
                         SectionAdd,
