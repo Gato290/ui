@@ -1133,9 +1133,9 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
 end
 
 -- ============================================
--- DROPDOWN - FIXED UNTUK NEW STRUCTURE
+-- DROPDOWN - MODEL LAMA (Di dalam window + search)
 -- ============================================
-function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, openDropdownFunc, dropdownScrollFrame, dropdownLayout, updateSizeCallback)
+function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, blurContainer, scrollFrame, listLayout, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
     config.Content = config.Content or ""
@@ -1153,8 +1153,8 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, op
     local DropdownFunc = { Value = config.Default, Options = config.Options }
 
     -- SAFETY CHECK
-    if not openDropdownFunc or not dropdownScrollFrame then
-        warn("Dropdown Error: openDropdownFunc or dropdownScrollFrame is nil")
+    if not blurContainer or not scrollFrame then
+        warn("Dropdown Error: blurContainer or scrollFrame is nil")
         return {
             Clear = function() end,
             AddOption = function() end,
@@ -1242,11 +1242,30 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, op
         TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
     end)
 
-    -- Dropdown button click handler - GUNAKAN OPEN FUNCTION
+    -- Dropdown button click handler
     DropdownButton.Activated:Connect(function()
-        if openDropdownFunc then
-            openDropdownFunc()
+        if not blurContainer.Visible then
+            blurContainer.Visible = true
+            
+            TweenService:Create(
+                blurContainer, 
+                TweenInfoPresets.Slow, 
+                { BackgroundTransparency = 0.3 }
+            ):Play()
+            
+            local dropdownSelect = blurContainer:FindFirstChild("DropdownSelect_" .. countItem)
+            if dropdownSelect then
+                TweenService:Create(
+                    dropdownSelect, 
+                    TweenInfoPresets.Slow, 
+                    { Position = UDim2.new(1, -11, 0.5, 0) }
+                ):Play()
+            end
+            
             TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
+        else
+            blurContainer.Visible = false
+            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
         end
     end)
 
@@ -1289,7 +1308,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, op
     end
 
     function DropdownFunc:Clear()
-        for _, DropFrame in ScrollSelect:GetChildren() do
+        for _, DropFrame in scrollFrame:GetChildren() do
             if DropFrame.Name == "Option" then
                 DropFrame:Destroy()
             end
@@ -1319,18 +1338,16 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, op
 
         Option.BackgroundColor3 = Color3.fromRGB(30, 30, 35)
         Option.BackgroundTransparency = 1
-        Option.Size = UDim2.new(1, -10, 0, 35)
+        Option.Size = UDim2.new(1, 0, 0, 28)
         Option.Name = "Option"
-        Option.ZIndex = 104
-        Option.Parent = ScrollSelect
+        Option.Parent = scrollFrame
 
-        UICorner37.CornerRadius = UDim.new(0, 6)
+        UICorner37.CornerRadius = UDim.new(0, 4)
         UICorner37.Parent = Option
 
         OptionButton.BackgroundTransparency = 1
         OptionButton.Size = UDim2.new(1, 0, 1, 0)
         OptionButton.Text = ""
-        OptionButton.ZIndex = 105
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
         
@@ -1344,13 +1361,12 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, op
 
         OptionText.Font = Enum.Font.GothamBold
         OptionText.Text = label
-        OptionText.TextSize = 13
+        OptionText.TextSize = 12
         OptionText.TextColor3 = Color3.fromRGB(230, 230, 230)
-        OptionText.Position = UDim2.new(0, 28, 0, 0)
-        OptionText.Size = UDim2.new(1, -35, 1, 0)
+        OptionText.Position = UDim2.new(0, 20, 0, 0)
+        OptionText.Size = UDim2.new(1, -25, 1, 0)
         OptionText.BackgroundTransparency = 1
         OptionText.TextXAlignment = Enum.TextXAlignment.Left
-        OptionText.ZIndex = 106
         OptionText.Name = "OptionText"
         OptionText.Parent = Option
 
@@ -1358,16 +1374,16 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, op
 
         ChooseFrame.AnchorPoint = Vector2.new(0, 0.5)
         ChooseFrame.BackgroundColor3 = MainColor
-        ChooseFrame.Position = UDim2.new(0, 8, 0.5, 0)
+        ChooseFrame.Position = UDim2.new(0, 5, 0.5, 0)
         ChooseFrame.Size = UDim2.new(0, 0, 0, 0)
-        ChooseFrame.ZIndex = 105
         ChooseFrame.Name = "ChooseFrame"
         ChooseFrame.Parent = Option
 
         UIStroke15.Color = MainColor
-        UIStroke15.Thickness = 2
+        UIStroke15.Thickness = 1.6
         UIStroke15.Transparency = 0.999
         UIStroke15.Parent = ChooseFrame
+        
         UICorner38.CornerRadius = UDim.new(0, 2)
         UICorner38.Parent = ChooseFrame
 
@@ -1401,14 +1417,14 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, op
         SaveConfigFunc()
 
         local texts = {}
-        for _, Drop in ScrollSelect:GetChildren() do
+        for _, Drop in scrollFrame:GetChildren() do
             if Drop.Name == "Option" and Drop:FindFirstChild("OptionText") then
                 local v = Drop:GetAttribute("RealValue")
                 local selected = config.Multi and table.find(DropdownFunc.Value, v) or DropdownFunc.Value == v
 
                 if selected then
                     TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Slow,
-                        { Size = UDim2.new(0, 3, 0, 18) }):Play()
+                        { Size = UDim2.new(0, 2, 0, 14) }):Play()
                     TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfoPresets.Normal, { Transparency = 0 }):Play()
                     TweenService:Create(Drop, TweenInfoPresets.Normal, { BackgroundTransparency = 0.9 }):Play()
                     table.insert(texts, Drop.OptionText.Text)
