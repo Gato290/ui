@@ -1,4 +1,4 @@
--- New (dengan dropdown fixed - setiap dropdown punya komponen sendiri)
+-- New (dengan dropdown fixed - posisi di dalam window)
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -1752,25 +1752,26 @@ function Chloex:Window(GuiConfig)
                 return Elements.AddInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection)
             end
 
-            -- DROPDOWN FIXED - SETIAP DROPDOWN PUNYA KOMPONEN SENDIRI
+            -- DROPDOWN FIXED - POSISI DI DALAM WINDOW
             function Items:AddDropdown(DropdownConfig)
                 CountItem = CountItem + 1
                 
-                -- BUAT KOMPONEN UNTUK DROPDOWN INI (Masing-masing punya sendiri)
+                -- BUAT KOMPONEN UNTUK DROPDOWN INI (POSISI DI DALAM WINDOW)
                 
-                -- 1. Blur Container
+                -- 1. Blur Container - ANCHOR KE KIRI
                 local DropdownBlur = Instance.new("Frame")
                 DropdownBlur.Name = "DropdownBlur_" .. CountItem
-                DropdownBlur.AnchorPoint = Vector2.new(1, 1)
+                DropdownBlur.AnchorPoint = Vector2.new(0, 1)  -- Anchor ke kiri bawah
                 DropdownBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownBlur.BackgroundTransparency = 0.999
                 DropdownBlur.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownBlur.BorderSizePixel = 0
                 DropdownBlur.ClipsDescendants = true
-                DropdownBlur.Position = UDim2.new(1, 8, 1, 8)
-                DropdownBlur.Size = UDim2.new(1, 154, 1, 54)
+                DropdownBlur.Position = UDim2.new(0, 200, 1, -10)  -- Posisi di dalam window
+                DropdownBlur.Size = UDim2.new(0, 180, 0, 200)      -- Ukuran container
                 DropdownBlur.Visible = false
                 DropdownBlur.Parent = SectionAdd
+                DropdownBlur.ZIndex = 5
                 
                 -- DropShadow untuk blur
                 local DropShadowHolder1 = Instance.new("Frame")
@@ -1799,7 +1800,7 @@ function Chloex:Window(GuiConfig)
                 local UICorner28 = Instance.new("UICorner")
                 UICorner28.Parent = DropdownBlur
                 
-                -- 2. Close Button (untuk menutup dropdown ini)
+                -- 2. Close Button
                 local CloseButton = Instance.new("TextButton")
                 CloseButton.Font = Enum.Font.SourceSans
                 CloseButton.Text = ""
@@ -1812,21 +1813,22 @@ function Chloex:Window(GuiConfig)
                 CloseButton.Size = UDim2.new(1, 0, 1, 0)
                 CloseButton.Name = "CloseButton_" .. CountItem
                 CloseButton.Parent = DropdownBlur
+                CloseButton.ZIndex = 9
                 
-                -- 3. Dropdown Select (DIPERBAIKI - POSISI DAN UKURAN)
+                -- 3. Dropdown Select - ANCHOR KE KIRI (POSISI DI DALAM)
                 local DropdownSelect = Instance.new("Frame")
-                DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
+                DropdownSelect.AnchorPoint = Vector2.new(0, 0.5)  -- Anchor ke kiri
                 DropdownSelect.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
                 DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownSelect.BorderSizePixel = 0
                 DropdownSelect.LayoutOrder = 1
-                -- POSISI: Geser ke kiri (minus) biar ga kejepit di kanan
-                DropdownSelect.Position = UDim2.new(1, -180, 0.5, 0)
-                -- UKURAN: Lebih lebar (200px) biar muat konten
-                DropdownSelect.Size = UDim2.new(0, 200, 1, -16)
+                DropdownSelect.Position = UDim2.new(0, 150, 0.5, 0)  -- Posisi awal untuk animasi
+                DropdownSelect.Size = UDim2.new(0, 180, 1, -16)      -- Ukuran dropdown
                 DropdownSelect.Name = "DropdownSelect_" .. CountItem
                 DropdownSelect.ClipsDescendants = true
                 DropdownSelect.Parent = DropdownBlur
+                DropdownSelect.ZIndex = 10
+                DropdownSelect.BackgroundTransparency = 1  -- Transparan untuk animasi
                 
                 local UICorner36 = Instance.new("UICorner")
                 UICorner36.CornerRadius = UDim.new(0, 3)
@@ -1867,41 +1869,55 @@ function Chloex:Window(GuiConfig)
                 DropPageLayout.Name = "DropPageLayout_" .. CountItem
                 DropPageLayout.Parent = DropdownFolder
                 
-                -- Function untuk menutup dropdown ini
+                -- Function untuk menutup dropdown
                 local function CloseThisDropdown()
                     if DropdownBlur and DropdownBlur.Visible then
-                        local success1, err1 = pcall(function()
-                            TweenService:Create(DropdownBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
+                        pcall(function()
+                            TweenService:Create(DropdownBlur, TweenInfo.new(0.2), { BackgroundTransparency = 0.999 }):Play()
                         end)
                         
-                        local success2, err2 = pcall(function()
-                            -- POSISI TUTUP: Sama dengan posisi awal
-                            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, -180, 0.5, 0) }):Play()
+                        pcall(function()
+                            TweenService:Create(DropdownSelect, TweenInfo.new(0.2), { Position = UDim2.new(0, 150, 0.5, 0) }):Play()
                         end)
                         
-                        task.wait(0.3)
+                        pcall(function()
+                            TweenService:Create(DropdownSelect, TweenInfo.new(0.2), { BackgroundTransparency = 1 }):Play()
+                        end)
+                        
+                        task.wait(0.2)
                         if DropdownBlur then
                             DropdownBlur.Visible = false
                         end
                     end
                 end
                 
+                -- Function untuk membuka dropdown
+                local function OpenThisDropdown()
+                    DropdownBlur.Visible = true
+                    
+                    -- Reset posisi awal
+                    DropdownSelect.Position = UDim2.new(0, 150, 0.5, 0)
+                    DropdownSelect.BackgroundTransparency = 1
+                    
+                    -- Animasi masuk
+                    pcall(function()
+                        TweenService:Create(DropdownBlur, TweenInfo.new(0.2), { BackgroundTransparency = 0.95 }):Play()
+                    end)
+                    
+                    pcall(function()
+                        TweenService:Create(DropdownSelect, TweenInfo.new(0.2), { Position = UDim2.new(0, 200, 0.5, 0) }):Play()
+                    end)
+                    
+                    pcall(function()
+                        TweenService:Create(DropdownSelect, TweenInfo.new(0.2), { BackgroundTransparency = 0 }):Play()
+                    end)
+                end
+                
                 CloseButton.MouseButton1Click:Connect(CloseThisDropdown)
                 
-                -- Auto-adjust tinggi dropdown berdasarkan jumlah item
-                task.spawn(function()
-                    task.wait(0.1)
-                    local totalHeight = 0
-                    for _, child in pairs(DropdownFolder:GetChildren()) do
-                        if child:IsA("Frame") then
-                            totalHeight = totalHeight + child.Size.Y.Offset + 3
-                        end
-                    end
-                    if totalHeight > 0 then
-                        local maxHeight = math.min(totalHeight + 40, 300) -- Max 300px
-                        DropdownSelect.Size = UDim2.new(0, 200, 0, maxHeight)
-                    end
-                end)
+                -- Simpan function ke blurContainer
+                DropdownBlur.OpenFunction = OpenThisDropdown
+                DropdownBlur.CloseFunction = CloseThisDropdown
                 
                 -- PAKAI PCALL UNTUK HINDARI ERROR
                 local success, dropdownObj = pcall(function()
@@ -1921,6 +1937,7 @@ function Chloex:Window(GuiConfig)
                     -- BUAT DROPDOWN DUMMY
                     dropdownObj = {
                         Close = CloseThisDropdown,
+                        Open = OpenThisDropdown,
                         Set = function() end,
                         Get = function() return nil end,
                         GetValue = function() return nil end,
@@ -1932,6 +1949,7 @@ function Chloex:Window(GuiConfig)
                 end
                 
                 dropdownObj.Close = CloseThisDropdown
+                dropdownObj.Open = OpenThisDropdown
                 CountDropdown = CountDropdown + 1
                 return dropdownObj
             end
