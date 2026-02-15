@@ -132,6 +132,12 @@ CURRENT_VERSION = nil
 local ConfigFile = ""
 local DEFAULT_NOTIFY_SIZE = 320
 
+-- Config settings
+local CONFIG_SETTINGS = {
+    AutoSave = true,
+    AutoLoad = true
+}
+
 -- Fungsi-fungsi config
 function SaveConfig()
     if writefile and ConfigFile ~= "" then
@@ -165,6 +171,13 @@ function LoadConfigElements()
         if ConfigData[key] ~= nil and element.Set then
             element:Set(ConfigData[key], true)
         end
+    end
+end
+
+-- Auto save function
+local function AutoSave()
+    if CONFIG_SETTINGS.AutoSave then
+        SaveConfig()
     end
 end
 
@@ -749,6 +762,12 @@ function Chloex:Window(GuiConfig)
     GuiConfig.UserProfileType = GuiConfig.UserProfileType or "simple"
     GuiConfig.NotifySize   = GuiConfig.NotifySize or 320
 
+    -- Set config settings
+    if GuiConfig.Config then
+        CONFIG_SETTINGS.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
+        CONFIG_SETTINGS.AutoLoad = GuiConfig.Config.AutoLoad ~= nil and GuiConfig.Config.AutoLoad or true
+    end
+
     CURRENT_CONFIG_NAME = GuiConfig.Configname
     DEFAULT_NOTIFY_SIZE = GuiConfig.NotifySize
     
@@ -771,7 +790,7 @@ function Chloex:Window(GuiConfig)
     
     LoadConfigFromFile()
     
-    Elements.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
+    Elements.Initialize(GuiConfig.Color, AutoSave, ConfigData, CONFIG_SETTINGS.AutoSave)
 
     local GuiFunc = {}
 
@@ -1395,6 +1414,12 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
 
+    -- Auto load config after initialization
+    if CONFIG_SETTINGS.AutoLoad then
+        task.wait(0.5) -- Wait for UI to fully initialize
+        LoadConfigElements()
+    end
+
     -- Tabs
     local Tabs = {}
     local CountTab = 0
@@ -1843,7 +1868,7 @@ function Chloex:Window(GuiConfig)
                     KeybindConfig = KeybindConfig or {}
                     KeybindConfig.SaveKey = true
                     KeybindConfig.ConfigData = ConfigData
-                    KeybindConfig.SaveFunction = SaveConfig
+                    KeybindConfig.SaveFunction = AutoSave
                     
                     CountItem = CountItem + 1
                     return KeybindModule.CreateKeybind(SectionAdd, KeybindConfig, CountItem, UpdateSizeSection)
