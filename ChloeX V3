@@ -1,4 +1,4 @@
--- New (with old dropdown)
+-- New (dengan dropdown old)
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -808,8 +808,6 @@ function Chloex:Window(GuiConfig)
     local ImageLabel1 = Instance.new("ImageLabel");
     local Min = Instance.new("TextButton");
     local ImageLabel2 = Instance.new("ImageLabel");
-    local LayersTab = Instance.new("Frame"); -- Diganti dari DecideFrame
-    local UICorner2 = Instance.new("UICorner");
     local DecideFrame = Instance.new("Frame");
     local Layers = Instance.new("Frame");
     local UICorner6 = Instance.new("UICorner");
@@ -959,18 +957,6 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
-    LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255) -- Background transparan untuk tab container
-    LayersTab.BackgroundTransparency = 0.9990000128746033
-    LayersTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    LayersTab.BorderSizePixel = 0
-    LayersTab.Position = UDim2.new(0, 9, 0, 50)
-    LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59)
-    LayersTab.Name = "LayersTab"
-    LayersTab.Parent = Main
-
-    UICorner2.CornerRadius = UDim.new(0, 2)
-    UICorner2.Parent = LayersTab
-
     DecideFrame.AnchorPoint = Vector2.new(0.5, 0)
     DecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DecideFrame.BackgroundTransparency = 0.85
@@ -1028,6 +1014,26 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
+    local CombinedLayersTab = Instance.new("Frame")
+    CombinedLayersTab.Name = "CombinedLayersTab"
+    CombinedLayersTab.BackgroundTransparency = 1
+    CombinedLayersTab.BorderSizePixel = 0
+    CombinedLayersTab.Position = UDim2.new(0, 9, 0, 50)
+    CombinedLayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59)
+    CombinedLayersTab.Parent = Main
+
+    local UICornerCombined = Instance.new("UICorner")
+    UICornerCombined.CornerRadius = UDim.new(0, 2)
+    UICornerCombined.Parent = CombinedLayersTab
+
+    local TabListSection = Instance.new("Frame")
+    TabListSection.Name = "TabListSection"
+    TabListSection.BackgroundTransparency = 1
+    TabListSection.BorderSizePixel = 0
+    TabListSection.Size = UDim2.new(1, 0, 1, 0)
+    TabListSection.Position = UDim2.new(0, 0, 0, 0)
+    TabListSection.Parent = CombinedLayersTab
+
     local ScrollTab = Instance.new("ScrollingFrame");
     local UIListLayout = Instance.new("UIListLayout");
 
@@ -1041,7 +1047,7 @@ function Chloex:Window(GuiConfig)
     ScrollTab.BorderSizePixel = 0
     ScrollTab.Size = UDim2.new(1, 0, 1, 0)
     ScrollTab.Name = "ScrollTab"
-    ScrollTab.Parent = LayersTab
+    ScrollTab.Parent = TabListSection
 
     UIListLayout.Padding = UDim.new(0, 3)
     UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
@@ -1060,7 +1066,7 @@ function Chloex:Window(GuiConfig)
     ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
     if GuiConfig.ShowUser then
-        LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 0.7, 0) -- Sesuaikan ukuran tab
+        TabListSection.Size = UDim2.new(1, 0, 0.7, 0)
         
         local UserProfileSection = Instance.new("Frame")
         UserProfileSection.Name = "UserProfileSection"
@@ -1068,7 +1074,7 @@ function Chloex:Window(GuiConfig)
         UserProfileSection.BorderSizePixel = 0
         UserProfileSection.Size = UDim2.new(1, 0, 0.3, 0)
         UserProfileSection.Position = UDim2.new(0, 0, 0.7, 0)
-        UserProfileSection.Parent = LayersTab
+        UserProfileSection.Parent = CombinedLayersTab
 
         local Divider = Instance.new("Frame")
         Divider.Name = "Divider"
@@ -1298,7 +1304,6 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
     MakeDraggable(Top, DropShadowHolder)
 
-    -- Dropdown System (OLD VERSION)
     local MoreBlur = Instance.new("Frame");
     local DropShadowHolder1 = Instance.new("Frame");
     local DropShadow1 = Instance.new("ImageLabel");
@@ -1581,8 +1586,12 @@ function Chloex:Window(GuiConfig)
         local Sections = {}
         local CountSection = 0
         
-        function Sections:AddSection(Title, AlwaysOpen)
-            local Title = Title or "Title"
+        function Sections:AddSection(SectionConfig)
+            local SectionConfig = SectionConfig or {}
+            local Title = SectionConfig.Title or "Title"
+            local AlwaysOpen = SectionConfig.AlwaysOpen
+            local Icon = SectionConfig.Icon or ""
+            
             local Section = Instance.new("Frame");
             local SectionDecideFrame = Instance.new("Frame");
             local UICorner1 = Instance.new("UICorner");
@@ -1605,6 +1614,8 @@ function Chloex:Window(GuiConfig)
             local SectionButton = Instance.new("TextButton");
             local FeatureFrame = Instance.new("Frame");
             local FeatureImg = Instance.new("ImageLabel");
+            
+            local SectionIcon = Instance.new("ImageLabel");
             local SectionTitle = Instance.new("TextLabel");
 
             SectionReal.AnchorPoint = Vector2.new(0.5, 0)
@@ -1655,6 +1666,22 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
+            SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            SectionIcon.BackgroundTransparency = 0.9990000128746033
+            SectionIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            SectionIcon.BorderSizePixel = 0
+            SectionIcon.Position = UDim2.new(0, 10, 0, 7)
+            SectionIcon.Size = UDim2.new(0, 16, 0, 16)
+            SectionIcon.Name = "SectionIcon"
+            SectionIcon.Parent = SectionReal
+            
+            local sectionIconImage = getIcon(Icon)
+            if sectionIconImage ~= "" then
+                SectionIcon.Image = sectionIconImage
+            else
+                SectionIcon.Visible = false
+            end
+
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = Title
             SectionTitle.TextColor3 = Color3.fromRGB(230.77499270439148, 230.77499270439148, 230.77499270439148)
@@ -1666,8 +1693,15 @@ function Chloex:Window(GuiConfig)
             SectionTitle.BackgroundTransparency = 0.9990000128746033
             SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionTitle.BorderSizePixel = 0
-            SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
-            SectionTitle.Size = UDim2.new(1, -50, 0, 13)
+            
+            if sectionIconImage ~= "" then
+                SectionTitle.Position = UDim2.new(0, 35, 0.5, 0)
+                SectionTitle.Size = UDim2.new(1, -70, 0, 13)
+            else
+                SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
+                SectionTitle.Size = UDim2.new(1, -50, 0, 13)
+            end
+            
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionReal
 
@@ -1825,8 +1859,10 @@ function Chloex:Window(GuiConfig)
                 return Elements.AddInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection)
             end
 
+            -- DROPDOWN MENGGUNAKAN VERSI OLD (tanpa increment CountItem)
             function Items:AddDropdown(DropdownConfig)
                 return Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
+                -- Catatan: CountItem tidak di-increment di sini, sesuai dengan versi old
             end
 
             -- KEYBIND IMPLEMENTATION USING MODULE
