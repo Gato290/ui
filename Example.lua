@@ -1,17 +1,23 @@
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V3"))()
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 
 local Window = Chloex:Window({
-    Title = "Title",
-    Footer = "Footer",
-    Color = "Default",
+    Title = "Title", -- Main title displayed at the top of the window
+    Footer = "Footer", -- Footer text shown at the bottom
+    Color = "Default", -- UI theme color (Default or custom theme)
     Version = 1.0,
-    ["Tab Width"] = 120,
-    Image = "70884221600423", -- ganti dengan gamar kalian sendiri
-    Configname = "MyCustomConfig",
-    Uitransparent = 0.15,  -- 15% transparan
-    ShowUser = true,  -- Tampilkan user profile
-    UserProfileType = "full", -- atau "simple"
+    ["Tab Width"] = 120, -- Width size of the tab section
+    Image = "70884221600423", -- Window icon asset ID (replace with your own)
+    Configname = "MyCustomConfig", -- Configuration file name for saving settings
+    Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
+    ShowUser = true, -- Enable player profile display
+    UserProfileType = "simple", -- Profile display style
+    Config = {
+        AutoSave = true, -- Automatically save settings
+        AutoLoad = true -- Automatically load saved settings
+    }
 })
+
+
 local Tabs = {
     -- Default icon 
     Button = Window:AddTab({
@@ -105,6 +111,7 @@ Sec.Button:AddButton({
         Notify("Example clicked!", 2)
     end
 })
+
 
 Sec.Toggle = Tabs.Toggle:AddSection({
     Title = "Toggle Section",
