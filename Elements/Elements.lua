@@ -1245,36 +1245,27 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, bl
         end
         
         if not blurContainer.Visible then
-            blurContainer.Visible = true
+            -- Cek apakah blurContainer punya fungsi Open
+            if blurContainer.OpenFunction and blurContainer.OpenFunction.Open then
+                blurContainer.OpenFunction.Open()
+            else
+                -- Fallback
+                blurContainer.Visible = true
+            end
             
             if dropPageLayout then
                 dropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder or 0)
             end
             
-            pcall(function()
-                TweenService:Create(blurContainer, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
-            end)
-            
-            -- Cari DropdownSelect - untuk mode independen, namanya "DropdownSelect_" .. countItem
-            local dropdownSelectName = "DropdownSelect_" .. countItem
-            local dropdownSelect = blurContainer:FindFirstChild(dropdownSelectName)
-            
-            -- Fallback ke pencarian umum
-            if not dropdownSelect then
-                dropdownSelect = blurContainer:FindFirstChild("DropdownSelect")
-            end
-            
-            if dropdownSelect then
-                pcall(function()
-                    TweenService:Create(dropdownSelect, TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
-                end)
-            else
-                warn("DropdownSelect not found in", blurContainer.Name)
-            end
-            
             TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
         else
-            blurContainer.Visible = false
+            -- Cek apakah blurContainer punya fungsi Close
+            if blurContainer.OpenFunction and blurContainer.OpenFunction.Close then
+                blurContainer.OpenFunction.Close()
+            else
+                blurContainer.Visible = false
+            end
+            
             TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
         end
     end)
