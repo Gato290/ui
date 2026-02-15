@@ -1753,7 +1753,7 @@ function Chloex:Window(GuiConfig)
             end
 
             -- ============================================
-            -- DROPDOWN PROFESIONAL - FIXED
+            -- DROPDOWN FIXED - AGAK GESER KE KANAN & TIDAK LANGSUNG SEARCH
             -- ============================================
             function Items:AddDropdown(DropdownConfig)
                 CountItem = CountItem + 1
@@ -1772,7 +1772,7 @@ function Chloex:Window(GuiConfig)
                 DropdownOverlay.ZIndex = 100
                 DropdownOverlay.Parent = Main
                 
-                -- Close overlay button
+                -- Close overlay button (untuk menutup ketika klik di luar)
                 local CloseOverlay = Instance.new("TextButton")
                 CloseOverlay.Font = Enum.Font.SourceSans
                 CloseOverlay.Text = ""
@@ -1787,13 +1787,14 @@ function Chloex:Window(GuiConfig)
                 CloseOverlay.Name = "CloseOverlay_" .. CountItem
                 CloseOverlay.Parent = DropdownOverlay
                 
-                -- Dropdown container dengan desain modern
+                -- Dropdown container dengan desain modern - AGAK GESER KE KANAN
                 local DropdownContainer = Instance.new("Frame")
                 DropdownContainer.AnchorPoint = Vector2.new(0.5, 0.5)
                 DropdownContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
                 DropdownContainer.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownContainer.BorderSizePixel = 0
-                DropdownContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+                -- Geser ke kanan +50 pixel
+                DropdownContainer.Position = UDim2.new(0.5, 50, 0.5, 0)
                 DropdownContainer.Size = UDim2.new(0, 280, 0, 320)
                 DropdownContainer.Name = "DropdownContainer_" .. CountItem
                 DropdownContainer.ClipsDescendants = true
@@ -1861,7 +1862,7 @@ function Chloex:Window(GuiConfig)
                 HeaderSubtitle.Size = UDim2.new(1, -50, 0, 16)
                 HeaderSubtitle.Position = UDim2.new(0, 15, 0, 32)
                 HeaderSubtitle.Font = Enum.Font.Gotham
-                HeaderSubtitle.Text = "Choose an option below"
+                HeaderSubtitle.Text = "Click an option to select"
                 HeaderSubtitle.TextColor3 = Color3.fromRGB(180, 180, 180)
                 HeaderSubtitle.TextSize = 12
                 HeaderSubtitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -1887,7 +1888,7 @@ function Chloex:Window(GuiConfig)
                 CloseBtnCorner.CornerRadius = UDim.new(1, 0)
                 CloseBtnCorner.Parent = CloseBtn
                 
-                -- Search container
+                -- Search container (tidak langsung aktif, perlu di klik dulu)
                 local SearchContainer = Instance.new("Frame")
                 SearchContainer.BackgroundColor3 = Color3.fromRGB(35, 35, 40)
                 SearchContainer.BorderSizePixel = 0
@@ -1913,14 +1914,14 @@ function Chloex:Window(GuiConfig)
                 SearchIcon.ZIndex = 104
                 SearchIcon.Parent = SearchContainer
                 
-                -- Search box
+                -- Search box - butuh di klik dulu untuk aktif
                 local SearchBox = Instance.new("TextBox")
                 SearchBox.AnchorPoint = Vector2.new(0, 0.5)
                 SearchBox.Position = UDim2.new(0, 40, 0.5, 0)
                 SearchBox.Size = UDim2.new(1, -52, 1, -8)
                 SearchBox.BackgroundTransparency = 1
                 SearchBox.Font = Enum.Font.Gotham
-                SearchBox.PlaceholderText = "Search..."
+                SearchBox.PlaceholderText = "Click to search..."
                 SearchBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
                 SearchBox.Text = ""
                 SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1930,6 +1931,17 @@ function Chloex:Window(GuiConfig)
                 SearchBox.ZIndex = 104
                 SearchBox.Name = "SearchBox"
                 SearchBox.Parent = SearchContainer
+                
+                -- Tidak langsung focus, hanya placeholder yang berubah ketika di klik
+                SearchBox.Focused:Connect(function()
+                    SearchBox.PlaceholderText = "Type to search..."
+                end)
+                
+                SearchBox.FocusLost:Connect(function()
+                    if SearchBox.Text == "" then
+                        SearchBox.PlaceholderText = "Click to search..."
+                    end
+                end)
                 
                 -- Clear search button
                 local ClearSearch = Instance.new("TextButton")
@@ -1988,19 +2000,29 @@ function Chloex:Window(GuiConfig)
                     OptionsFrame.CanvasSize = UDim2.new(0, 0, 0, OptionsLayout.AbsoluteContentSize.Y + 10)
                 end)
                 
-                -- Search functionality
+                -- Search functionality - hanya aktif setelah user mengetik
                 SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
                     local query = SearchBox.Text:lower()
                     local hasResults = false
                     
-                    for _, option in pairs(OptionsFrame:GetChildren()) do
-                        if option:IsA("Frame") and option.Name == "Option" then
-                            local optionText = option:FindFirstChild("OptionText")
-                            if optionText then
-                                local text = optionText.Text:lower()
-                                local visible = (query == "" or text:find(query, 1, true) ~= nil)
-                                option.Visible = visible
-                                if visible then hasResults = true end
+                    if query ~= "" then
+                        for _, option in pairs(OptionsFrame:GetChildren()) do
+                            if option:IsA("Frame") and option.Name == "Option" then
+                                local optionText = option:FindFirstChild("OptionText")
+                                if optionText then
+                                    local text = optionText.Text:lower()
+                                    local visible = text:find(query, 1, true) ~= nil
+                                    option.Visible = visible
+                                    if visible then hasResults = true end
+                                end
+                            end
+                        end
+                    else
+                        -- Jika query kosong, tampilkan semua option
+                        for _, option in pairs(OptionsFrame:GetChildren()) do
+                            if option:IsA("Frame") and option.Name == "Option" then
+                                option.Visible = true
+                                hasResults = true
                             end
                         end
                     end
@@ -2035,7 +2057,7 @@ function Chloex:Window(GuiConfig)
                     ClearSearch.Visible = false
                 end)
                 
-                -- Close button functions
+                -- Fungsi untuk menutup dropdown
                 local function CloseThisDropdown()
                     if DropdownOverlay and DropdownOverlay.Visible then
                         TweenService:Create(
@@ -2056,10 +2078,12 @@ function Chloex:Window(GuiConfig)
                             DropdownContainer.Size = UDim2.new(0, 280, 0, 320)
                             SearchBox.Text = ""
                             ClearSearch.Visible = false
+                            SearchBox.PlaceholderText = "Click to search..."
                         end
                     end
                 end
                 
+                -- Fungsi untuk membuka dropdown
                 local function OpenThisDropdown()
                     if DropdownOverlay then
                         DropdownOverlay.Visible = true
@@ -2077,12 +2101,13 @@ function Chloex:Window(GuiConfig)
                             { Size = UDim2.new(0, 280, 0, 320) }
                         ):Play()
                         
-                        -- Focus ke search box
-                        task.wait(0.1)
-                        SearchBox:CaptureFocus()
+                        -- JANGAN langsung focus ke search box
+                        -- Hanya set placeholder
+                        SearchBox.PlaceholderText = "Click to search..."
                     end
                 end
                 
+                -- Tutup dropdown ketika klik di luar (selain dropdown container)
                 CloseOverlay.MouseButton1Click:Connect(CloseThisDropdown)
                 CloseBtn.MouseButton1Click:Connect(CloseThisDropdown)
                 
