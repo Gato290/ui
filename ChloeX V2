@@ -1,4 +1,4 @@
--- main.lua V0.1.0 - Chloe X UI with Keybind Support (Fixed Events)
+-- Main.lua v0.0.1
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -20,7 +20,7 @@ end
 
 -- Load Elements dari file eksternal
 local success, ElementsModule = pcall(function()
-    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
+    return loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/ElementV2.lua"))()
 end)
 
 if not success then
@@ -94,17 +94,15 @@ local function getIcon(iconString)
     
     -- Cek format dengan prefix
     if iconString:find("^lucide:") then
-        local iconName = iconString:sub(8) -- Hilangkan "lucide:" (7 karakter + :)
+        local iconName = iconString:sub(8)
         return LucideIcons[iconName] or ""
     elseif iconString:find("^solar:") then
-        local iconName = iconString:sub(7) -- Hilangkan "solar:" (6 karakter + :)
+        local iconName = iconString:sub(7)
         return SolarIcons[iconName] or ""
     else
-        -- Cek di Icons biasa (default)
         if Icons[iconString] then
             return Icons[iconString]
         else
-            -- Jika bukan key di Icons, anggap sebagai asset ID langsung
             return iconString
         end
     end
@@ -675,7 +673,6 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyFrame:Destroy()
         end
 
-        -- FIX: Ganti Activated dengan MouseButton1Click
         Close.MouseButton1Click:Connect(function()
             NotifyFunction:Close()
         end)
@@ -1123,7 +1120,6 @@ function Chloex:Window(GuiConfig)
         return false
     end
 
-    -- FIX: Ganti Activated dengan MouseButton1Click
     Min.MouseButton1Click:Connect(function()
         CircleClick(Min, Mouse.X, Mouse.Y)
         DropShadowHolder.Visible = false
@@ -1306,123 +1302,76 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
     MakeDraggable(Top, DropShadowHolder)
 
-    local MoreBlur = Instance.new("Frame");
-    local DropShadowHolder1 = Instance.new("Frame");
-    local DropShadow1 = Instance.new("ImageLabel");
-    local UICorner28 = Instance.new("UICorner");
-    local ConnectButton = Instance.new("TextButton");
-
-    MoreBlur.AnchorPoint = Vector2.new(1, 1)
-    MoreBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    MoreBlur.BackgroundTransparency = 0.999
-    MoreBlur.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    MoreBlur.BorderSizePixel = 0
-    MoreBlur.ClipsDescendants = true
-    MoreBlur.Position = UDim2.new(1, 8, 1, 8)
-    MoreBlur.Size = UDim2.new(1, 154, 1, 54)
-    MoreBlur.Visible = false
-    MoreBlur.Name = "MoreBlur"
-    MoreBlur.Parent = Layers
-
-    DropShadowHolder1.BackgroundTransparency = 1
-    DropShadowHolder1.BorderSizePixel = 0
-    DropShadowHolder1.Size = UDim2.new(1, 0, 1, 0)
-    DropShadowHolder1.ZIndex = 0
-    DropShadowHolder1.Name = "DropShadowHolder"
-    DropShadowHolder1.Parent = MoreBlur
-
-    DropShadow1.Image = "rbxassetid://6015897843"
-    DropShadow1.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    DropShadow1.ImageTransparency = 1
-    DropShadow1.ScaleType = Enum.ScaleType.Slice
-    DropShadow1.SliceCenter = Rect.new(49, 49, 450, 450)
-    DropShadow1.AnchorPoint = Vector2.new(0.5, 0.5)
-    DropShadow1.BackgroundTransparency = 1
-    DropShadow1.BorderSizePixel = 0
-    DropShadow1.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DropShadow1.Size = UDim2.new(1, 35, 1, 35)
-    DropShadow1.ZIndex = 0
-    DropShadow1.Name = "DropShadow"
-    DropShadow1.Parent = DropShadowHolder1
-
-    UICorner28.Parent = MoreBlur
-
-    ConnectButton.Font = Enum.Font.SourceSans
-    ConnectButton.Text = ""
-    ConnectButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    ConnectButton.TextSize = 14
-    ConnectButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ConnectButton.BackgroundTransparency = 0.999
-    ConnectButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    ConnectButton.BorderSizePixel = 0
-    ConnectButton.Size = UDim2.new(1, 0, 1, 0)
-    ConnectButton.Name = "ConnectButton"
-    ConnectButton.Parent = MoreBlur
-
-    local DropdownSelect = Instance.new("Frame");
-    local UICorner36 = Instance.new("UICorner");
-    local UIStroke14 = Instance.new("UIStroke");
-    local DropdownSelectReal = Instance.new("Frame");
-    local DropdownFolder = Instance.new("Folder");
-    local DropPageLayout = Instance.new("UIPageLayout");
-
-    DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
-    DropdownSelect.BackgroundColor3 = Color3.fromRGB(30.00000011175871, 30.00000011175871, 30.00000011175871)
-    DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    DropdownSelect.BorderSizePixel = 0
-    DropdownSelect.LayoutOrder = 1
-    DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
-    DropdownSelect.Size = UDim2.new(0, 160, 1, -16)
-    DropdownSelect.Name = "DropdownSelect"
-    DropdownSelect.ClipsDescendants = true
-    DropdownSelect.Parent = MoreBlur
-
-    -- FIX: Ganti Activated dengan MouseButton1Click
-    ConnectButton.MouseButton1Click:Connect(function()
-        if MoreBlur.Visible then
-            TweenService:Create(MoreBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
-            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
-            task.wait(0.3)
-            MoreBlur.Visible = false
-        end
-    end)
-    
-    UICorner36.CornerRadius = UDim.new(0, 3)
-    UICorner36.Parent = DropdownSelect
-
-    UIStroke14.Color = Color3.fromRGB(12, 159, 255)
-    UIStroke14.Thickness = 2.5
-    UIStroke14.Transparency = 0.8
-    UIStroke14.Parent = DropdownSelect
-
-    DropdownSelectReal.AnchorPoint = Vector2.new(0.5, 0.5)
-    DropdownSelectReal.BackgroundColor3 = Color3.fromRGB(0, 27, 98)
-    DropdownSelectReal.BackgroundTransparency = 0.7
-    DropdownSelectReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    DropdownSelectReal.BorderSizePixel = 0
-    DropdownSelectReal.LayoutOrder = 1
-    DropdownSelectReal.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DropdownSelectReal.Size = UDim2.new(1, 1, 1, 1)
-    DropdownSelectReal.Name = "DropdownSelectReal"
-    DropdownSelectReal.Parent = DropdownSelect
-
-    DropdownFolder.Name = "DropdownFolder"
-    DropdownFolder.Parent = DropdownSelectReal
-
-    DropPageLayout.EasingDirection = Enum.EasingDirection.InOut
-    DropPageLayout.EasingStyle = Enum.EasingStyle.Quad
-    DropPageLayout.TweenTime = 0.009999999776482582
-    DropPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    DropPageLayout.FillDirection = Enum.FillDirection.Vertical
-    DropPageLayout.Archivable = false
-    DropPageLayout.Name = "DropPageLayout"
-    DropPageLayout.Parent = DropdownFolder
-
     -- Auto load config after initialization
     if CONFIG_SETTINGS.AutoLoad then
-        task.wait(0.5) -- Wait for UI to fully initialize
+        task.wait(0.5)
         LoadConfigElements()
     end
+
+    -- Create dropdown folder for all dropdowns
+    local DropdownFolder = Instance.new("Folder")
+    DropdownFolder.Name = "DropdownFolder"
+    DropdownFolder.Parent = Chloeex
+
+    local MoreBlur = Instance.new("Frame")
+    MoreBlur.Name = "MoreBlur"
+    MoreBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    MoreBlur.BackgroundTransparency = 0.999
+    MoreBlur.BorderSizePixel = 0
+    MoreBlur.Size = UDim2.new(1, 0, 1, 0)
+    MoreBlur.Visible = false
+    MoreBlur.ZIndex = 99
+    MoreBlur.Parent = Chloeex
+
+    local DropdownSelect = Instance.new("Frame")
+    DropdownSelect.Name = "DropdownSelect"
+    DropdownSelect.BackgroundColor3 = Color3.fromRGB(25, 25, 30)
+    DropdownSelect.BackgroundTransparency = 0
+    DropdownSelect.BorderSizePixel = 0
+    DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
+    DropdownSelect.Size = UDim2.new(0, 220, 0, 300)
+    DropdownSelect.Visible = false
+    DropdownSelect.ZIndex = 100
+    DropdownSelect.Parent = MoreBlur
+
+    local DropdownCorner = Instance.new("UICorner")
+    DropdownCorner.CornerRadius = UDim.new(0, 8)
+    DropdownCorner.Parent = DropdownSelect
+
+    local DropShadow2 = Instance.new("ImageLabel")
+    DropShadow2.Image = "rbxassetid://6015897843"
+    DropShadow2.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    DropShadow2.ImageTransparency = 0.5
+    DropShadow2.ScaleType = Enum.ScaleType.Slice
+    DropShadow2.SliceCenter = Rect.new(49, 49, 450, 450)
+    DropShadow2.AnchorPoint = Vector2.new(0.5, 0.5)
+    DropShadow2.BackgroundTransparency = 1
+    DropShadow2.BorderSizePixel = 0
+    DropShadow2.Position = UDim2.new(0.5, 0, 0.5, 0)
+    DropShadow2.Size = UDim2.new(1, 25, 1, 25)
+    DropShadow2.ZIndex = 99
+    DropShadow2.Parent = DropdownSelect
+
+    local DropdownHolder = Instance.new("Frame")
+    DropdownHolder.Name = "DropdownHolder"
+    DropdownHolder.BackgroundTransparency = 1
+    DropdownHolder.Size = UDim2.new(1, 0, 1, 0)
+    DropdownHolder.ZIndex = 101
+    DropdownHolder.Parent = DropdownSelect
+
+    local DropdownPage = Instance.new("Frame")
+    DropdownPage.Name = "DropdownPage"
+    DropdownPage.BackgroundTransparency = 1
+    DropdownPage.Size = UDim2.new(1, 0, 1, 0)
+    DropdownPage.ZIndex = 102
+    DropdownPage.Parent = DropdownHolder
+
+    local DropPageLayout = Instance.new("UIPageLayout")
+    DropPageLayout.Name = "DropPageLayout"
+    DropPageLayout.Parent = DropdownPage
+    DropPageLayout.TweenTime = 0.3
+    DropPageLayout.EasingDirection = Enum.EasingDirection.InOut
+    DropPageLayout.EasingStyle = Enum.EasingStyle.Quad
 
     -- Tabs
     local Tabs = {}
@@ -1537,7 +1486,6 @@ function Chloex:Window(GuiConfig)
             UICorner4.Parent = ChooseFrame
         end
 
-        -- FIX: Ganti Activated dengan MouseButton1Click
         TabButton.MouseButton1Click:Connect(function()
             CircleClick(TabButton, Mouse.X, Mouse.Y)
             local FrameChoose
@@ -1794,7 +1742,6 @@ function Chloex:Window(GuiConfig)
             end
 
             if AlwaysOpen ~= true then
-                -- FIX: Ganti Activated dengan MouseButton1Click
                 SectionButton.MouseButton1Click:Connect(function()
                     CircleClick(SectionButton, Mouse.X, Mouse.Y)
                     if OpenSection then
@@ -1841,32 +1788,66 @@ function Chloex:Window(GuiConfig)
             local CountItem = 0
 
             function Items:AddParagraph(ParagraphConfig)
+                CountItem = CountItem + 1
                 return Elements.AddParagraph(SectionAdd, ParagraphConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddPanel(PanelConfig)
+                CountItem = CountItem + 1
                 return Elements.AddPanel(SectionAdd, PanelConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddButton(ButtonConfig)
+                CountItem = CountItem + 1
                 return Elements.AddButton(SectionAdd, ButtonConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddToggle(ToggleConfig)
+                CountItem = CountItem + 1
                 return Elements.AddToggle(SectionAdd, ToggleConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddSlider(SliderConfig)
+                CountItem = CountItem + 1
                 return Elements.AddSlider(SectionAdd, SliderConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddInput(InputConfig)
+                CountItem = CountItem + 1
                 return Elements.AddInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddDropdown(DropdownConfig)
+                local DropdownConfig = DropdownConfig or {}
+                DropdownConfig.Title = DropdownConfig.Title or "Title"
+                DropdownConfig.Content = DropdownConfig.Content or ""
+                DropdownConfig.Multi = DropdownConfig.Multi or false
+                DropdownConfig.Options = DropdownConfig.Options or {}
+                DropdownConfig.Default = DropdownConfig.Default or (DropdownConfig.Multi and {} or nil)
+                DropdownConfig.Callback = DropdownConfig.Callback or function() end
+                DropdownConfig.New = DropdownConfig.New or "false"
+
+                local configKey = "Dropdown_" .. DropdownConfig.Title
+                if ConfigData[configKey] ~= nil then
+                    DropdownConfig.Default = ConfigData[configKey]
+                end
+
+                CountDropdown = CountDropdown + 1
+                local DropdownFunc = Elements.AddDropdown(
+                    SectionAdd, 
+                    DropdownConfig, 
+                    CountItem, 
+                    CountDropdown, 
+                    MoreBlur, 
+                    DropdownSelect, 
+                    DropdownPage, 
+                    DropPageLayout, 
+                    UpdateSizeSection
+                )
+                
                 CountItem = CountItem + 1
-                return Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
+                AllElements[configKey] = DropdownFunc
+                return DropdownFunc
             end
 
             -- KEYBIND IMPLEMENTATION USING MODULE
@@ -1886,10 +1867,12 @@ function Chloex:Window(GuiConfig)
             end
 
             function Items:AddDivider()
+                CountItem = CountItem + 1
                 return Elements.AddDivider(SectionAdd, CountItem, UpdateSizeSection)
             end
 
             function Items:AddSubSection(title)
+                CountItem = CountItem + 1
                 return Elements.AddSubSection(SectionAdd, title, CountItem, UpdateSizeSection)
             end
 
