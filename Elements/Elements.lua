@@ -1,5 +1,5 @@
 -- Elements.lua - UI Elements Module
--- Version 1.3.0 (Dropdown fixed - each dropdown has own container)
+-- Version 1.3.1 (Dropdown fixed - using MouseButton1Click)
 -- GitHub: https://github.com/Gato290/ui
 
 local TweenService = game:GetService("TweenService")
@@ -719,7 +719,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     UICorner23.CornerRadius = UDim.new(0, 15)
     UICorner23.Parent = ToggleCircle
 
-    ToggleButton.Activated:Connect(function()
+    ToggleButton.MouseButton1Click:Connect(function()
         ToggleFunc.Value = not ToggleFunc.Value
         ToggleFunc:Set(ToggleFunc.Value)
     end)
@@ -1161,13 +1161,15 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     DropdownContainer.Parent = moreBlur:FindFirstChild("DropdownSelect"):FindFirstChild("DropdownSelectReal"):FindFirstChild("DropdownFolder")
     DropdownContainer.ZIndex = 10
 
-    -- Blur effect untuk background saat dropdown terbuka
-    local DropdownBlur = Instance.new("Frame")
+    -- Blur effect untuk background saat dropdown terbuka (GUNAKAN TEXTBUTTON)
+    local DropdownBlur = Instance.new("TextButton")
     DropdownBlur.Name = "DropdownBlur_" .. HttpService:GenerateGUID(false)
     DropdownBlur.Size = UDim2.new(1, 0, 1, 0)
     DropdownBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     DropdownBlur.BackgroundTransparency = 0.5
     DropdownBlur.BorderSizePixel = 0
+    DropdownBlur.Text = "" -- PENTING: Text dikosongkan
+    DropdownBlur.AutoButtonColor = false -- Matikan efek auto button
     DropdownBlur.Visible = false
     DropdownBlur.Parent = moreBlur
     DropdownBlur.ZIndex = 9
@@ -1367,8 +1369,8 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         SearchBox:CaptureFocus()
     end
 
-    -- Toggle dropdown
-    DropdownButton.Activated:Connect(function()
+    -- Toggle dropdown (GUNAKAN MouseButton1Click)
+    DropdownButton.MouseButton1Click:Connect(function()
         if DropdownContainer.Visible then
             CloseDropdown()
         else
@@ -1376,8 +1378,8 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         end
     end)
 
-    -- Click outside untuk menutup
-    DropdownBlur.Activated:Connect(function()
+    -- Click outside untuk menutup (GUNAKAN MouseButton1Click)
+    DropdownBlur.MouseButton1Click:Connect(function()
         CloseDropdown()
     end)
 
@@ -1471,7 +1473,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
         UIStroke15.Parent = ChooseFrame
         UICorner38.Parent = ChooseFrame
 
-        OptionButton.Activated:Connect(function()
+        OptionButton.MouseButton1Click:Connect(function()
             if config.Multi then
                 if not table.find(DropdownFunc.Value, value) then
                     table.insert(DropdownFunc.Value, value)
