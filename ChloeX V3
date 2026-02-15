@@ -94,17 +94,15 @@ local function getIcon(iconString)
     
     -- Cek format dengan prefix
     if iconString:find("^lucide:") then
-        local iconName = iconString:sub(8) -- Hilangkan "lucide:" (7 karakter + :)
+        local iconName = iconString:sub(8)
         return LucideIcons[iconName] or ""
     elseif iconString:find("^solar:") then
-        local iconName = iconString:sub(7) -- Hilangkan "solar:" (6 karakter + :)
+        local iconName = iconString:sub(7)
         return SolarIcons[iconName] or ""
     else
-        -- Cek di Icons biasa (default)
         if Icons[iconString] then
             return Icons[iconString]
         else
-            -- Jika bukan key di Icons, anggap sebagai asset ID langsung
             return iconString
         end
     end
@@ -1304,12 +1302,9 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
     MakeDraggable(Top, DropShadowHolder)
 
-    -- HAPUS MoreBlur, DropdownSelect, dan komponen global lainnya
-    -- Karena sekarang setiap dropdown punya komponen sendiri
-
     -- Auto load config after initialization
     if CONFIG_SETTINGS.AutoLoad then
-        task.wait(0.5) -- Wait for UI to fully initialize
+        task.wait(0.5)
         LoadConfigElements()
     end
 
@@ -1728,26 +1723,32 @@ function Chloex:Window(GuiConfig)
             local CountItem = 0
 
             function Items:AddParagraph(ParagraphConfig)
+                CountItem = CountItem + 1
                 return Elements.AddParagraph(SectionAdd, ParagraphConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddPanel(PanelConfig)
+                CountItem = CountItem + 1
                 return Elements.AddPanel(SectionAdd, PanelConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddButton(ButtonConfig)
+                CountItem = CountItem + 1
                 return Elements.AddButton(SectionAdd, ButtonConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddToggle(ToggleConfig)
+                CountItem = CountItem + 1
                 return Elements.AddToggle(SectionAdd, ToggleConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddSlider(SliderConfig)
+                CountItem = CountItem + 1
                 return Elements.AddSlider(SectionAdd, SliderConfig, CountItem, UpdateSizeSection)
             end
 
             function Items:AddInput(InputConfig)
+                CountItem = CountItem + 1
                 return Elements.AddInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection)
             end
 
@@ -1769,7 +1770,7 @@ function Chloex:Window(GuiConfig)
                 DropdownBlur.Position = UDim2.new(1, 8, 1, 8)
                 DropdownBlur.Size = UDim2.new(1, 154, 1, 54)
                 DropdownBlur.Visible = false
-                DropdownBlur.Parent = SectionAdd  -- Parent ke SectionAdd bukan global
+                DropdownBlur.Parent = SectionAdd
                 
                 -- DropShadow untuk blur
                 local DropShadowHolder1 = Instance.new("Frame")
@@ -1866,31 +1867,53 @@ function Chloex:Window(GuiConfig)
                 
                 -- Function untuk menutup dropdown ini
                 local function CloseThisDropdown()
-                    if DropdownBlur.Visible then
-                        TweenService:Create(DropdownBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
-                        TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
+                    if DropdownBlur and DropdownBlur.Visible then
+                        local success1, err1 = pcall(function()
+                            TweenService:Create(DropdownBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
+                        end)
+                        
+                        local success2, err2 = pcall(function()
+                            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
+                        end)
+                        
                         task.wait(0.3)
-                        DropdownBlur.Visible = false
+                        if DropdownBlur then
+                            DropdownBlur.Visible = false
+                        end
                     end
                 end
                 
-                -- Close button click
                 CloseButton.MouseButton1Click:Connect(CloseThisDropdown)
                 
-                -- Panggil Elements.AddDropdown dengan parameter yang benar
-                local dropdownObj = Elements.AddDropdown(
-                    SectionAdd,           -- Parent
-                    DropdownConfig,       -- Config
-                    CountItem,            -- Item count
-                    CountDropdown,        -- Dropdown count
-                    DropdownBlur,         -- BLUR SENDIRI
-                    DropPageLayout,       -- LAYOUT SENDIRI
-                    UpdateSizeSection     -- Update function
-                )
+                -- PAKAI PCALL UNTUK HINDARI ERROR
+                local success, dropdownObj = pcall(function()
+                    return Elements.AddDropdown(
+                        SectionAdd,
+                        DropdownConfig,
+                        CountItem,
+                        CountDropdown,
+                        DropdownBlur,
+                        DropPageLayout,
+                        UpdateSizeSection
+                    )
+                end)
                 
-                -- Tambahkan method close ke objek dropdown
+                if not success then
+                    warn("Failed to create dropdown:", dropdownObj)
+                    -- BUAT DROPDOWN DUMMY
+                    dropdownObj = {
+                        Close = CloseThisDropdown,
+                        Set = function() end,
+                        Get = function() return nil end,
+                        GetValue = function() return nil end,
+                        SetValue = function() end,
+                        AddOption = function() end,
+                        Clear = function() end,
+                        SetValues = function() end
+                    }
+                end
+                
                 dropdownObj.Close = CloseThisDropdown
-                
                 CountDropdown = CountDropdown + 1
                 return dropdownObj
             end
@@ -1912,10 +1935,12 @@ function Chloex:Window(GuiConfig)
             end
 
             function Items:AddDivider()
+                CountItem = CountItem + 1
                 return Elements.AddDivider(SectionAdd, CountItem, UpdateSizeSection)
             end
 
             function Items:AddSubSection(title)
+                CountItem = CountItem + 1
                 return Elements.AddSubSection(SectionAdd, title, CountItem, UpdateSizeSection)
             end
 
