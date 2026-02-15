@@ -1813,15 +1813,17 @@ function Chloex:Window(GuiConfig)
                 CloseButton.Name = "CloseButton_" .. CountItem
                 CloseButton.Parent = DropdownBlur
                 
-                -- 3. Dropdown Select
+                -- 3. Dropdown Select (DIPERBAIKI - POSISI DAN UKURAN)
                 local DropdownSelect = Instance.new("Frame")
                 DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
                 DropdownSelect.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
                 DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
                 DropdownSelect.BorderSizePixel = 0
                 DropdownSelect.LayoutOrder = 1
-                DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
-                DropdownSelect.Size = UDim2.new(0, 160, 1, -16)
+                -- POSISI: Geser ke kiri (minus) biar ga kejepit di kanan
+                DropdownSelect.Position = UDim2.new(1, -180, 0.5, 0)
+                -- UKURAN: Lebih lebar (200px) biar muat konten
+                DropdownSelect.Size = UDim2.new(0, 200, 1, -16)
                 DropdownSelect.Name = "DropdownSelect_" .. CountItem
                 DropdownSelect.ClipsDescendants = true
                 DropdownSelect.Parent = DropdownBlur
@@ -1873,7 +1875,8 @@ function Chloex:Window(GuiConfig)
                         end)
                         
                         local success2, err2 = pcall(function()
-                            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
+                            -- POSISI TUTUP: Sama dengan posisi awal
+                            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, -180, 0.5, 0) }):Play()
                         end)
                         
                         task.wait(0.3)
@@ -1884,6 +1887,21 @@ function Chloex:Window(GuiConfig)
                 end
                 
                 CloseButton.MouseButton1Click:Connect(CloseThisDropdown)
+                
+                -- Auto-adjust tinggi dropdown berdasarkan jumlah item
+                task.spawn(function()
+                    task.wait(0.1)
+                    local totalHeight = 0
+                    for _, child in pairs(DropdownFolder:GetChildren()) do
+                        if child:IsA("Frame") then
+                            totalHeight = totalHeight + child.Size.Y.Offset + 3
+                        end
+                    end
+                    if totalHeight > 0 then
+                        local maxHeight = math.min(totalHeight + 40, 300) -- Max 300px
+                        DropdownSelect.Size = UDim2.new(0, 200, 0, maxHeight)
+                    end
+                end)
                 
                 -- PAKAI PCALL UNTUK HINDARI ERROR
                 local success, dropdownObj = pcall(function()
