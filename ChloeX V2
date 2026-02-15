@@ -1,6 +1,9 @@
--- main.lua V0.0.9 - Chloe X UI with Keybind Support
+-- main.lua V0.1.0 - Chloe X UI with Keybind Support (Fixed Events)
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local CoreGui = game:GetService("CoreGui")
 
 -- Load Color module dari file eksternal
 local successColor, Colors = pcall(function()
@@ -181,11 +184,8 @@ local function AutoSave()
     end
 end
 
-local UserInputService = game:GetService("UserInputService")
-local TweenService = game:GetService("TweenService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
-local CoreGui = game:GetService("CoreGui")
 local viewport = workspace.CurrentCamera.ViewportSize
 
 local function isMobileDevice()
@@ -675,9 +675,11 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyFrame:Destroy()
         end
 
-        Close.Activated:Connect(function()
+        -- FIX: Ganti Activated dengan MouseButton1Click
+        Close.MouseButton1Click:Connect(function()
             NotifyFunction:Close()
         end)
+        
         TweenService:Create(
             NotifyFrameReal,
             TweenInfo.new(tonumber(NotifyConfig.Time), Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
@@ -1121,12 +1123,13 @@ function Chloex:Window(GuiConfig)
         return false
     end
 
-    Min.Activated:Connect(function()
+    -- FIX: Ganti Activated dengan MouseButton1Click
+    Min.MouseButton1Click:Connect(function()
         CircleClick(Min, Mouse.X, Mouse.Y)
         DropShadowHolder.Visible = false
     end)
     
-    Close.Activated:Connect(function()
+    Close.MouseButton1Click:Connect(function()
         CircleClick(Close, Mouse.X, Mouse.Y)
 
         local Overlay = Instance.new("Frame")
@@ -1287,8 +1290,7 @@ function Chloex:Window(GuiConfig)
                     if input.UserInputState == Enum.UserInputState.End then
                         dragging = false
                     end
-                end
-                )
+                end)
             end
         end)
 
@@ -1375,7 +1377,8 @@ function Chloex:Window(GuiConfig)
     DropdownSelect.ClipsDescendants = true
     DropdownSelect.Parent = MoreBlur
 
-    ConnectButton.Activated:Connect(function()
+    -- FIX: Ganti Activated dengan MouseButton1Click
+    ConnectButton.MouseButton1Click:Connect(function()
         if MoreBlur.Visible then
             TweenService:Create(MoreBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
             TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
@@ -1383,6 +1386,7 @@ function Chloex:Window(GuiConfig)
             MoreBlur.Visible = false
         end
     end)
+    
     UICorner36.CornerRadius = UDim.new(0, 3)
     UICorner36.Parent = DropdownSelect
 
@@ -1533,7 +1537,8 @@ function Chloex:Window(GuiConfig)
             UICorner4.Parent = ChooseFrame
         end
 
-        TabButton.Activated:Connect(function()
+        -- FIX: Ganti Activated dengan MouseButton1Click
+        TabButton.MouseButton1Click:Connect(function()
             CircleClick(TabButton, Mouse.X, Mouse.Y)
             local FrameChoose
             for a, s in ScrollTab:GetChildren() do
@@ -1789,7 +1794,8 @@ function Chloex:Window(GuiConfig)
             end
 
             if AlwaysOpen ~= true then
-                SectionButton.Activated:Connect(function()
+                -- FIX: Ganti Activated dengan MouseButton1Click
+                SectionButton.MouseButton1Click:Connect(function()
                     CircleClick(SectionButton, Mouse.X, Mouse.Y)
                     if OpenSection then
                         TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 0 }):Play()
@@ -1859,6 +1865,7 @@ function Chloex:Window(GuiConfig)
             end
 
             function Items:AddDropdown(DropdownConfig)
+                CountItem = CountItem + 1
                 return Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
             end
 
