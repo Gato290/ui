@@ -1,5 +1,5 @@
 -- Elements.lua - UI Elements Module
--- Version 1.2.1 (Dengan Dropdown Independen)
+-- Version 1.3.0 (Dengan Dropdown yang sudah diperbaiki)
 -- GitHub: https://github.com/Gato290/ui
 
 local TweenService = game:GetService("TweenService")
@@ -160,7 +160,6 @@ function ElementsModule.AddParagraph(parent, config, countItem, updateSizeCallba
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
         
-        -- Hover effect untuk button
         ParagraphButton.MouseEnter:Connect(function()
             TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -289,7 +288,6 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
         InputBox.Position = UDim2.new(0, 5, 0, 3)
         InputBox.Parent = InputFrame
         
-        -- Focus effect
         InputBox.Focused:Connect(function()
             TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
         end)
@@ -317,7 +315,6 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = ButtonMain
     
-    -- Hover effect
     ButtonMain.MouseEnter:Connect(function()
         TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
         TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -349,7 +346,6 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
         subCorner.CornerRadius = UDim.new(0, 6)
         subCorner.Parent = SubButton
         
-        -- Hover effect
         SubButton.MouseEnter:Connect(function()
             TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -389,11 +385,9 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
     config.SubCallback = config.SubCallback or function() end
     config.New = config.New or "false"
     
-    -- Deteksi apakah ini button v2 (memiliki New atau Title2)
     local isV2 = config.New == "true" or config.Title2 ~= nil
 
     if isV2 then
-        -- Button V2 dengan tampilan lebih modern
         config.Title2 = config.Title2 or ""
         config.New = config.New == "true"
         
@@ -408,7 +402,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         UICorner.CornerRadius = UDim.new(0, 6)
         UICorner.Parent = Button
 
-        -- Icon panah
         local ArrowIcon = Instance.new("ImageLabel")
         ArrowIcon.Size = UDim2.new(0, 16, 0, 16)
         ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0)
@@ -421,7 +414,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         ArrowIcon.Name = "ArrowIcon"
         ArrowIcon.Parent = Button
 
-        -- Title utama
         local MainTitle = Instance.new("TextLabel")
         MainTitle.Font = Enum.Font.GothamBold
         MainTitle.Text = config.Title
@@ -435,7 +427,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         MainTitle.Name = "MainTitle"
         MainTitle.Parent = Button
 
-        -- Sub title (Title2)
         local SubTitle = Instance.new("TextLabel")
         SubTitle.Font = Enum.Font.Gotham
         SubTitle.Text = config.Title2
@@ -449,7 +440,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         SubTitle.Name = "SubTitle"
         SubTitle.Parent = Button
 
-        -- Badge "NEW" (jika ada)
         if config.New then
             local BadgeFrame = Instance.new("Frame")
             BadgeFrame.BackgroundColor3 = MainColor
@@ -475,7 +465,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             BadgeText.ZIndex = 6
         end
 
-        -- Tombol utama (cover seluruh area)
         local MainButton = Instance.new("TextButton")
         MainButton.Font = Enum.Font.SourceSans
         MainButton.Text = ""
@@ -483,7 +472,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         MainButton.Size = UDim2.new(1, 0, 1, 0)
         MainButton.Parent = Button
 
-        -- Hover effect
         MainButton.MouseEnter:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0}):Play()
@@ -496,7 +484,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play()
         end)
 
-        -- Click effect
         MainButton.MouseButton1Down:Connect(function()
             TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.8}):Play()
             TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play()
@@ -513,7 +500,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         return {Click = config.Callback}
 
     else
-        -- Button V1 (original) dengan satu atau dua button
         local Button = Instance.new("Frame")
         Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Button.BackgroundTransparency = 0.935
@@ -525,7 +511,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         UICorner.CornerRadius = UDim.new(0, 4)
         UICorner.Parent = Button
 
-        -- Buat badge
         local Badge = createBadge(Button, config)
         if Badge then
             Badge.Position = UDim2.new(1, -45, 0, 5)
@@ -547,7 +532,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
         mainCorner.CornerRadius = UDim.new(0, 4)
         mainCorner.Parent = MainButton
         
-        -- Hover effect
         MainButton.MouseEnter:Connect(function()
             TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
             TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -577,7 +561,6 @@ function ElementsModule.AddButton(parent, config, countItem, updateSizeCallback)
             subCorner.CornerRadius = UDim.new(0, 4)
             subCorner.Parent = SubButton
             
-            -- Hover effect
             SubButton.MouseEnter:Connect(function()
                 TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
                 TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
@@ -645,7 +628,6 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     ToggleTitle.Name = "ToggleTitle"
     ToggleTitle.Parent = Toggle
 
-    -- Buat badge
     local Badge = createBadge(Toggle, config)
     if Badge then
         Badge.Position = UDim2.new(1, -70, 0, 8)
@@ -835,7 +817,6 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderTitle.Name = "SliderTitle"
     SliderTitle.Parent = Slider
 
-    -- Buat badge
     local Badge = createBadge(Slider, config)
     if Badge then
         Badge.Position = UDim2.new(1, -170, 0, 8)
@@ -946,11 +927,9 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
         SliderFunc.Value = Value
         TextBox.Text = tostring(Value)
         
-        -- Smooth animation untuk slider
         local targetSize = UDim2.fromScale((Value - config.Min) / (config.Max - config.Min), 1)
         TweenService:Create(SliderDraggable, TweenInfoPresets.Slow, { Size = targetSize }):Play()
         
-        -- Callback dengan pcall untuk keamanan
         local success, err = pcall(function()
             config.Callback(Value)
         end)
@@ -963,7 +942,6 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderFrame.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
-            -- Smooth circle expansion
             TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 14, 0, 14) }):Play()
             
             local SizeScale = math.clamp(
@@ -978,10 +956,8 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     SliderFrame.InputEnded:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = false
-            -- Smooth circle shrink
             TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 8, 0, 8) }):Play()
             
-            -- Final callback
             local success, err = pcall(function()
                 config.Callback(SliderFunc.Value)
             end)
@@ -1065,7 +1041,6 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     InputTitle.Name = "InputTitle"
     InputTitle.Parent = Input
 
-    -- Buat badge
     local Badge = createBadge(Input, config)
     if Badge then
         Badge.Position = UDim2.new(1, -170, 0, 8)
@@ -1132,7 +1107,6 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     InputTextBox.Name = "InputTextBox"
     InputTextBox.Parent = InputFrame
     
-    -- Focus effect
     InputTextBox.Focused:Connect(function()
         TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
     end)
@@ -1159,8 +1133,7 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     return InputFunc
 end
 
--- ==================== DROPDOWN YANG SUDAH DIPERBAIKI ====================
-function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallback)
+function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, moreBlur, dropPageLayout, updateSizeCallback)
     config = config or {}
     config.Title = config.Title or "Title"
     config.Content = config.Content or ""
@@ -1169,6 +1142,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
     config.Default = config.Default or (config.Multi and {} or nil)
     config.Callback = config.Callback or function() end
     config.New = config.New or "false"
+    config.Placeholder = config.Placeholder or (config.Multi and "Select Options" or "Select Option")
 
     local configKey = "Dropdown_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -1177,7 +1151,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
 
     local DropdownFunc = { Value = config.Default, Options = config.Options }
 
-    -- Create main dropdown frame
     local Dropdown = Instance.new("Frame")
     local DropdownButton = Instance.new("TextButton")
     local UICorner10 = Instance.new("UICorner")
@@ -1195,7 +1168,6 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
     Dropdown.Size = UDim2.new(1, 0, 0, 46)
     Dropdown.Name = "Dropdown"
     Dropdown.Parent = parent
-    Dropdown.ClipsDescendants = false
 
     DropdownButton.Text = ""
     DropdownButton.BackgroundTransparency = 1
@@ -1217,7 +1189,7 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
     DropdownTitle.Name = "DropdownTitle"
     DropdownTitle.Parent = Dropdown
 
-    -- Create badge
+    -- Buat badge
     local Badge = createBadge(Dropdown, config)
     if Badge then
         Badge.Position = UDim2.new(1, -170, 0, 8)
@@ -1241,13 +1213,12 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
     SelectOptionsFrame.Position = UDim2.new(1, -7, 0.5, 0)
     SelectOptionsFrame.Size = UDim2.new(0, 148, 0, 30)
     SelectOptionsFrame.Name = "SelectOptionsFrame"
+    SelectOptionsFrame.LayoutOrder = countDropdown
     SelectOptionsFrame.Parent = Dropdown
-    SelectOptionsFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
 
     UICorner11.CornerRadius = UDim.new(0, 4)
     UICorner11.Parent = SelectOptionsFrame
 
-    -- Hover effect untuk SelectOptionsFrame
     SelectOptionsFrame.MouseEnter:Connect(function()
         TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.9}):Play()
     end)
@@ -1256,8 +1227,21 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
         TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
     end)
 
+    DropdownButton.Activated:Connect(function()
+        if not moreBlur.Visible then
+            moreBlur.Visible = true
+            dropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder)
+            TweenService:Create(moreBlur, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
+            TweenService:Create(moreBlur:FindFirstChild("DropdownSelect"), TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
+            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
+        else
+            moreBlur.Visible = false
+            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
+        end
+    end)
+
     OptionSelecting.Font = Enum.Font.GothamBold
-    OptionSelecting.Text = config.Multi and "Select Options" or "Select Option"
+    OptionSelecting.Text = config.Placeholder
     OptionSelecting.TextColor3 = Color3.fromRGB(255, 255, 255)
     OptionSelecting.TextSize = 12
     OptionSelecting.TextTransparency = 0.6
@@ -1278,140 +1262,57 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
     OptionImg.Name = "OptionImg"
     OptionImg.Parent = SelectOptionsFrame
 
-    -- Create dropdown container (UNIK untuk setiap dropdown)
+    -- Dropdown Container untuk options
     local DropdownContainer = Instance.new("Frame")
-    DropdownContainer.Name = "DropdownContainer_" .. config.Title
-    DropdownContainer.Size = UDim2.new(0, 200, 0, 300)
-    DropdownContainer.Position = UDim2.new(1, 10, 0, 0)
-    DropdownContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
-    DropdownContainer.BackgroundTransparency = 0.1
-    DropdownContainer.BorderSizePixel = 0
-    DropdownContainer.Visible = false
-    DropdownContainer.ZIndex = 10
-    DropdownContainer.Parent = Dropdown
+    DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
+    DropdownContainer.BackgroundTransparency = 1
+    DropdownContainer.Parent = moreBlur:FindFirstChild("DropdownSelect"):FindFirstChild("DropdownSelectReal"):FindFirstChild("DropdownFolder")
 
-    local DropdownContainerCorner = Instance.new("UICorner")
-    DropdownContainerCorner.CornerRadius = UDim.new(0, 8)
-    DropdownContainerCorner.Parent = DropdownContainer
-
-    local DropdownStroke = Instance.new("UIStroke")
-    DropdownStroke.Color = MainColor
-    DropdownStroke.Thickness = 1
-    DropdownStroke.Transparency = 0.5
-    DropdownStroke.Parent = DropdownContainer
-
-    -- Search box
+    -- Search Box
     local SearchBox = Instance.new("TextBox")
-    SearchBox.PlaceholderText = "Search..."
+    SearchBox.PlaceholderText = "🔍 Search..."
     SearchBox.Font = Enum.Font.Gotham
     SearchBox.Text = ""
     SearchBox.TextSize = 12
     SearchBox.TextColor3 = Color3.fromRGB(255, 255, 255)
-    SearchBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    SearchBox.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     SearchBox.BackgroundTransparency = 0.5
     SearchBox.BorderSizePixel = 0
-    SearchBox.Size = UDim2.new(1, -20, 0, 30)
-    SearchBox.Position = UDim2.new(0, 10, 0, 10)
+    SearchBox.Size = UDim2.new(1, -10, 0, 28)
+    SearchBox.Position = UDim2.new(0, 5, 0, 5)
     SearchBox.ClearTextOnFocus = false
     SearchBox.Name = "SearchBox"
     SearchBox.Parent = DropdownContainer
 
-    local SearchCorner = Instance.new("UICorner")
-    SearchCorner.CornerRadius = UDim.new(0, 6)
-    SearchCorner.Parent = SearchBox
+    local searchCorner = Instance.new("UICorner")
+    searchCorner.CornerRadius = UDim.new(0, 4)
+    searchCorner.Parent = SearchBox
 
     local ScrollSelect = Instance.new("ScrollingFrame")
-    ScrollSelect.Size = UDim2.new(1, -20, 1, -55)
-    ScrollSelect.Position = UDim2.new(0, 10, 0, 45)
-    ScrollSelect.ScrollBarImageColor3 = MainColor
+    ScrollSelect.Size = UDim2.new(1, -10, 1, -43)
+    ScrollSelect.Position = UDim2.new(0, 5, 0, 38)
+    ScrollSelect.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
     ScrollSelect.ScrollBarImageTransparency = 0.5
-    ScrollSelect.ScrollBarThickness = 4
     ScrollSelect.BorderSizePixel = 0
     ScrollSelect.BackgroundTransparency = 1
+    ScrollSelect.ScrollBarThickness = 4
     ScrollSelect.CanvasSize = UDim2.new(0, 0, 0, 0)
     ScrollSelect.Name = "ScrollSelect"
     ScrollSelect.Parent = DropdownContainer
 
     local UIListLayout4 = Instance.new("UIListLayout")
-    UIListLayout4.Padding = UDim.new(0, 3)
+    UIListLayout4.Padding = UDim.new(0, 2)
     UIListLayout4.SortOrder = Enum.SortOrder.LayoutOrder
     UIListLayout4.Parent = ScrollSelect
 
     UIListLayout4:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-        ScrollSelect.CanvasSize = UDim2.new(0, 0, 0, UIListLayout4.AbsoluteContentSize.Y + 10)
+        ScrollSelect.CanvasSize = UDim2.new(0, 0, 0, UIListLayout4.AbsoluteContentSize.Y + 5)
     end)
 
-    -- Toggle dropdown visibility
-    local isOpen = false
-    
-    local function closeDropdown()
-        if isOpen then
-            isOpen = false
-            TweenService:Create(DropdownContainer, TweenInfoPresets.Normal, {
-                Size = UDim2.new(0, 200, 0, 0),
-                Transparency = 1
-            }):Play()
-            TweenService:Create(DropdownContainer, TweenInfoPresets.Normal, {
-                Visible = false
-            }):Play()
-            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
-            
-            -- Delay untuk benar-benar hide
-            task.wait(0.2)
-            DropdownContainer.Visible = false
-        end
-    end
-    
-    local function openDropdown()
-        if not isOpen then
-            isOpen = true
-            DropdownContainer.Visible = true
-            DropdownContainer.Size = UDim2.new(0, 200, 0, 0)
-            DropdownContainer.Transparency = 1
-            
-            TweenService:Create(DropdownContainer, TweenInfoPresets.Slow, {
-                Size = UDim2.new(0, 200, 0, 300),
-                Transparency = 0.1
-            }):Play()
-            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
-            
-            -- Bring to front
-            DropdownContainer.ZIndex = 10
-            for _, child in pairs(DropdownContainer:GetDescendants()) do
-                child.ZIndex = 10
-            end
-        end
-    end
-
-    DropdownButton.Activated:Connect(function()
-        if isOpen then
-            closeDropdown()
-        else
-            openDropdown()
-            -- Focus search box
-            SearchBox:CaptureFocus()
-        end
-    end)
-
-    -- Close when clicking outside
-    UserInputService.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 then
-            local pos = UserInputService:GetMouseLocation()
-            local absPos = DropdownContainer.AbsolutePosition
-            local absSize = DropdownContainer.AbsoluteSize
-            
-            if isOpen and (pos.X < absPos.X or pos.X > absPos.X + absSize.X or 
-                          pos.Y < absPos.Y or pos.Y > absPos.Y + absSize.Y) then
-                closeDropdown()
-            end
-        end
-    end)
-
-    -- Search functionality
     SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
         local query = string.lower(SearchBox.Text)
         for _, option in pairs(ScrollSelect:GetChildren()) do
-            if option:IsA("Frame") and option.Name == "Option" and option:FindFirstChild("OptionText") then
+            if option.Name == "Option" and option:FindFirstChild("OptionText") then
                 local text = string.lower(option.OptionText.Text)
                 option.Visible = query == "" or string.find(text, query, 1, true)
             end
@@ -1420,13 +1321,13 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
 
     function DropdownFunc:Clear()
         for _, DropFrame in ScrollSelect:GetChildren() do
-            if DropFrame:IsA("Frame") and DropFrame.Name == "Option" then
+            if DropFrame.Name == "Option" then
                 DropFrame:Destroy()
             end
         end
         DropdownFunc.Value = config.Multi and {} or nil
         DropdownFunc.Options = {}
-        OptionSelecting.Text = config.Multi and "Select Options" or "Select Option"
+        OptionSelecting.Text = config.Placeholder
     end
 
     function DropdownFunc:AddOption(option)
@@ -1439,6 +1340,9 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
             value = option
         end
 
+        -- Buat unique ID untuk setiap option
+        local optionId = HttpService:GenerateGUID(false)
+
         local Option = Instance.new("Frame")
         local OptionButton = Instance.new("TextButton")
         local OptionText = Instance.new("TextLabel")
@@ -1448,23 +1352,19 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
         local UICorner37 = Instance.new("UICorner")
 
         Option.BackgroundTransparency = 1
-        Option.Size = UDim2.new(1, -10, 0, 30)
-        Option.Position = UDim2.new(0, 5, 0, 0)
+        Option.Size = UDim2.new(1, 0, 0, 32)
         Option.Name = "Option"
         Option.Parent = ScrollSelect
-        Option.ZIndex = 10
 
-        UICorner37.CornerRadius = UDim.new(0, 3)
+        UICorner37.CornerRadius = UDim.new(0, 4)
         UICorner37.Parent = Option
 
         OptionButton.BackgroundTransparency = 1
         OptionButton.Size = UDim2.new(1, 0, 1, 0)
         OptionButton.Text = ""
-        OptionButton.Name = "OptionButton"
+        OptionButton.Name = "OptionButton_" .. optionId
         OptionButton.Parent = Option
-        OptionButton.ZIndex = 10
         
-        -- Hover effect untuk option
         OptionButton.MouseEnter:Connect(function()
             TweenService:Create(Option, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
         end)
@@ -1477,23 +1377,23 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
         OptionText.Text = label
         OptionText.TextSize = 13
         OptionText.TextColor3 = Color3.fromRGB(230, 230, 230)
-        OptionText.Position = UDim2.new(0, 20, 0, 8)
-        OptionText.Size = UDim2.new(1, -100, 0, 13)
+        OptionText.Position = UDim2.new(0, 8, 0, 8)
+        OptionText.Size = UDim2.new(1, -100, 0, 14)
         OptionText.BackgroundTransparency = 1
         OptionText.TextXAlignment = Enum.TextXAlignment.Left
+        OptionText.TextTruncate = Enum.TextTruncate.AtEnd
         OptionText.Name = "OptionText"
         OptionText.Parent = Option
-        OptionText.ZIndex = 10
 
         Option:SetAttribute("RealValue", value)
+        Option:SetAttribute("OptionId", optionId)
 
         ChooseFrame.AnchorPoint = Vector2.new(0, 0.5)
         ChooseFrame.BackgroundColor3 = MainColor
-        ChooseFrame.Position = UDim2.new(0, 5, 0.5, 0)
+        ChooseFrame.Position = UDim2.new(0, 2, 0.5, 0)
         ChooseFrame.Size = UDim2.new(0, 0, 0, 0)
         ChooseFrame.Name = "ChooseFrame"
         ChooseFrame.Parent = Option
-        ChooseFrame.ZIndex = 10
 
         UIStroke15.Color = MainColor
         UIStroke15.Thickness = 1.6
@@ -1515,7 +1415,8 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
                 end
             else
                 DropdownFunc.Value = value
-                -- TIDAK AUTO CLOSE - user harus klik tombol dropdown atau di luar area
+                moreBlur.Visible = false
+                TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
             end
             DropdownFunc:Set(DropdownFunc.Value)
         end)
@@ -1533,16 +1434,15 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
 
         local texts = {}
         for _, Drop in ScrollSelect:GetChildren() do
-            if Drop:IsA("Frame") and Drop.Name == "Option" and Drop:FindFirstChild("OptionText") then
+            if Drop.Name == "Option" and Drop:FindFirstChild("OptionText") then
                 local v = Drop:GetAttribute("RealValue")
                 local selected = config.Multi and table.find(DropdownFunc.Value, v) or DropdownFunc.Value == v
 
                 if selected then
-                    -- Smooth animation untuk selection
                     TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Slow,
-                        { Size = UDim2.new(0, 3, 0, 12) }):Play()
+                        { Size = UDim2.new(0, 1, 0, 14) }):Play()
                     TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfoPresets.Normal, { Transparency = 0 }):Play()
-                    TweenService:Create(Drop, TweenInfoPresets.Normal, { BackgroundTransparency = 0.935 }):Play()
+                    TweenService:Create(Drop, TweenInfoPresets.Normal, { BackgroundTransparency = 0.95 }):Play()
                     table.insert(texts, Drop.OptionText.Text)
                 else
                     TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Normal,
@@ -1554,9 +1454,15 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
             end
         end
 
-        OptionSelecting.Text = (#texts == 0)
-            and (config.Multi and "Select Options" or "Select Option")
-            or table.concat(texts, ", ")
+        if #texts == 0 then
+            OptionSelecting.Text = config.Placeholder
+        else
+            local displayText = table.concat(texts, ", ")
+            if #displayText > 20 then
+                displayText = string.sub(displayText, 1, 17) + "..."
+            end
+            OptionSelecting.Text = displayText
+        end
 
         if config.Callback then
             if config.Multi then
@@ -1567,19 +1473,46 @@ function ElementsModule.AddDropdown(parent, config, countItem, updateSizeCallbac
         end
     end
 
+    function DropdownFunc:SetValue(val)
+        self:Set(val)
+    end
+
+    function DropdownFunc:GetValue()
+        return self.Value
+    end
+
+    function DropdownFunc:SetOptions(newOptions)
+        self:Clear()
+        for _, option in ipairs(newOptions) do
+            self:AddOption(option)
+        end
+        self.Options = newOptions
+    end
+
     function DropdownFunc:SetValues(newList, selecting)
         newList = newList or {}
         selecting = selecting or (config.Multi and {} or nil)
-        DropdownFunc:Clear()
-        for _, v in ipairs(newList) do
-            DropdownFunc:AddOption(v)
+        self:SetOptions(newList)
+        if selecting then
+            self:Set(selecting)
         end
-        DropdownFunc.Options = newList
-        DropdownFunc:Set(selecting)
     end
 
-    -- Initialize with options
-    DropdownFunc:SetValues(DropdownFunc.Options, DropdownFunc.Value)
+    function DropdownFunc:GetSelectedText()
+        local texts = {}
+        for _, Drop in ScrollSelect:GetChildren() do
+            if Drop.Name == "Option" and Drop:FindFirstChild("OptionText") then
+                local v = Drop:GetAttribute("RealValue")
+                local selected = config.Multi and table.find(DropdownFunc.Value, v) or DropdownFunc.Value == v
+                if selected then
+                    table.insert(texts, Drop.OptionText.Text)
+                end
+            end
+        end
+        return texts
+    end
+
+    DropdownFunc:SetValues(config.Options, config.Default)
 
     AllElements[configKey] = DropdownFunc
     return DropdownFunc
