@@ -1,4 +1,4 @@
--- New (dengan dropdown old)
+-- New (dengan dropdown fixed - setiap dropdown punya komponen sendiri)
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -1304,116 +1304,8 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
     MakeDraggable(Top, DropShadowHolder)
 
-    local MoreBlur = Instance.new("Frame");
-    local DropShadowHolder1 = Instance.new("Frame");
-    local DropShadow1 = Instance.new("ImageLabel");
-    local UICorner28 = Instance.new("UICorner");
-    local ConnectButton = Instance.new("TextButton");
-
-    MoreBlur.AnchorPoint = Vector2.new(1, 1)
-    MoreBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    MoreBlur.BackgroundTransparency = 0.999
-    MoreBlur.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    MoreBlur.BorderSizePixel = 0
-    MoreBlur.ClipsDescendants = true
-    MoreBlur.Position = UDim2.new(1, 8, 1, 8)
-    MoreBlur.Size = UDim2.new(1, 154, 1, 54)
-    MoreBlur.Visible = false
-    MoreBlur.Name = "MoreBlur"
-    MoreBlur.Parent = Layers
-
-    DropShadowHolder1.BackgroundTransparency = 1
-    DropShadowHolder1.BorderSizePixel = 0
-    DropShadowHolder1.Size = UDim2.new(1, 0, 1, 0)
-    DropShadowHolder1.ZIndex = 0
-    DropShadowHolder1.Name = "DropShadowHolder"
-    DropShadowHolder1.Parent = MoreBlur
-
-    DropShadow1.Image = "rbxassetid://6015897843"
-    DropShadow1.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    DropShadow1.ImageTransparency = 1
-    DropShadow1.ScaleType = Enum.ScaleType.Slice
-    DropShadow1.SliceCenter = Rect.new(49, 49, 450, 450)
-    DropShadow1.AnchorPoint = Vector2.new(0.5, 0.5)
-    DropShadow1.BackgroundTransparency = 1
-    DropShadow1.BorderSizePixel = 0
-    DropShadow1.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DropShadow1.Size = UDim2.new(1, 35, 1, 35)
-    DropShadow1.ZIndex = 0
-    DropShadow1.Name = "DropShadow"
-    DropShadow1.Parent = DropShadowHolder1
-
-    UICorner28.Parent = MoreBlur
-
-    ConnectButton.Font = Enum.Font.SourceSans
-    ConnectButton.Text = ""
-    ConnectButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    ConnectButton.TextSize = 14
-    ConnectButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ConnectButton.BackgroundTransparency = 0.999
-    ConnectButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    ConnectButton.BorderSizePixel = 0
-    ConnectButton.Size = UDim2.new(1, 0, 1, 0)
-    ConnectButton.Name = "ConnectButton"
-    ConnectButton.Parent = MoreBlur
-
-    local DropdownSelect = Instance.new("Frame");
-    local UICorner36 = Instance.new("UICorner");
-    local UIStroke14 = Instance.new("UIStroke");
-    local DropdownSelectReal = Instance.new("Frame");
-    local DropdownFolder = Instance.new("Folder");
-    local DropPageLayout = Instance.new("UIPageLayout");
-
-    DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
-    DropdownSelect.BackgroundColor3 = Color3.fromRGB(30.00000011175871, 30.00000011175871, 30.00000011175871)
-    DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    DropdownSelect.BorderSizePixel = 0
-    DropdownSelect.LayoutOrder = 1
-    DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
-    DropdownSelect.Size = UDim2.new(0, 160, 1, -16)
-    DropdownSelect.Name = "DropdownSelect"
-    DropdownSelect.ClipsDescendants = true
-    DropdownSelect.Parent = MoreBlur
-
-    ConnectButton.MouseButton1Click:Connect(function()
-        if MoreBlur.Visible then
-            TweenService:Create(MoreBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
-            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
-            task.wait(0.3)
-            MoreBlur.Visible = false
-        end
-    end)
-    
-    UICorner36.CornerRadius = UDim.new(0, 3)
-    UICorner36.Parent = DropdownSelect
-
-    UIStroke14.Color = Color3.fromRGB(12, 159, 255)
-    UIStroke14.Thickness = 2.5
-    UIStroke14.Transparency = 0.8
-    UIStroke14.Parent = DropdownSelect
-
-    DropdownSelectReal.AnchorPoint = Vector2.new(0.5, 0.5)
-    DropdownSelectReal.BackgroundColor3 = Color3.fromRGB(0, 27, 98)
-    DropdownSelectReal.BackgroundTransparency = 0.7
-    DropdownSelectReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    DropdownSelectReal.BorderSizePixel = 0
-    DropdownSelectReal.LayoutOrder = 1
-    DropdownSelectReal.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DropdownSelectReal.Size = UDim2.new(1, 1, 1, 1)
-    DropdownSelectReal.Name = "DropdownSelectReal"
-    DropdownSelectReal.Parent = DropdownSelect
-
-    DropdownFolder.Name = "DropdownFolder"
-    DropdownFolder.Parent = DropdownSelectReal
-
-    DropPageLayout.EasingDirection = Enum.EasingDirection.InOut
-    DropPageLayout.EasingStyle = Enum.EasingStyle.Quad
-    DropPageLayout.TweenTime = 0.009999999776482582
-    DropPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    DropPageLayout.FillDirection = Enum.FillDirection.Vertical
-    DropPageLayout.Archivable = false
-    DropPageLayout.Name = "DropPageLayout"
-    DropPageLayout.Parent = DropdownFolder
+    -- HAPUS MoreBlur, DropdownSelect, dan komponen global lainnya
+    -- Karena sekarang setiap dropdown punya komponen sendiri
 
     -- Auto load config after initialization
     if CONFIG_SETTINGS.AutoLoad then
@@ -1859,10 +1751,148 @@ function Chloex:Window(GuiConfig)
                 return Elements.AddInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection)
             end
 
-            -- DROPDOWN MENGGUNAKAN VERSI OLD (tanpa increment CountItem)
+            -- DROPDOWN FIXED - SETIAP DROPDOWN PUNYA KOMPONEN SENDIRI
             function Items:AddDropdown(DropdownConfig)
-                return Elements.AddDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, MoreBlur, DropPageLayout, UpdateSizeSection)
-                -- Catatan: CountItem tidak di-increment di sini, sesuai dengan versi old
+                CountItem = CountItem + 1
+                
+                -- BUAT KOMPONEN UNTUK DROPDOWN INI (Masing-masing punya sendiri)
+                
+                -- 1. Blur Container
+                local DropdownBlur = Instance.new("Frame")
+                DropdownBlur.Name = "DropdownBlur_" .. CountItem
+                DropdownBlur.AnchorPoint = Vector2.new(1, 1)
+                DropdownBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownBlur.BackgroundTransparency = 0.999
+                DropdownBlur.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownBlur.BorderSizePixel = 0
+                DropdownBlur.ClipsDescendants = true
+                DropdownBlur.Position = UDim2.new(1, 8, 1, 8)
+                DropdownBlur.Size = UDim2.new(1, 154, 1, 54)
+                DropdownBlur.Visible = false
+                DropdownBlur.Parent = SectionAdd  -- Parent ke SectionAdd bukan global
+                
+                -- DropShadow untuk blur
+                local DropShadowHolder1 = Instance.new("Frame")
+                DropShadowHolder1.BackgroundTransparency = 1
+                DropShadowHolder1.BorderSizePixel = 0
+                DropShadowHolder1.Size = UDim2.new(1, 0, 1, 0)
+                DropShadowHolder1.ZIndex = 0
+                DropShadowHolder1.Name = "DropShadowHolder"
+                DropShadowHolder1.Parent = DropdownBlur
+                
+                local DropShadow1 = Instance.new("ImageLabel")
+                DropShadow1.Image = "rbxassetid://6015897843"
+                DropShadow1.ImageColor3 = Color3.fromRGB(0, 0, 0)
+                DropShadow1.ImageTransparency = 1
+                DropShadow1.ScaleType = Enum.ScaleType.Slice
+                DropShadow1.SliceCenter = Rect.new(49, 49, 450, 450)
+                DropShadow1.AnchorPoint = Vector2.new(0.5, 0.5)
+                DropShadow1.BackgroundTransparency = 1
+                DropShadow1.BorderSizePixel = 0
+                DropShadow1.Position = UDim2.new(0.5, 0, 0.5, 0)
+                DropShadow1.Size = UDim2.new(1, 35, 1, 35)
+                DropShadow1.ZIndex = 0
+                DropShadow1.Name = "DropShadow"
+                DropShadow1.Parent = DropShadowHolder1
+                
+                local UICorner28 = Instance.new("UICorner")
+                UICorner28.Parent = DropdownBlur
+                
+                -- 2. Close Button (untuk menutup dropdown ini)
+                local CloseButton = Instance.new("TextButton")
+                CloseButton.Font = Enum.Font.SourceSans
+                CloseButton.Text = ""
+                CloseButton.TextColor3 = Color3.fromRGB(0, 0, 0)
+                CloseButton.TextSize = 14
+                CloseButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                CloseButton.BackgroundTransparency = 0.999
+                CloseButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                CloseButton.BorderSizePixel = 0
+                CloseButton.Size = UDim2.new(1, 0, 1, 0)
+                CloseButton.Name = "CloseButton_" .. CountItem
+                CloseButton.Parent = DropdownBlur
+                
+                -- 3. Dropdown Select
+                local DropdownSelect = Instance.new("Frame")
+                DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
+                DropdownSelect.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+                DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownSelect.BorderSizePixel = 0
+                DropdownSelect.LayoutOrder = 1
+                DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
+                DropdownSelect.Size = UDim2.new(0, 160, 1, -16)
+                DropdownSelect.Name = "DropdownSelect_" .. CountItem
+                DropdownSelect.ClipsDescendants = true
+                DropdownSelect.Parent = DropdownBlur
+                
+                local UICorner36 = Instance.new("UICorner")
+                UICorner36.CornerRadius = UDim.new(0, 3)
+                UICorner36.Parent = DropdownSelect
+                
+                local UIStroke14 = Instance.new("UIStroke")
+                UIStroke14.Color = Color3.fromRGB(12, 159, 255)
+                UIStroke14.Thickness = 2.5
+                UIStroke14.Transparency = 0.8
+                UIStroke14.Parent = DropdownSelect
+                
+                -- 4. Real Dropdown
+                local DropdownSelectReal = Instance.new("Frame")
+                DropdownSelectReal.AnchorPoint = Vector2.new(0.5, 0.5)
+                DropdownSelectReal.BackgroundColor3 = Color3.fromRGB(0, 27, 98)
+                DropdownSelectReal.BackgroundTransparency = 0.7
+                DropdownSelectReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                DropdownSelectReal.BorderSizePixel = 0
+                DropdownSelectReal.LayoutOrder = 1
+                DropdownSelectReal.Position = UDim2.new(0.5, 0, 0.5, 0)
+                DropdownSelectReal.Size = UDim2.new(1, 1, 1, 1)
+                DropdownSelectReal.Name = "DropdownSelectReal_" .. CountItem
+                DropdownSelectReal.Parent = DropdownSelect
+                
+                -- 5. Folder untuk item-item dropdown
+                local DropdownFolder = Instance.new("Folder")
+                DropdownFolder.Name = "DropdownFolder_" .. CountItem
+                DropdownFolder.Parent = DropdownSelectReal
+                
+                -- 6. PageLayout untuk item-item
+                local DropPageLayout = Instance.new("UIPageLayout")
+                DropPageLayout.EasingDirection = Enum.EasingDirection.InOut
+                DropPageLayout.EasingStyle = Enum.EasingStyle.Quad
+                DropPageLayout.TweenTime = 0.01
+                DropPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+                DropPageLayout.FillDirection = Enum.FillDirection.Vertical
+                DropPageLayout.Archivable = false
+                DropPageLayout.Name = "DropPageLayout_" .. CountItem
+                DropPageLayout.Parent = DropdownFolder
+                
+                -- Function untuk menutup dropdown ini
+                local function CloseThisDropdown()
+                    if DropdownBlur.Visible then
+                        TweenService:Create(DropdownBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
+                        TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
+                        task.wait(0.3)
+                        DropdownBlur.Visible = false
+                    end
+                end
+                
+                -- Close button click
+                CloseButton.MouseButton1Click:Connect(CloseThisDropdown)
+                
+                -- Panggil Elements.AddDropdown dengan parameter yang benar
+                local dropdownObj = Elements.AddDropdown(
+                    SectionAdd,           -- Parent
+                    DropdownConfig,       -- Config
+                    CountItem,            -- Item count
+                    CountDropdown,        -- Dropdown count
+                    DropdownBlur,         -- BLUR SENDIRI
+                    DropPageLayout,       -- LAYOUT SENDIRI
+                    UpdateSizeSection     -- Update function
+                )
+                
+                -- Tambahkan method close ke objek dropdown
+                dropdownObj.Close = CloseThisDropdown
+                
+                CountDropdown = CountDropdown + 1
+                return dropdownObj
             end
 
             -- KEYBIND IMPLEMENTATION USING MODULE
