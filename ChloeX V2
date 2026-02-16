@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.5
+local HttpService = game:GetService("HttpService") -- V0.0.7
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -84,7 +84,17 @@ local AUTO_LOAD = false
 function SaveConfig()
     if writefile and ConfigFile ~= "" then
         ConfigData._version = CURRENT_VERSION
-        writefile(ConfigFile, HttpService:JSONEncode(ConfigData))
+        -- Bersihkan data yang tidak perlu sebelum save
+        local cleanData = {}
+        for key, value in pairs(ConfigData) do
+            -- Hanya simpan key yang bukan meta data dan bukan function
+            if key ~= "_version" and type(value) ~= "function" then
+                cleanData[key] = value
+            end
+        end
+        cleanData._version = CURRENT_VERSION
+        writefile(ConfigFile, HttpService:JSONEncode(cleanData))
+        ConfigData = cleanData
     end
 end
 
@@ -114,6 +124,51 @@ function LoadConfigElements()
             element:Set(ConfigData[key], true)
         end
     end
+end
+
+-- Fungsi untuk generate key berdasarkan Flag
+local function generateKey(elementConfig, elementType)
+    if not elementConfig then return nil end
+    
+    -- Jika ada Flag, gunakan sebagai key utama
+    if elementConfig.Flag then
+        return tostring(elementConfig.Flag)
+    end
+    
+    -- Jika tidak ada Flag, buat key otomatis berdasarkan path
+    local parts = {}
+    
+    -- Tambahkan window title
+    if _G.CurrentWindowTitle then
+        table.insert(parts, _G.CurrentWindowTitle)
+    end
+    
+    -- Tambahkan tab name
+    if elementConfig._tabName then
+        table.insert(parts, elementConfig._tabName)
+    end
+    
+    -- Tambahkan section title
+    if elementConfig._sectionTitle then
+        table.insert(parts, elementConfig._sectionTitle)
+    end
+    
+    -- Tambahkan element type
+    if elementType then
+        table.insert(parts, elementType)
+    end
+    
+    -- Tambahkan title/name
+    if elementConfig.Title then
+        table.insert(parts, elementConfig.Title)
+    elseif elementConfig.Name then
+        table.insert(parts, elementConfig.Name)
+    elseif elementConfig.Text then
+        table.insert(parts, elementConfig.Text)
+    end
+    
+    -- Gabungkan dengan underscore
+    return table.concat(parts, "_")
 end
 
 local UserInputService = game:GetService("UserInputService")
@@ -544,8 +599,11 @@ function Chloex:Window(GuiConfig)
         LoadConfigFromFile()
     end
 
-    -- Initialize Elements Module with required data
-    ElementsModule:Initialize(GuiConfig, SaveConfig, ConfigData, Icons)
+    -- Simpan window title untuk generate key
+    _G.CurrentWindowTitle = GuiConfig.Title
+
+    -- Initialize Elements Module dengan fungsi generate key yang baru
+    ElementsModule:Initialize(GuiConfig, SaveConfig, ConfigData, Icons, generateKey)
 
     local GuiFunc = {}
 
@@ -1602,41 +1660,76 @@ function Chloex:Window(GuiConfig)
             local CountItem = 0
 
             function Items:AddParagraph(ParagraphConfig)
+                -- Tambahkan info parent untuk key generation
+                if type(ParagraphConfig) == "table" then
+                    ParagraphConfig._tabName = TabConfig.Name
+                    ParagraphConfig._sectionTitle = Title
+                end
                 local func = ElementsModule:CreateParagraph(SectionAdd, ParagraphConfig, CountItem)
                 CountItem = CountItem + 1
                 return func
             end
 
             function Items:AddPanel(PanelConfig)
+                -- Tambahkan info parent untuk key generation
+                if type(PanelConfig) == "table" then
+                    PanelConfig._tabName = TabConfig.Name
+                    PanelConfig._sectionTitle = Title
+                end
                 local func = ElementsModule:CreatePanel(SectionAdd, PanelConfig, CountItem)
                 CountItem = CountItem + 1
                 return func
             end
 
             function Items:AddButton(ButtonConfig)
+                -- Tambahkan info parent untuk key generation
+                if type(ButtonConfig) == "table" then
+                    ButtonConfig._tabName = TabConfig.Name
+                    ButtonConfig._sectionTitle = Title
+                end
                 ElementsModule:CreateButton(SectionAdd, ButtonConfig, CountItem)
                 CountItem = CountItem + 1
             end
 
             function Items:AddToggle(ToggleConfig)
+                -- Tambahkan info parent untuk key generation
+                if type(ToggleConfig) == "table" then
+                    ToggleConfig._tabName = TabConfig.Name
+                    ToggleConfig._sectionTitle = Title
+                end
                 local func = ElementsModule:CreateToggle(SectionAdd, ToggleConfig, CountItem, UpdateSizeSection, Elements)
                 CountItem = CountItem + 1
                 return func
             end
 
             function Items:AddSlider(SliderConfig)
+                -- Tambahkan info parent untuk key generation
+                if type(SliderConfig) == "table" then
+                    SliderConfig._tabName = TabConfig.Name
+                    SliderConfig._sectionTitle = Title
+                end
                 local func = ElementsModule:CreateSlider(SectionAdd, SliderConfig, CountItem, UpdateSizeSection, Elements)
                 CountItem = CountItem + 1
                 return func
             end
 
             function Items:AddInput(InputConfig)
+                -- Tambahkan info parent untuk key generation
+                if type(InputConfig) == "table" then
+                    InputConfig._tabName = TabConfig.Name
+                    InputConfig._sectionTitle = Title
+                end
                 local func = ElementsModule:CreateInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection, Elements)
                 CountItem = CountItem + 1
                 return func
             end
 
             function Items:AddDropdown(DropdownConfig)
+                -- Tambahkan info parent untuk key generation
+                if type(DropdownConfig) == "table" then
+                    DropdownConfig._tabName = TabConfig.Name
+                    DropdownConfig._sectionTitle = Title
+                end
                 local func = ElementsModule:CreateDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, DropdownFolder, MoreBlur, DropdownSelect, DropPageLayout, Elements)
                 CountItem = CountItem + 1
                 CountDropdown = CountDropdown + 1
