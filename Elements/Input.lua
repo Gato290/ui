@@ -1,16 +1,29 @@
-return function(InputConfig, ctx)
-    local InputConfig = InputConfig or {}
-    InputConfig.Title = InputConfig.Title or "Title"
-    InputConfig.Content = InputConfig.Content or ""
-    InputConfig.Callback = InputConfig.Callback or function() end
-    InputConfig.Default = InputConfig.Default or ""
+-- input.lua
+local InputModule = {}
 
-    local configKey = "Input_" .. InputConfig.Title
-    if ctx.ConfigData[configKey] ~= nil then
-        InputConfig.Default = ctx.ConfigData[configKey]
+local MainColor = Color3.fromRGB(255, 0, 255)
+local SaveConfigFunc = function() end
+local ConfigData = {}
+
+function InputModule.Initialize(color, saveFunc, config)
+    MainColor = color or MainColor
+    SaveConfigFunc = saveFunc or function() end
+    ConfigData = config or {}
+end
+
+function InputModule.Create(parent, config, countItem, updateSizeCallback, saveConfig, configData)
+    config = config or {}
+    config.Title = config.Title or "Title"
+    config.Content = config.Content or ""
+    config.Callback = config.Callback or function() end
+    config.Default = config.Default or ""
+
+    local configKey = "Input_" .. config.Title
+    if configData and configData[configKey] ~= nil then
+        config.Default = configData[configKey]
     end
 
-    local InputFunc = { Value = InputConfig.Default, key = configKey }
+    local InputFunc = { Value = config.Default }
 
     local Input = Instance.new("Frame");
     local UICorner12 = Instance.new("UICorner");
@@ -21,25 +34,25 @@ return function(InputConfig, ctx)
     local InputTextBox = Instance.new("TextBox");
 
     Input.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Input.BackgroundTransparency = 0.9350000023841858
+    Input.BackgroundTransparency = 0.935
     Input.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Input.BorderSizePixel = 0
-    Input.LayoutOrder = ctx.CountItem()
+    Input.LayoutOrder = countItem
     Input.Size = UDim2.new(1, 0, 0, 46)
     Input.Name = "Input"
-    Input.Parent = ctx.SectionAdd
+    Input.Parent = parent
 
     UICorner12.CornerRadius = UDim.new(0, 4)
     UICorner12.Parent = Input
 
     InputTitle.Font = Enum.Font.GothamBold
-    InputTitle.Text = InputConfig.Title or "TextBox"
-    InputTitle.TextColor3 = Color3.fromRGB(230.77499270439148, 230.77499270439148, 230.77499270439148)
+    InputTitle.Text = config.Title or "TextBox"
+    InputTitle.TextColor3 = Color3.fromRGB(230, 230, 230)
     InputTitle.TextSize = 13
     InputTitle.TextXAlignment = Enum.TextXAlignment.Left
     InputTitle.TextYAlignment = Enum.TextYAlignment.Top
     InputTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    InputTitle.BackgroundTransparency = 0.9990000128746033
+    InputTitle.BackgroundTransparency = 0.999
     InputTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
     InputTitle.BorderSizePixel = 0
     InputTitle.Position = UDim2.new(0, 10, 0, 10)
@@ -48,15 +61,15 @@ return function(InputConfig, ctx)
     InputTitle.Parent = Input
 
     InputContent.Font = Enum.Font.GothamBold
-    InputContent.Text = InputConfig.Content or "This is a TextBox"
+    InputContent.Text = config.Content or "This is a TextBox"
     InputContent.TextColor3 = Color3.fromRGB(255, 255, 255)
     InputContent.TextSize = 12
-    InputContent.TextTransparency = 0.6000000238418579
+    InputContent.TextTransparency = 0.6
     InputContent.TextWrapped = true
     InputContent.TextXAlignment = Enum.TextXAlignment.Left
     InputContent.TextYAlignment = Enum.TextYAlignment.Bottom
     InputContent.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    InputContent.BackgroundTransparency = 0.9990000128746033
+    InputContent.BackgroundTransparency = 0.999
     InputContent.BorderColor3 = Color3.fromRGB(0, 0, 0)
     InputContent.BorderSizePixel = 0
     InputContent.Position = UDim2.new(0, 10, 0, 25)
@@ -64,23 +77,21 @@ return function(InputConfig, ctx)
     InputContent.Name = "InputContent"
     InputContent.Parent = Input
 
-    InputContent.Size = UDim2.new(1, -180, 0,
-        12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
+    InputContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
     InputContent.TextWrapped = true
     Input.Size = UDim2.new(1, 0, 0, InputContent.AbsoluteSize.Y + 33)
 
     InputContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         InputContent.TextWrapped = false
-        InputContent.Size = UDim2.new(1, -180, 0,
-            12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
+        InputContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
         Input.Size = UDim2.new(1, 0, 0, InputContent.AbsoluteSize.Y + 33)
         InputContent.TextWrapped = true
-        ctx.UpdateSizeSection()
+        if updateSizeCallback then updateSizeCallback() end
     end)
 
     InputFrame.AnchorPoint = Vector2.new(1, 0.5)
     InputFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    InputFrame.BackgroundTransparency = 0.949999988079071
+    InputFrame.BackgroundTransparency = 0.95
     InputFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     InputFrame.BorderSizePixel = 0
     InputFrame.ClipsDescendants = true
@@ -94,29 +105,28 @@ return function(InputConfig, ctx)
 
     InputTextBox.CursorPosition = -1
     InputTextBox.Font = Enum.Font.GothamBold
-    InputTextBox.PlaceholderColor3 = Color3.fromRGB(120.00000044703484, 120.00000044703484,
-        120.00000044703484)
+    InputTextBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
     InputTextBox.PlaceholderText = "Input Here"
-    InputTextBox.Text = InputConfig.Default
+    InputTextBox.Text = config.Default
     InputTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
     InputTextBox.TextSize = 12
     InputTextBox.TextXAlignment = Enum.TextXAlignment.Left
     InputTextBox.AnchorPoint = Vector2.new(0, 0.5)
     InputTextBox.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    InputTextBox.BackgroundTransparency = 0.9990000128746033
+    InputTextBox.BackgroundTransparency = 0.999
     InputTextBox.BorderColor3 = Color3.fromRGB(0, 0, 0)
     InputTextBox.BorderSizePixel = 0
     InputTextBox.Position = UDim2.new(0, 5, 0.5, 0)
     InputTextBox.Size = UDim2.new(1, -10, 1, -8)
     InputTextBox.Name = "InputTextBox"
     InputTextBox.Parent = InputFrame
-
+    
     function InputFunc:Set(Value)
         InputTextBox.Text = Value
         InputFunc.Value = Value
-        InputConfig.Callback(Value)
-        ctx.ConfigData[configKey] = Value
-        ctx.SaveConfig()
+        config.Callback(Value)
+        configData[configKey] = Value
+        SaveConfigFunc()
     end
 
     InputFunc:Set(InputFunc.Value)
@@ -124,6 +134,8 @@ return function(InputConfig, ctx)
     InputTextBox.FocusLost:Connect(function()
         InputFunc:Set(InputTextBox.Text)
     end)
-
+    
     return InputFunc
 end
+
+return InputModule
