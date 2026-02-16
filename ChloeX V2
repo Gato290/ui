@@ -1,13 +1,12 @@
-local HttpService = game:GetService("HttpService") -- V0.0.4
+local HttpService = game:GetService("HttpService") -- V0.0.5
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
 
 -- Load Color Module
 local ColorModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/color.lua"))()
 
 -- Load Elements Module
 local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
-
--- Load ShowUser Module
-local ShowUserModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/showuser.lua"))()
 
 -- Load Icon Libraries
 local defaultIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Icon/defaulticons.lua"))()
@@ -119,7 +118,6 @@ end
 
 local UserInputService = game:GetService("UserInputService")
 local TweenService = game:GetService("TweenService")
-local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
 local CoreGui = game:GetService("CoreGui")
 local viewport = workspace.CurrentCamera.ViewportSize
@@ -501,6 +499,8 @@ function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
     GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
+    -- ShowUser configuration
+    GuiConfig.ShowUser     = GuiConfig.ShowUser or false
     -- Convert color string to Color3 if needed
     GuiConfig.Color        = getColor(GuiConfig.Color or "Default")
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
@@ -562,6 +562,83 @@ function Chloex:Window(GuiConfig)
     local ImageLabel1 = Instance.new("ImageLabel");
     local Min = Instance.new("TextButton");
     local ImageLabel2 = Instance.new("ImageLabel");
+    
+    -- User Info Frame (if ShowUser is enabled)
+    local UserInfoFrame = nil
+    if GuiConfig.ShowUser then
+        UserInfoFrame = Instance.new("Frame")
+        UserInfoFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        UserInfoFrame.BackgroundTransparency = 0.3
+        UserInfoFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        UserInfoFrame.BorderSizePixel = 0
+        UserInfoFrame.Position = UDim2.new(0, 10, 0, 45)
+        UserInfoFrame.Size = UDim2.new(0, 200, 0, 50)
+        UserInfoFrame.Name = "UserInfoFrame"
+        UserInfoFrame.Parent = Main
+        
+        local UserInfoCorner = Instance.new("UICorner")
+        UserInfoCorner.CornerRadius = UDim.new(0, 6)
+        UserInfoCorner.Parent = UserInfoFrame
+        
+        -- User Avatar
+        local Avatar = Instance.new("ImageLabel")
+        Avatar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Avatar.BackgroundTransparency = 0.5
+        Avatar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Avatar.BorderSizePixel = 0
+        Avatar.Position = UDim2.new(0, 5, 0.5, -20)
+        Avatar.Size = UDim2.new(0, 40, 0, 40)
+        Avatar.Name = "Avatar"
+        Avatar.Parent = UserInfoFrame
+        
+        local AvatarCorner = Instance.new("UICorner")
+        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Circle
+        AvatarCorner.Parent = Avatar
+        
+        -- Try to load user avatar
+        local userId = LocalPlayer.UserId
+        local thumbType = Enum.ThumbnailType.HeadShot
+        local thumbSize = Enum.ThumbnailSize.Size48x48
+        local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+        if content then
+            Avatar.Image = content
+        else
+            Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        end
+        
+        -- Display Name
+        local DisplayName = Instance.new("TextLabel")
+        DisplayName.Font = Enum.Font.GothamBold
+        DisplayName.Text = LocalPlayer.DisplayName
+        DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
+        DisplayName.TextSize = 14
+        DisplayName.TextXAlignment = Enum.TextXAlignment.Left
+        DisplayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        DisplayName.BackgroundTransparency = 1
+        DisplayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        DisplayName.BorderSizePixel = 0
+        DisplayName.Position = UDim2.new(0, 50, 0, 8)
+        DisplayName.Size = UDim2.new(1, -55, 0, 16)
+        DisplayName.Name = "DisplayName"
+        DisplayName.Parent = UserInfoFrame
+        
+        -- Username with @
+        local Username = Instance.new("TextLabel")
+        Username.Font = Enum.Font.Gotham
+        Username.Text = "@" .. LocalPlayer.Name
+        Username.TextColor3 = Color3.fromRGB(150, 150, 150)
+        Username.TextSize = 12
+        Username.TextXAlignment = Enum.TextXAlignment.Left
+        Username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Username.BackgroundTransparency = 1
+        Username.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Username.BorderSizePixel = 0
+        Username.Position = UDim2.new(0, 50, 0, 26)
+        Username.Size = UDim2.new(1, -55, 0, 14)
+        Username.Name = "Username"
+        Username.Parent = UserInfoFrame
+    end
+
     local LayersTab = Instance.new("Frame");
     local UICorner2 = Instance.new("UICorner");
     local DecideFrame = Instance.new("Frame");
@@ -713,12 +790,18 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
+    -- Adjust LayersTab position based on ShowUser
+    local topOffset = 50
+    if GuiConfig.ShowUser then
+        topOffset = 105 -- Move down to make room for user info
+    end
+    
     LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     LayersTab.BackgroundTransparency = 0.9990000128746033
     LayersTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
     LayersTab.BorderSizePixel = 0
-    LayersTab.Position = UDim2.new(0, 9, 0, 50)
-    LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -59)
+    LayersTab.Position = UDim2.new(0, 9, 0, topOffset)
+    LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -(topOffset + 9))
     LayersTab.Name = "LayersTab"
     LayersTab.Parent = Main
 
@@ -739,8 +822,8 @@ function Chloex:Window(GuiConfig)
     Layers.BackgroundTransparency = 0.9990000128746033
     Layers.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Layers.BorderSizePixel = 0
-    Layers.Position = UDim2.new(0, GuiConfig["Tab Width"] + 18, 0, 50)
-    Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -59)
+    Layers.Position = UDim2.new(0, GuiConfig["Tab Width"] + 18, 0, topOffset)
+    Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -(topOffset + 9))
     Layers.Name = "Layers"
     Layers.Parent = Main
 
@@ -1139,73 +1222,6 @@ function Chloex:Window(GuiConfig)
         UIListLayout1.SortOrder = Enum.SortOrder.LayoutOrder
         UIListLayout1.Parent = ScrolLayers
 
-        -- ==============================================
-        -- TAMBAHKAN USER PROFILE DI SINI (DALAM TAB)
-        -- ==============================================
-        local UserProfileInTab = nil
-        
-        -- Cek apakah user profile harus ditampilkan di tab ini
-        -- Tampilkan hanya di tab pertama (Home)
-        if GuiConfig.ShowUser and CountTab == 0 then
-            local profileConfig = GuiConfig.ShowUser
-            local useSimple = false
-            local avatarSize = 36
-            local showStats = false
-            
-            if type(profileConfig) == "table" then
-                useSimple = profileConfig.Simple == true
-                avatarSize = profileConfig.AvatarSize or 36
-                showStats = profileConfig.ShowStats == true
-            elseif profileConfig == true then
-                useSimple = false
-            end
-            
-            -- Buat container untuk profile di dalam ScrolLayers
-            local ProfileContainer = Instance.new("Frame")
-            ProfileContainer.Name = "ProfileInTab"
-            ProfileContainer.BackgroundTransparency = 1
-            ProfileContainer.BorderSizePixel = 0
-            ProfileContainer.LayoutOrder = 0 -- Urutan pertama
-            ProfileContainer.Size = UDim2.new(1, 0, 0, avatarSize + 30) -- Tinggi dinamis
-            ProfileContainer.Parent = ScrolLayers
-            
-            -- Pilih fungsi pembuat profil
-            if useSimple then
-                UserProfileInTab = ShowUserModule.CreateSimpleUserProfile(
-                    ProfileContainer,
-                    true,
-                    GuiConfig.Uitransparent,
-                    GuiConfig.Color
-                )
-            else
-                UserProfileInTab = ShowUserModule.CreateUserProfile(
-                    ProfileContainer,
-                    true,
-                    GuiConfig.Uitransparent,
-                    GuiConfig.Color
-                )
-            end
-            
-            -- Atur ukuran avatar
-            if UserProfileInTab and UserProfileInTab.SetAvatarSize and avatarSize ~= 32 then
-                UserProfileInTab:SetAvatarSize(avatarSize)
-            end
-            
-            -- Atur visibilitas stats
-            if UserProfileInTab and UserProfileInTab.ToggleStats then
-                UserProfileInTab:ToggleStats(showStats)
-            end
-            
-            -- Update tinggi container berdasarkan apakah stats ditampilkan
-            if showStats then
-                ProfileContainer.Size = UDim2.new(1, 0, 0, avatarSize + 50)
-            else
-                ProfileContainer.Size = UDim2.new(1, 0, 0, avatarSize + 20)
-            end
-        end
-        -- ==============================================
-
-        -- Lanjutkan dengan pembuatan tab button...
         local Tab = Instance.new("Frame");
         local UICorner3 = Instance.new("UICorner");
         local TabButton = Instance.new("TextButton");
@@ -1214,14 +1230,6 @@ function Chloex:Window(GuiConfig)
         local UIStroke2 = Instance.new("UIStroke");
         local UICorner4 = Instance.new("UICorner");
 
-        -- ... (kode selanjutnya untuk tab button dan section)
-        -- (lanjutkan dengan kode asli dari main.lua dari sini sampai akhir)
-        
-        -- Untuk menghemat ruang, saya tidak menyalin seluruh kode setelah ini
-        -- Tapi Anda harus menggabungkan bagian ini dengan kode main.lua asli Anda
-        
-        -- LANJUTKAN DENGAN KODE ASLI main.lua DARI SINI...
-        
         Tab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         if CountTab == 0 then
             Tab.BackgroundTransparency = 0.9200000166893005
@@ -1353,7 +1361,7 @@ function Chloex:Window(GuiConfig)
         local Sections = {}
         local CountSection = 0
         function Sections:AddSection(SectionConfig)
-            -- Handle different parameter types
+            -- Handle different parameter types (string for backward compatibility or table for new format)
             local Title = "Section"
             local Icon = ""
             local Open = false
@@ -1405,7 +1413,7 @@ function Chloex:Window(GuiConfig)
             UICorner.CornerRadius = UDim.new(0, 4)
             UICorner.Parent = SectionReal
 
-            -- Section Icon
+            -- Section Icon (if provided)
             if Icon and Icon ~= "" then
                 SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 SectionIcon.BackgroundTransparency = 0.9990000128746033
@@ -1468,7 +1476,7 @@ function Chloex:Window(GuiConfig)
             SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionTitle.BorderSizePixel = 0
             if Icon and Icon ~= "" then
-                SectionTitle.Position = UDim2.new(0, 32, 0.5, 0)
+                SectionTitle.Position = UDim2.new(0, 32, 0.5, 0) -- Offset for icon
             else
                 SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
             end
@@ -1549,6 +1557,7 @@ function Chloex:Window(GuiConfig)
                 end
             end
 
+            -- Handle section open state
             if OpenSection then
                 UpdateSizeSection()
             end
