@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.3
+local HttpService = game:GetService("HttpService") -- V0.0.4
 
 -- Load Elements from external files
 local Elements = {}
@@ -13,7 +13,7 @@ for _, elementName in ipairs(elementFiles) do
         return loadstring(game:HttpGet(("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/%s.lua"):format(elementName)))()
     end)
     
-    if success then
+    if success and result then
         Elements[elementName] = result
     else
         warn("Failed to load element: " .. elementName)
@@ -39,7 +39,12 @@ CURRENT_VERSION  = nil
 function SaveConfig()
     if writefile then
         ConfigData._version = CURRENT_VERSION
-        writefile(ConfigFile, HttpService:JSONEncode(ConfigData))
+        local success, encoded = pcall(function()
+            return HttpService:JSONEncode(ConfigData)
+        end)
+        if success then
+            writefile(ConfigFile, encoded)
+        end
     end
 end
 
@@ -61,10 +66,6 @@ function LoadConfigFromFile()
     else
         ConfigData = { _version = CURRENT_VERSION }
     end
-end
-
-function LoadConfigElements()
-    -- Akan diimplementasikan melalui elemen masing-masing
 end
 
 local Icons = {
@@ -101,6 +102,8 @@ local function safeSize(pxWidth, pxHeight)
 end
 
 local function MakeDraggable(topbarobject, object)
+    if not topbarobject or not object then return end
+    
     local function CustomPos(topbarobject, object)
         local Dragging, DragInput, DragStart, StartPosition
 
@@ -209,6 +212,7 @@ local function MakeDraggable(topbarobject, object)
 end
 
 function CircleClick(Button, X, Y)
+    if not Button then return end
     spawn(function()
         Button.ClipsDescendants = true
         local Circle = Instance.new("ImageLabel")
@@ -406,7 +410,7 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.Parent = NotifyFrameReal
         TextLabel2.Size = UDim2.new(1, -20, 0, 13)
 
-        TextLabel2.Size = UDim2.new(1, -20, 0, 13 + (13 * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
+        TextLabel2.Size = UDim2.new(1, -20, 0, 13 + (13 * (TextLabel2.TextBounds.X // math.max(1, TextLabel2.AbsoluteSize.X))))
         TextLabel2.TextWrapped = true
 
         if TextLabel2.AbsoluteSize.Y < 27 then
@@ -465,9 +469,14 @@ function Chloex:Window(GuiConfig)
     LoadConfigFromFile()
 
     -- Initialize elements with config
-    for _, element in pairs(Elements) do
+    for name, element in pairs(Elements) do
         if element and type(element) == "table" and element.Initialize then
-            element.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
+            local success, err = pcall(function()
+                element.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
+            end)
+            if not success then
+                warn("Failed to initialize element " .. tostring(name) .. ": " .. tostring(err))
+            end
         end
     end
 
@@ -867,7 +876,7 @@ function Chloex:Window(GuiConfig)
         MainButton.Size = UDim2.new(0, 40, 0, 40)
         MainButton.Position = UDim2.new(0, 20, 0, 100)
         MainButton.BackgroundTransparency = 1
-        MainButton.Image = "rbxassetid://" .. GuiConfig.Image
+        MainButton.Image = "rbxassetid://" .. (GuiConfig.Image or "71947103252559")
         MainButton.ScaleType = Enum.ScaleType.Fit
 
         local UICorner = Instance.new("UICorner")
@@ -1210,7 +1219,6 @@ function Chloex:Window(GuiConfig)
             Section.BorderSizePixel = 0
             Section.LayoutOrder = CountSection
             Section.ClipsDescendants = true
-            Section.LayoutOrder = 1
             Section.Size = UDim2.new(1, 0, 0, 30)
             Section.Name = "Section"
             Section.Parent = ScrolLayers
@@ -1419,62 +1427,152 @@ function Chloex:Window(GuiConfig)
             local CountItem = 0
 
             function Items:AddParagraph(config)
-                local result = Elements.Paragraph.Create(SectionAdd, config, CountItem, UpdateSizeSection, Icons)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.Paragraph then
+                    warn("Paragraph element not loaded")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.Paragraph.Create(SectionAdd, config, CountItem, UpdateSizeSection, Icons)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating Paragraph: " .. tostring(result))
+                end
             end
 
             function Items:AddPanel(config)
-                local result = Elements.panel.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.panel then
+                    warn("Panel element not loaded")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.panel.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating Panel: " .. tostring(result))
+                end
             end
 
             function Items:AddButton(config)
-                local result = Elements.Button.Create(SectionAdd, config, CountItem, UpdateSizeSection)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.Button then
+                    warn("Button element not loaded")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.Button.Create(SectionAdd, config, CountItem, UpdateSizeSection)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating Button: " .. tostring(result))
+                end
             end
 
             function Items:AddToggle(config)
-                local result = Elements.toggle.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.toggle then
+                    warn("Toggle element not loaded")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.toggle.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating Toggle: " .. tostring(result))
+                end
             end
 
             function Items:AddSlider(config)
-                local result = Elements.slider.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.slider then
+                    warn("Slider element not loaded")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.slider.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating Slider: " .. tostring(result))
+                end
             end
 
             function Items:AddInput(config)
-                local result = Elements.input.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.input then
+                    warn("Input element not loaded")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.input.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating Input: " .. tostring(result))
+                end
             end
 
             function Items:AddDropdown(config)
-                local result = Elements.Dropdown.Create(
-                    SectionAdd, config, CountItem, CountDropdown, 
-                    MoreBlur, DropPageLayout, UpdateSizeSection, 
-                    SaveConfig, ConfigData, GuiConfig.Color
-                )
-                CountItem = CountItem + 1
-                CountDropdown = CountDropdown + 1
-                return result
+                if not Elements.Dropdown then
+                    warn("Dropdown element not loaded")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.Dropdown.Create(
+                        SectionAdd, config, CountItem, CountDropdown, 
+                        MoreBlur, DropPageLayout, UpdateSizeSection, 
+                        SaveConfig, ConfigData, GuiConfig.Color
+                    )
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    CountDropdown = CountDropdown + 1
+                    return result
+                else
+                    warn("Error creating Dropdown: " .. tostring(result))
+                end
             end
 
             function Items:AddDivider()
-                local result = Elements.Dropdown.AddDivider(SectionAdd, CountItem, GuiConfig.Color)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.Dropdown then
+                    warn("Dropdown element not loaded for AddDivider")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.Dropdown.AddDivider(SectionAdd, CountItem, GuiConfig.Color)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating Divider: " .. tostring(result))
+                end
             end
 
             function Items:AddSubSection(title)
-                local result = Elements.Dropdown.AddSubSection(SectionAdd, title, CountItem)
-                CountItem = CountItem + 1
-                return result
+                if not Elements.Dropdown then
+                    warn("Dropdown element not loaded for AddSubSection")
+                    return
+                end
+                local success, result = pcall(function()
+                    return Elements.Dropdown.AddSubSection(SectionAdd, title, CountItem)
+                end)
+                if success then
+                    CountItem = CountItem + 1
+                    return result
+                else
+                    warn("Error creating SubSection: " .. tostring(result))
+                end
             end
 
             CountSection = CountSection + 1
