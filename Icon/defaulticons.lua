@@ -1,6 +1,6 @@
--- default.lua
+-- defaulticons.lua
 
-local default = {
+local defaulticons = {
     nexa     = "rbxassetid://0",
     vikai     = "rbxassetid://0",
     alert     = "rbxassetid://73186275216515",
@@ -43,4 +43,4 @@ local default = {
     web       = "rbxassetid://137601480983962",
 }
 
-return default
+return defaulticons
