@@ -1,62 +1,26 @@
--- Elements.lua V1.0.0 (Merged from V0.0.5 NEW and OLD versions)
+-- Elements.lua V0.0.5
+-- UI Elements Module for NexaHub
+-- Added: Button Click Highlight Animations
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
 local Mouse = LocalPlayer:GetMouse()
-local HttpService = game:GetService("HttpService")
 
 local Elements = {}
 
--- Configuration variables (from both versions)
-local GuiConfig = {}
-local SaveConfig = function() end
-local ConfigData = {}
-local Icons = {}
-local MainColor = Color3.fromRGB(255, 0, 255) -- Default magenta
+-- Import required functions from main library
+local SaveConfig, ConfigData, GuiConfig, Icons
 
--- Store all elements
-local AllElements = {}
-
--- Tween info presets untuk konsistensi (from OLD version)
-local TweenInfoPresets = {
-    Quick = TweenInfo.new(0.15, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Normal = TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Slow = TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-    Bounce = TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out)
-}
-
--- ============================================================================
--- INITIALIZATION FUNCTIONS (from both versions)
--- ============================================================================
-
--- From NEW version
 function Elements:Initialize(config, saveFunc, configData, icons)
-    GuiConfig = config or {}
-    SaveConfig = saveFunc or function() end
-    ConfigData = configData or {}
-    Icons = icons or {}
-    MainColor = GuiConfig.Color or MainColor
+    GuiConfig = config
+    SaveConfig = saveFunc
+    ConfigData = configData
+    Icons = icons
 end
 
--- From OLD version
-function ElementsModule.Initialize(color, saveFunc, config)
-    MainColor = color or MainColor
-    SaveConfigFunc = saveFunc or function() end
-    ConfigData = config or {}
-end
-
--- Helper function to get all elements (from OLD version)
-function Elements.GetAll()
-    return AllElements
-end
-
--- ============================================================================
--- HELPER FUNCTIONS
--- ============================================================================
-
--- Helper function for button click animation (from NEW version)
+-- Helper function for button click animation
 local function AnimateButtonClick(button, color)
-    color = color or GuiConfig.Color or MainColor
+    color = color or GuiConfig.Color
     
     -- Create highlight effect
     local originalTransparency = button.BackgroundTransparency
@@ -76,45 +40,6 @@ local function AnimateButtonClick(button, color)
     }):Play()
 end
 
--- Helper function untuk membuat badge (from OLD version)
-local function createBadge(parent, config)
-    if not config.New or config.New ~= "true" then return nil end
-    
-    local BadgeFrame = Instance.new("Frame")
-    BadgeFrame.BackgroundColor3 = MainColor
-    BadgeFrame.BackgroundTransparency = 0.2
-    BadgeFrame.Size = UDim2.new(0, 34, 0, 16)
-    BadgeFrame.Position = UDim2.new(1, -50, 0, 8) -- Posisi default di kanan atas
-    BadgeFrame.Parent = parent
-    BadgeFrame.Name = "BadgeFrame"
-    BadgeFrame.ZIndex = 5
-
-    local BadgeCorner = Instance.new("UICorner")
-    BadgeCorner.CornerRadius = UDim.new(0, 8)
-    BadgeCorner.Parent = BadgeFrame
-
-    local BadgeText = Instance.new("TextLabel")
-    BadgeText.Font = Enum.Font.GothamBold
-    BadgeText.Text = "NEW"
-    BadgeText.TextSize = 9
-    BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BadgeText.BackgroundTransparency = 1
-    BadgeText.Size = UDim2.new(1, 0, 1, 0)
-    BadgeText.Parent = BadgeFrame
-    BadgeText.ZIndex = 6
-    
-    -- Animasi masuk
-    BadgeFrame.Size = UDim2.new(0, 0, 0, 0)
-    task.wait()
-    TweenService:Create(BadgeFrame, TweenInfoPresets.Bounce, {Size = UDim2.new(0, 34, 0, 16)}):Play()
-    
-    return BadgeFrame
-end
-
--- ============================================================================
--- PARAGRAPH COMPONENTS
--- ============================================================================
-
 --[[
     PERBAIKAN: CreateParagraph - Button sekarang full-width dan paragraph menyesuaikan height
     TAMBAHAN: Animasi highlight saat button diklik
@@ -123,11 +48,6 @@ function Elements:CreateParagraph(parent, config, countItem)
     local ParagraphConfig = config or {}
     ParagraphConfig.Title = ParagraphConfig.Title or "Title"
     ParagraphConfig.Content = ParagraphConfig.Content or "Content"
-    ParagraphConfig.Icon = ParagraphConfig.Icon or nil
-    ParagraphConfig.ButtonText = ParagraphConfig.ButtonText or nil
-    ParagraphConfig.ButtonCallback = ParagraphConfig.ButtonCallback or function() end
-    ParagraphConfig.New = ParagraphConfig.New or "false"
-    
     local ParagraphFunc = {}
 
     local Paragraph = Instance.new("Frame")
@@ -192,12 +112,6 @@ function Elements:CreateParagraph(parent, config, countItem)
     -- Set proper width for content to wrap correctly
     ParagraphContent.Size = UDim2.new(1, -(iconOffset + 6), 1, 0)
 
-    -- Buat badge (from OLD version)
-    local Badge = createBadge(Paragraph, ParagraphConfig)
-    if Badge then
-        Badge.Position = UDim2.new(1, -90, 0, 8)
-    end
-
     local ParagraphButton
     if ParagraphConfig.ButtonText then
         ParagraphButton = Instance.new("TextButton")
@@ -216,17 +130,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         local btnCorner = Instance.new("UICorner")
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
-
-        -- Hover effect (from OLD version)
-        ParagraphButton.MouseEnter:Connect(function()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
-        end)
-        
-        ParagraphButton.MouseLeave:Connect(function()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
-        end)
 
         -- ANIMASI HIGHLIGHT
         ParagraphButton.MouseButton1Click:Connect(function()
@@ -275,12 +178,8 @@ function Elements:CreateParagraph(parent, config, countItem)
         -- UpdateSize will be called automatically via signals
     end
 
-    AllElements["Paragraph_" .. ParagraphConfig.Title] = ParagraphFunc
     return ParagraphFunc
 end
-
--- Alias for backward compatibility with OLD version
-Elements.AddParagraph = Elements.CreateParagraph
 
 --[[
     CreateEditableParagraph - Paragraph dengan TextBox yang bisa diedit
@@ -293,9 +192,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphConfig.Placeholder = ParagraphConfig.Placeholder or "Type something..."
     ParagraphConfig.Callback = ParagraphConfig.Callback or function() end
     ParagraphConfig.Default = ParagraphConfig.Default or ""
-    ParagraphConfig.ButtonText = ParagraphConfig.ButtonText or nil
-    ParagraphConfig.ButtonCallback = ParagraphConfig.ButtonCallback or function() end
-    ParagraphConfig.New = ParagraphConfig.New or "false"
     
     local configKey = "EditableParagraph_" .. ParagraphConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -352,12 +248,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Parent = Paragraph
 
-    -- Buat badge
-    local Badge = createBadge(Paragraph, ParagraphConfig)
-    if Badge then
-        Badge.Position = UDim2.new(1, -90, 0, 8)
-    end
-
     TextBoxFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TextBoxFrame.BackgroundTransparency = 0.95
     TextBoxFrame.BorderSizePixel = 0
@@ -387,15 +277,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphTextBox.RichText = false
     ParagraphTextBox.Parent = TextBoxFrame
 
-    -- Focus effect (from OLD version)
-    ParagraphTextBox.Focused:Connect(function()
-        TweenService:Create(TextBoxFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
-    end)
-    
-    ParagraphTextBox.FocusLost:Connect(function()
-        TweenService:Create(TextBoxFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.95}):Play()
-    end)
-
     local ParagraphButton
     if ParagraphConfig.ButtonText then
         ParagraphButton = Instance.new("TextButton")
@@ -413,17 +294,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         local btnCorner = Instance.new("UICorner")
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
-
-        -- Hover effect
-        ParagraphButton.MouseEnter:Connect(function()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
-        end)
-        
-        ParagraphButton.MouseLeave:Connect(function()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-            TweenService:Create(ParagraphButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
-        end)
 
         ParagraphButton.MouseButton1Click:Connect(function()
             AnimateButtonClick(ParagraphButton)
@@ -475,13 +345,8 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         return ParagraphTextBox.Text
     end
 
-    AllElements[configKey] = ParagraphFunc
     return ParagraphFunc
 end
-
--- ============================================================================
--- PANEL COMPONENT
--- ============================================================================
 
 function Elements:CreatePanel(parent, config, countItem)
     config = config or {}
@@ -493,7 +358,6 @@ function Elements:CreatePanel(parent, config, countItem)
     config.ButtonCallback = config.Callback or config.ButtonCallback or function() end
     config.SubButtonText = config.SubButton or config.SubButtonText or nil
     config.SubButtonCallback = config.SubCallback or config.SubButtonCallback or function() end
-    config.New = config.New or "false"
 
     local configKey = "Panel_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -531,14 +395,8 @@ function Elements:CreatePanel(parent, config, countItem)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.BackgroundTransparency = 1
     Title.Position = UDim2.new(0, 10, 0, 10)
-    Title.Size = UDim2.new(1, -80, 0, 13)
+    Title.Size = UDim2.new(1, -20, 0, 13)
     Title.Parent = Panel
-
-    -- Buat badge
-    local Badge = createBadge(Panel, config)
-    if Badge then
-        Badge.Position = UDim2.new(1, -60, 0, 8)
-    end
 
     local Content = Instance.new("TextLabel")
     Content.Font = Enum.Font.Gotham
@@ -579,15 +437,6 @@ function Elements:CreatePanel(parent, config, countItem)
         InputBox.Size = UDim2.new(1, -10, 1, -6)
         InputBox.Position = UDim2.new(0, 5, 0, 3)
         InputBox.Parent = InputFrame
-
-        -- Focus effect
-        InputBox.Focused:Connect(function()
-            TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
-        end)
-        
-        InputBox.FocusLost:Connect(function()
-            TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.95}):Play()
-        end)
     end
 
     local yBtn = config.Placeholder and 88 or 48
@@ -607,17 +456,6 @@ function Elements:CreatePanel(parent, config, countItem)
     local btnCorner = Instance.new("UICorner")
     btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = ButtonMain
-
-    -- Hover effect
-    ButtonMain.MouseEnter:Connect(function()
-        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
-    end)
-    
-    ButtonMain.MouseLeave:Connect(function()
-        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-        TweenService:Create(ButtonMain, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
-    end)
 
     -- ANIMASI HIGHLIGHT
     ButtonMain.MouseButton1Click:Connect(function()
@@ -642,17 +480,6 @@ function Elements:CreatePanel(parent, config, countItem)
         subCorner.CornerRadius = UDim.new(0, 6)
         subCorner.Parent = SubButton
 
-        -- Hover effect
-        SubButton.MouseEnter:Connect(function()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
-        end)
-        
-        SubButton.MouseLeave:Connect(function()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-            TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
-        end)
-
         -- ANIMASI HIGHLIGHT
         SubButton.MouseButton1Click:Connect(function()
             AnimateButtonClick(SubButton)
@@ -672,16 +499,8 @@ function Elements:CreatePanel(parent, config, countItem)
         return InputBox and InputBox.Text or ""
     end
 
-    AllElements[configKey] = PanelFunc
     return PanelFunc
 end
-
--- Alias for backward compatibility
-Elements.AddPanel = Elements.CreatePanel
-
--- ============================================================================
--- BUTTON COMPONENTS (Combined V1 and V2)
--- ============================================================================
 
 function Elements:CreateButton(parent, config, countItem)
     config = config or {}
@@ -689,232 +508,64 @@ function Elements:CreateButton(parent, config, countItem)
     config.Callback = config.Callback or function() end
     config.SubTitle = config.SubTitle or nil
     config.SubCallback = config.SubCallback or function() end
-    config.New = config.New or "false"
-    
-    -- Deteksi apakah ini button v2 (memiliki Title2)
-    local isV2 = config.Title2 ~= nil
 
-    if isV2 then
-        -- Button V2 dengan tampilan lebih modern (seperti di gambar) - VERSION KOMPAK
-        config.Title2 = config.Title2 or "" -- Sub title
-        local isNew = config.New == "true" -- Convert ke boolean
-        
-        local Button = Instance.new("Frame")
-        Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Button.BackgroundTransparency = 0.935
-        Button.Size = UDim2.new(1, 0, 0, 48)
-        Button.LayoutOrder = countItem
-        Button.Parent = parent
+    local Button = Instance.new("Frame")
+    Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Button.BackgroundTransparency = 0.935
+    Button.Size = UDim2.new(1, 0, 0, 40)
+    Button.LayoutOrder = countItem
+    Button.Parent = parent
 
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 6)
-        UICorner.Parent = Button
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 4)
+    UICorner.Parent = Button
 
-        -- Icon panah (seperti di gambar)
-        local ArrowIcon = Instance.new("ImageLabel")
-        ArrowIcon.Size = UDim2.new(0, 16, 0, 16)
-        ArrowIcon.Position = UDim2.new(1, -24, 0.5, 0)
-        ArrowIcon.AnchorPoint = Vector2.new(0, 0.5)
-        ArrowIcon.BackgroundTransparency = 1
-        ArrowIcon.Image = "rbxassetid://16851841101"
-        ArrowIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-        ArrowIcon.ImageTransparency = 0.3
-        ArrowIcon.Rotation = -90
-        ArrowIcon.Name = "ArrowIcon"
-        ArrowIcon.Parent = Button
+    local MainButton = Instance.new("TextButton")
+    MainButton.Font = Enum.Font.GothamBold
+    MainButton.Text = config.Title
+    MainButton.TextSize = 12
+    MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    MainButton.TextTransparency = 0.3
+    MainButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    MainButton.BackgroundTransparency = 0.935
+    MainButton.Size = config.SubTitle and UDim2.new(0.5, -8, 1, -10) or UDim2.new(1, -12, 1, -10)
+    MainButton.Position = UDim2.new(0, 6, 0, 5)
+    MainButton.Parent = Button
 
-        -- Title utama
-        local MainTitle = Instance.new("TextLabel")
-        MainTitle.Font = Enum.Font.GothamBold
-        MainTitle.Text = config.Title
-        MainTitle.TextSize = 14
-        MainTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-        MainTitle.TextXAlignment = Enum.TextXAlignment.Left
-        MainTitle.TextYAlignment = Enum.TextYAlignment.Top
-        MainTitle.BackgroundTransparency = 1
-        MainTitle.Position = UDim2.new(0, 10, 0, 8)
-        MainTitle.Size = UDim2.new(1, -80, 0, 16)
-        MainTitle.Name = "MainTitle"
-        MainTitle.Parent = Button
+    local mainCorner = Instance.new("UICorner")
+    mainCorner.CornerRadius = UDim.new(0, 4)
+    mainCorner.Parent = MainButton
 
-        -- Sub title (Title2)
-        local SubTitle = Instance.new("TextLabel")
-        SubTitle.Font = Enum.Font.Gotham
-        SubTitle.Text = config.Title2
-        SubTitle.TextSize = 11
-        SubTitle.TextColor3 = Color3.fromRGB(200, 200, 200)
-        SubTitle.TextXAlignment = Enum.TextXAlignment.Left
-        SubTitle.TextYAlignment = Enum.TextYAlignment.Top
-        SubTitle.BackgroundTransparency = 1
-        SubTitle.Position = UDim2.new(0, 10, 0, 24)
-        SubTitle.Size = UDim2.new(1, -80, 0, 14)
-        SubTitle.Name = "SubTitle"
-        SubTitle.Parent = Button
+    -- ANIMASI HIGHLIGHT
+    MainButton.MouseButton1Click:Connect(function()
+        AnimateButtonClick(MainButton)
+        config.Callback()
+    end)
 
-        -- Badge "NEW" (jika ada)
-        if isNew then
-            local BadgeFrame = Instance.new("Frame")
-            BadgeFrame.BackgroundColor3 = GuiConfig.Color or MainColor
-            BadgeFrame.BackgroundTransparency = 0.2
-            BadgeFrame.Size = UDim2.new(0, 34, 0, 16)
-            BadgeFrame.Position = UDim2.new(1, -60, 0, 8)
-            BadgeFrame.Parent = Button
-            BadgeFrame.Name = "BadgeFrame"
-            BadgeFrame.ZIndex = 5
+    if config.SubTitle then
+        local SubButton = Instance.new("TextButton")
+        SubButton.Font = Enum.Font.GothamBold
+        SubButton.Text = config.SubTitle
+        SubButton.TextSize = 12
+        SubButton.TextTransparency = 0.3
+        SubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        SubButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        SubButton.BackgroundTransparency = 0.935
+        SubButton.Size = UDim2.new(0.5, -8, 1, -10)
+        SubButton.Position = UDim2.new(0.5, 2, 0, 5)
+        SubButton.Parent = Button
 
-            local BadgeCorner = Instance.new("UICorner")
-            BadgeCorner.CornerRadius = UDim.new(0, 8)
-            BadgeCorner.Parent = BadgeFrame
-
-            local BadgeText = Instance.new("TextLabel")
-            BadgeText.Font = Enum.Font.GothamBold
-            BadgeText.Text = "NEW"
-            BadgeText.TextSize = 9
-            BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
-            BadgeText.BackgroundTransparency = 1
-            BadgeText.Size = UDim2.new(1, 0, 1, 0)
-            BadgeText.Parent = BadgeFrame
-            BadgeText.ZIndex = 6
-        end
-
-        -- Tombol utama (cover seluruh area)
-        local MainButton = Instance.new("TextButton")
-        MainButton.Font = Enum.Font.SourceSans
-        MainButton.Text = ""
-        MainButton.BackgroundTransparency = 1
-        MainButton.Size = UDim2.new(1, 0, 1, 0)
-        MainButton.Parent = Button
-
-        -- Hover effect
-        MainButton.MouseEnter:Connect(function()
-            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
-        end)
-
-        MainButton.MouseLeave:Connect(function()
-            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {ImageTransparency = 0.3}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 16, 0, 16)}):Play()
-        end)
-
-        -- Click effect
-        MainButton.MouseButton1Down:Connect(function()
-            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.8}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 14, 0, 14)}):Play()
-        end)
-
-        MainButton.MouseButton1Up:Connect(function()
-            TweenService:Create(Button, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(ArrowIcon, TweenInfoPresets.Quick, {Size = UDim2.new(0, 18, 0, 18)}):Play()
-        end)
-
-        MainButton.MouseButton1Click:Connect(function()
-            AnimateButtonClick(MainButton)
-            config.Callback()
-        end)
-
-        AllElements["Button_V2_" .. config.Title] = {Click = config.Callback}
-        return {Click = config.Callback}
-
-    else
-        -- Button V1 (original) dengan satu atau dua button
-        local Button = Instance.new("Frame")
-        Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Button.BackgroundTransparency = 0.935
-        Button.Size = UDim2.new(1, 0, 0, 40)
-        Button.LayoutOrder = countItem
-        Button.Parent = parent
-
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 4)
-        UICorner.Parent = Button
-
-        -- Buat badge
-        local Badge = createBadge(Button, config)
-        if Badge then
-            Badge.Position = UDim2.new(1, -45, 0, 5)
-        end
-
-        local MainButton = Instance.new("TextButton")
-        MainButton.Font = Enum.Font.GothamBold
-        MainButton.Text = config.Title
-        MainButton.TextSize = 12
-        MainButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        MainButton.TextTransparency = 0.3
-        MainButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        MainButton.BackgroundTransparency = 0.935
-        MainButton.Size = config.SubTitle and UDim2.new(0.5, -8, 1, -10) or UDim2.new(1, -12, 1, -10)
-        MainButton.Position = UDim2.new(0, 6, 0, 5)
-        MainButton.Parent = Button
-
-        local mainCorner = Instance.new("UICorner")
-        mainCorner.CornerRadius = UDim.new(0, 4)
-        mainCorner.Parent = MainButton
-
-        -- Hover effect
-        MainButton.MouseEnter:Connect(function()
-            TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-            TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
-        end)
-        
-        MainButton.MouseLeave:Connect(function()
-            TweenService:Create(MainButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-            TweenService:Create(MainButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
-        end)
+        local subCorner = Instance.new("UICorner")
+        subCorner.CornerRadius = UDim.new(0, 4)
+        subCorner.Parent = SubButton
 
         -- ANIMASI HIGHLIGHT
-        MainButton.MouseButton1Click:Connect(function()
-            AnimateButtonClick(MainButton)
-            config.Callback()
+        SubButton.MouseButton1Click:Connect(function()
+            AnimateButtonClick(SubButton)
+            config.SubCallback()
         end)
-
-        if config.SubTitle then
-            local SubButton = Instance.new("TextButton")
-            SubButton.Font = Enum.Font.GothamBold
-            SubButton.Text = config.SubTitle
-            SubButton.TextSize = 12
-            SubButton.TextTransparency = 0.3
-            SubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-            SubButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SubButton.BackgroundTransparency = 0.935
-            SubButton.Size = UDim2.new(0.5, -8, 1, -10)
-            SubButton.Position = UDim2.new(0.5, 2, 0, 5)
-            SubButton.Parent = Button
-
-            local subCorner = Instance.new("UICorner")
-            subCorner.CornerRadius = UDim.new(0, 4)
-            subCorner.Parent = SubButton
-
-            -- Hover effect
-            SubButton.MouseEnter:Connect(function()
-                TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.85}):Play()
-                TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0}):Play()
-            end)
-            
-            SubButton.MouseLeave:Connect(function()
-                TweenService:Create(SubButton, TweenInfoPresets.Quick, {BackgroundTransparency = 0.935}):Play()
-                TweenService:Create(SubButton, TweenInfoPresets.Quick, {TextTransparency = 0.3}):Play()
-            end)
-
-            -- ANIMASI HIGHLIGHT
-            SubButton.MouseButton1Click:Connect(function()
-                AnimateButtonClick(SubButton)
-                config.SubCallback()
-            end)
-        end
-
-        AllElements["Button_" .. config.Title] = {Click = config.Callback}
-        return {Click = config.Callback}
     end
 end
-
--- Alias for backward compatibility
-Elements.AddButton = Elements.CreateButton
-
--- ============================================================================
--- TOGGLE COMPONENT
--- ============================================================================
 
 function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Elements_Table)
     local ToggleConfig = config or {}
@@ -923,7 +574,6 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleConfig.Content = ToggleConfig.Content or ""
     ToggleConfig.Default = ToggleConfig.Default or false
     ToggleConfig.Callback = ToggleConfig.Callback or function() end
-    ToggleConfig.New = ToggleConfig.New or "false"
 
     local configKey = "Toggle_" .. ToggleConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -961,15 +611,9 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleTitle.TextYAlignment = Enum.TextYAlignment.Top
     ToggleTitle.BackgroundTransparency = 1
     ToggleTitle.Position = UDim2.new(0, 10, 0, 10)
-    ToggleTitle.Size = UDim2.new(1, -120, 0, 13)
+    ToggleTitle.Size = UDim2.new(1, -100, 0, 13)
     ToggleTitle.Name = "ToggleTitle"
     ToggleTitle.Parent = Toggle
-
-    -- Buat badge
-    local Badge = createBadge(Toggle, ToggleConfig)
-    if Badge then
-        Badge.Position = UDim2.new(1, -70, 0, 8)
-    end
 
     local ToggleTitle2 = Instance.new("TextLabel")
     ToggleTitle2.Font = Enum.Font.GothamBold
@@ -980,7 +624,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleTitle2.TextYAlignment = Enum.TextYAlignment.Top
     ToggleTitle2.BackgroundTransparency = 1
     ToggleTitle2.Position = UDim2.new(0, 10, 0, 23)
-    ToggleTitle2.Size = UDim2.new(1, -120, 0, 12)
+    ToggleTitle2.Size = UDim2.new(1, -100, 0, 12)
     ToggleTitle2.Name = "ToggleTitle2"
     ToggleTitle2.Parent = Toggle
 
@@ -992,7 +636,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleContent.TextXAlignment = Enum.TextXAlignment.Left
     ToggleContent.TextYAlignment = Enum.TextYAlignment.Bottom
     ToggleContent.BackgroundTransparency = 1
-    ToggleContent.Size = UDim2.new(1, -120, 0, 12)
+    ToggleContent.Size = UDim2.new(1, -100, 0, 12)
     ToggleContent.Name = "ToggleContent"
     ToggleContent.Parent = Toggle
 
@@ -1006,7 +650,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         ToggleTitle2.Visible = false
     end
 
-    ToggleContent.Size = UDim2.new(1, -120, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+    ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
     ToggleContent.TextWrapped = true
     if ToggleConfig.Title2 ~= "" then
         Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
@@ -1016,13 +660,13 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 
     ToggleContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         ToggleContent.TextWrapped = false
-        ToggleContent.Size = UDim2.new(1, -120, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+        ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
         if ToggleConfig.Title2 ~= "" then
             Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
         else
             Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 33)
         end
-        if updateSectionSize then updateSectionSize() end
+        updateSectionSize()
     end)
 
     ToggleButton.Font = Enum.Font.SourceSans
@@ -1062,8 +706,6 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     end)
 
     function ToggleFunc:Set(Value)
-        local color = GuiConfig.Color or MainColor
-        
         if typeof(ToggleConfig.Callback) == "function" then
             local ok, err = pcall(function()
                 ToggleConfig.Callback(Value)
@@ -1073,33 +715,22 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         ConfigData[configKey] = Value
         SaveConfig()
         if Value then
-            TweenService:Create(ToggleTitle, TweenInfoPresets.Normal, { TextColor3 = color }):Play()
-            TweenService:Create(ToggleCircle, TweenInfoPresets.Slow, { Position = UDim2.new(0, 15, 0, 0) }):Play()
-            TweenService:Create(UIStroke8, TweenInfoPresets.Normal, { Color = color, Transparency = 0 }):Play()
-            TweenService:Create(FeatureFrame2, TweenInfoPresets.Normal, { BackgroundColor3 = color, BackgroundTransparency = 0 }):Play()
+            TweenService:Create(ToggleTitle, TweenInfo.new(0.2), { TextColor3 = GuiConfig.Color }):Play()
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 15, 0, 0) }):Play()
+            TweenService:Create(UIStroke8, TweenInfo.new(0.2), { Color = GuiConfig.Color, Transparency = 0 }):Play()
+            TweenService:Create(FeatureFrame2, TweenInfo.new(0.2), { BackgroundColor3 = GuiConfig.Color, BackgroundTransparency = 0 }):Play()
         else
-            TweenService:Create(ToggleTitle, TweenInfoPresets.Normal, { TextColor3 = Color3.fromRGB(230, 230, 230) }):Play()
-            TweenService:Create(ToggleCircle, TweenInfoPresets.Slow, { Position = UDim2.new(0, 0, 0, 0) }):Play()
-            TweenService:Create(UIStroke8, TweenInfoPresets.Normal, { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 }):Play()
-            TweenService:Create(FeatureFrame2, TweenInfoPresets.Normal, { BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92 }):Play()
+            TweenService:Create(ToggleTitle, TweenInfo.new(0.2), { TextColor3 = Color3.fromRGB(230, 230, 230) }):Play()
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 0, 0, 0) }):Play()
+            TweenService:Create(UIStroke8, TweenInfo.new(0.2), { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 }):Play()
+            TweenService:Create(FeatureFrame2, TweenInfo.new(0.2), { BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92 }):Play()
         end
     end
 
     ToggleFunc:Set(ToggleFunc.Value)
-    
-    if Elements_Table then
-        Elements_Table[configKey] = ToggleFunc
-    end
-    AllElements[configKey] = ToggleFunc
+    Elements_Table[configKey] = ToggleFunc
     return ToggleFunc
 end
-
--- Alias for backward compatibility
-Elements.AddToggle = Elements.CreateToggle
-
--- ============================================================================
--- SLIDER COMPONENT
--- ============================================================================
 
 function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Elements_Table)
     local SliderConfig = config or {}
@@ -1110,7 +741,6 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderConfig.Max = SliderConfig.Max or 100
     SliderConfig.Default = SliderConfig.Default or 50
     SliderConfig.Callback = SliderConfig.Callback or function() end
-    SliderConfig.New = SliderConfig.New or "false"
 
     local configKey = "Slider_" .. SliderConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -1153,15 +783,9 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderTitle.TextYAlignment = Enum.TextYAlignment.Top
     SliderTitle.BackgroundTransparency = 1
     SliderTitle.Position = UDim2.new(0, 10, 0, 10)
-    SliderTitle.Size = UDim2.new(1, -200, 0, 13)
+    SliderTitle.Size = UDim2.new(1, -180, 0, 13)
     SliderTitle.Name = "SliderTitle"
     SliderTitle.Parent = Slider
-
-    -- Buat badge
-    local Badge = createBadge(Slider, SliderConfig)
-    if Badge then
-        Badge.Position = UDim2.new(1, -170, 0, 8)
-    end
 
     SliderContent.Font = Enum.Font.GothamBold
     SliderContent.Text = SliderConfig.Content
@@ -1172,24 +796,24 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderContent.TextYAlignment = Enum.TextYAlignment.Bottom
     SliderContent.BackgroundTransparency = 1
     SliderContent.Position = UDim2.new(0, 10, 0, 25)
-    SliderContent.Size = UDim2.new(1, -200, 0, 12)
+    SliderContent.Size = UDim2.new(1, -180, 0, 12)
     SliderContent.Name = "SliderContent"
     SliderContent.Parent = Slider
 
-    SliderContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
+    SliderContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
     SliderContent.TextWrapped = true
     Slider.Size = UDim2.new(1, 0, 0, SliderContent.AbsoluteSize.Y + 33)
 
     SliderContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         SliderContent.TextWrapped = false
-        SliderContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
+        SliderContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (SliderContent.TextBounds.X // SliderContent.AbsoluteSize.X)))
         Slider.Size = UDim2.new(1, 0, 0, SliderContent.AbsoluteSize.Y + 33)
         SliderContent.TextWrapped = true
-        if updateSectionSize then updateSectionSize() end
+        updateSectionSize()
     end)
 
     SliderInput.AnchorPoint = Vector2.new(0, 0.5)
-    SliderInput.BackgroundColor3 = GuiConfig.Color or MainColor
+    SliderInput.BackgroundColor3 = GuiConfig.Color
     SliderInput.BackgroundTransparency = 1
     SliderInput.BorderSizePixel = 0
     SliderInput.Position = UDim2.new(1, -155, 0.5, 0)
@@ -1223,7 +847,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     UICorner17.Parent = SliderFrame
 
     SliderDraggable.AnchorPoint = Vector2.new(0, 0.5)
-    SliderDraggable.BackgroundColor3 = GuiConfig.Color or MainColor
+    SliderDraggable.BackgroundColor3 = GuiConfig.Color
     SliderDraggable.BorderSizePixel = 0
     SliderDraggable.Position = UDim2.new(0, 0, 0.5, 0)
     SliderDraggable.Size = UDim2.new(0.9, 0, 0, 1)
@@ -1233,7 +857,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     UICorner18.Parent = SliderDraggable
 
     SliderCircle.AnchorPoint = Vector2.new(1, 0.5)
-    SliderCircle.BackgroundColor3 = GuiConfig.Color or MainColor
+    SliderCircle.BackgroundColor3 = GuiConfig.Color
     SliderCircle.BorderSizePixel = 0
     SliderCircle.Position = UDim2.new(1, 4, 0.5, 0)
     SliderCircle.Size = UDim2.new(0, 8, 0, 8)
@@ -1242,7 +866,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
 
     UICorner19.Parent = SliderCircle
 
-    UIStroke6.Color = GuiConfig.Color or MainColor
+    UIStroke6.Color = GuiConfig.Color
     UIStroke6.Parent = SliderCircle
 
     local Dragging = false
@@ -1258,15 +882,13 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         Value = math.clamp(Round(Value, SliderConfig.Increment), SliderConfig.Min, SliderConfig.Max)
         SliderFunc.Value = Value
         TextBox.Text = tostring(Value)
-        
-        local targetSize = UDim2.fromScale((Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1)
-        TweenService:Create(SliderDraggable, TweenInfoPresets.Slow, { Size = targetSize }):Play()
+        TweenService:Create(
+            SliderDraggable,
+            TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+            { Size = UDim2.fromScale((Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1) }
+        ):Play()
 
-        local success, err = pcall(function()
-            SliderConfig.Callback(Value)
-        end)
-        if not success then warn("Slider Callback error:", err) end
-        
+        SliderConfig.Callback(Value)
         ConfigData[configKey] = Value
         SaveConfig()
     end
@@ -1274,7 +896,11 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderFrame.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
-            TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 14, 0, 14) }):Play()
+            TweenService:Create(
+                SliderCircle,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { Size = UDim2.new(0, 14, 0, 14) }
+            ):Play()
             local SizeScale = math.clamp(
                 (Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X,
                 0,
@@ -1287,12 +913,12 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderFrame.InputEnded:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = false
-            TweenService:Create(SliderCircle, TweenInfoPresets.Normal, { Size = UDim2.new(0, 8, 0, 8) }):Play()
-            
-            local success, err = pcall(function()
-                SliderConfig.Callback(SliderFunc.Value)
-            end)
-            if not success then warn("Slider Callback error:", err) end
+            SliderConfig.Callback(SliderFunc.Value)
+            TweenService:Create(
+                SliderCircle,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { Size = UDim2.new(0, 8, 0, 8) }
+            ):Play()
         end
     end)
 
@@ -1318,20 +944,9 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     end)
 
     SliderFunc:Set(SliderConfig.Default)
-    
-    if Elements_Table then
-        Elements_Table[configKey] = SliderFunc
-    end
-    AllElements[configKey] = SliderFunc
+    Elements_Table[configKey] = SliderFunc
     return SliderFunc
 end
-
--- Alias for backward compatibility
-Elements.AddSlider = Elements.CreateSlider
-
--- ============================================================================
--- INPUT COMPONENT
--- ============================================================================
 
 function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elements_Table)
     local InputConfig = config or {}
@@ -1339,7 +954,6 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     InputConfig.Content = InputConfig.Content or ""
     InputConfig.Callback = InputConfig.Callback or function() end
     InputConfig.Default = InputConfig.Default or ""
-    InputConfig.New = InputConfig.New or "false"
 
     local configKey = "Input_" .. InputConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -1375,15 +989,9 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     InputTitle.TextYAlignment = Enum.TextYAlignment.Top
     InputTitle.BackgroundTransparency = 1
     InputTitle.Position = UDim2.new(0, 10, 0, 10)
-    InputTitle.Size = UDim2.new(1, -200, 0, 13)
+    InputTitle.Size = UDim2.new(1, -180, 0, 13)
     InputTitle.Name = "InputTitle"
     InputTitle.Parent = Input
-
-    -- Buat badge
-    local Badge = createBadge(Input, InputConfig)
-    if Badge then
-        Badge.Position = UDim2.new(1, -170, 0, 8)
-    end
 
     InputContent.Font = Enum.Font.GothamBold
     InputContent.Text = InputConfig.Content
@@ -1395,20 +1003,20 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     InputContent.TextYAlignment = Enum.TextYAlignment.Bottom
     InputContent.BackgroundTransparency = 1
     InputContent.Position = UDim2.new(0, 10, 0, 25)
-    InputContent.Size = UDim2.new(1, -200, 0, 12)
+    InputContent.Size = UDim2.new(1, -180, 0, 12)
     InputContent.Name = "InputContent"
     InputContent.Parent = Input
 
-    InputContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
+    InputContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
     InputContent.TextWrapped = true
     Input.Size = UDim2.new(1, 0, 0, InputContent.AbsoluteSize.Y + 33)
 
     InputContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         InputContent.TextWrapped = false
-        InputContent.Size = UDim2.new(1, -200, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
+        InputContent.Size = UDim2.new(1, -180, 0, 12 + (12 * (InputContent.TextBounds.X // InputContent.AbsoluteSize.X)))
         Input.Size = UDim2.new(1, 0, 0, InputContent.AbsoluteSize.Y + 33)
         InputContent.TextWrapped = true
-        if updateSectionSize then updateSectionSize() end
+        updateSectionSize()
     end)
 
     InputFrame.AnchorPoint = Vector2.new(1, 0.5)
@@ -1440,15 +1048,6 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     InputTextBox.Name = "InputTextBox"
     InputTextBox.Parent = InputFrame
 
-    -- Focus effect
-    InputTextBox.Focused:Connect(function()
-        TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.9}):Play()
-    end)
-    
-    InputTextBox.FocusLost:Connect(function()
-        TweenService:Create(InputFrame, TweenInfoPresets.Normal, {BackgroundTransparency = 0.95}):Play()
-    end)
-
     function InputFunc:Set(Value)
         InputTextBox.Text = Value
         InputFunc.Value = Value
@@ -1463,19 +1062,9 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
         InputFunc:Set(InputTextBox.Text)
     end)
 
-    if Elements_Table then
-        Elements_Table[configKey] = InputFunc
-    end
-    AllElements[configKey] = InputFunc
+    Elements_Table[configKey] = InputFunc
     return InputFunc
 end
-
--- Alias for backward compatibility
-Elements.AddInput = Elements.CreateInput
-
--- ============================================================================
--- DROPDOWN COMPONENT
--- ============================================================================
 
 function Elements:CreateDropdown(parent, config, countItem, countDropdown, DropdownFolder, MoreBlur, DropdownSelect, DropPageLayout, Elements_Table)
     local DropdownConfig = config or {}
@@ -1485,7 +1074,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     DropdownConfig.Options = DropdownConfig.Options or {}
     DropdownConfig.Default = DropdownConfig.Default or (DropdownConfig.Multi and {} or nil)
     DropdownConfig.Callback = DropdownConfig.Callback or function() end
-    DropdownConfig.New = DropdownConfig.New or "false"
 
     local configKey = "Dropdown_" .. DropdownConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -1532,12 +1120,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     DropdownTitle.Name = "DropdownTitle"
     DropdownTitle.Parent = Dropdown
 
-    -- Buat badge
-    local Badge = createBadge(Dropdown, DropdownConfig)
-    if Badge then
-        Badge.Position = UDim2.new(1, -170, 0, 8)
-    end
-
     DropdownContent.Font = Enum.Font.GothamBold
     DropdownContent.Text = DropdownConfig.Content
     DropdownContent.TextColor3 = Color3.fromRGB(255, 255, 255)
@@ -1562,33 +1144,12 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     UICorner11.CornerRadius = UDim.new(0, 4)
     UICorner11.Parent = SelectOptionsFrame
 
-    -- Hover effect
-    SelectOptionsFrame.MouseEnter:Connect(function()
-        TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.9}):Play()
-    end)
-    
-    SelectOptionsFrame.MouseLeave:Connect(function()
-        TweenService:Create(SelectOptionsFrame, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
-    end)
-
     DropdownButton.Activated:Connect(function()
-        if MoreBlur and not MoreBlur.Visible then
+        if not MoreBlur.Visible then
             MoreBlur.Visible = true
-            if DropPageLayout then
-                DropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder)
-            end
-            TweenService:Create(MoreBlur, TweenInfoPresets.Slow, { BackgroundTransparency = 1 }):Play()
-            if DropdownSelect then
-                TweenService:Create(DropdownSelect, TweenInfoPresets.Slow, { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
-            end
-            -- Rotasi arrow saat dibuka
-            TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 180}):Play()
-        else
-            if MoreBlur then
-                MoreBlur.Visible = false
-                -- Rotasi arrow kembali saat ditutup
-                TweenService:Create(OptionImg, TweenInfoPresets.Normal, {Rotation = 0}):Play()
-            end
+            DropPageLayout:JumpToIndex(SelectOptionsFrame.LayoutOrder)
+            TweenService:Create(MoreBlur, TweenInfo.new(0.3), { BackgroundTransparency = 1 }):Play()
+            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, -11, 0.5, 0) }):Play()
         end
     end)
 
@@ -1614,25 +1175,10 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     OptionImg.Name = "OptionImg"
     OptionImg.Parent = SelectOptionsFrame
 
-    local DropdownContainer
-    if DropdownFolder then
-        DropdownContainer = Instance.new("Frame")
-        DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
-        DropdownContainer.BackgroundTransparency = 1
-        DropdownContainer.Parent = DropdownFolder
-    elseif MoreBlur and MoreBlur:FindFirstChild("DropdownSelect") and MoreBlur.DropdownSelect:FindFirstChild("DropdownSelectReal") and MoreBlur.DropdownSelect.DropdownSelectReal:FindFirstChild("DropdownFolder") then
-        DropdownContainer = Instance.new("Frame")
-        DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
-        DropdownContainer.BackgroundTransparency = 1
-        DropdownContainer.Parent = MoreBlur.DropdownSelect.DropdownSelectReal.DropdownFolder
-    else
-        -- Fallback: create temporary container
-        DropdownContainer = Instance.new("Frame")
-        DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
-        DropdownContainer.BackgroundTransparency = 1
-        DropdownContainer.Parent = parent
-        DropdownContainer.Visible = false
-    end
+    local DropdownContainer = Instance.new("Frame")
+    DropdownContainer.Size = UDim2.new(1, 0, 1, 0)
+    DropdownContainer.BackgroundTransparency = 1
+    DropdownContainer.Parent = DropdownFolder
 
     local SearchBox = Instance.new("TextBox")
     SearchBox.PlaceholderText = "Search"
@@ -1722,15 +1268,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         OptionButton.Text = ""
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
-        
-        -- Hover effect untuk option
-        OptionButton.MouseEnter:Connect(function()
-            TweenService:Create(Option, TweenInfoPresets.Quick, {BackgroundTransparency = 0.95}):Play()
-        end)
-        
-        OptionButton.MouseLeave:Connect(function()
-            TweenService:Create(Option, TweenInfoPresets.Quick, {BackgroundTransparency = 1}):Play()
-        end)
 
         OptionText.Font = Enum.Font.GothamBold
         OptionText.Text = label
@@ -1746,13 +1283,13 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         Option:SetAttribute("RealValue", value)
 
         ChooseFrame.AnchorPoint = Vector2.new(0, 0.5)
-        ChooseFrame.BackgroundColor3 = GuiConfig.Color or MainColor
+        ChooseFrame.BackgroundColor3 = GuiConfig.Color
         ChooseFrame.Position = UDim2.new(0, 2, 0.5, 0)
         ChooseFrame.Size = UDim2.new(0, 0, 0, 0)
         ChooseFrame.Name = "ChooseFrame"
         ChooseFrame.Parent = Option
 
-        UIStroke15.Color = GuiConfig.Color or MainColor
+        UIStroke15.Color = GuiConfig.Color
         UIStroke15.Thickness = 1.6
         UIStroke15.Transparency = 0.999
         UIStroke15.Parent = ChooseFrame
@@ -1794,14 +1331,14 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
                 local selected = DropdownConfig.Multi and table.find(DropdownFunc.Value, v) or DropdownFunc.Value == v
 
                 if selected then
-                    TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Slow, { Size = UDim2.new(0, 1, 0, 12) }):Play()
-                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfoPresets.Normal, { Transparency = 0 }):Play()
-                    TweenService:Create(Drop, TweenInfoPresets.Normal, { BackgroundTransparency = 0.935 }):Play()
+                    TweenService:Create(Drop.ChooseFrame, TweenInfo.new(0.2), { Size = UDim2.new(0, 1, 0, 12) }):Play()
+                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfo.new(0.2), { Transparency = 0 }):Play()
+                    TweenService:Create(Drop, TweenInfo.new(0.2), { BackgroundTransparency = 0.935 }):Play()
                     table.insert(texts, Drop.OptionText.Text)
                 else
-                    TweenService:Create(Drop.ChooseFrame, TweenInfoPresets.Normal, { Size = UDim2.new(0, 0, 0, 0) }):Play()
-                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfoPresets.Normal, { Transparency = 0.999 }):Play()
-                    TweenService:Create(Drop, TweenInfoPresets.Normal, { BackgroundTransparency = 0.999 }):Play()
+                    TweenService:Create(Drop.ChooseFrame, TweenInfo.new(0.1), { Size = UDim2.new(0, 0, 0, 0) }):Play()
+                    TweenService:Create(Drop.ChooseFrame.UIStroke, TweenInfo.new(0.1), { Transparency = 0.999 }):Play()
+                    TweenService:Create(Drop, TweenInfo.new(0.1), { BackgroundTransparency = 0.999 }):Play()
                 end
             end
         end
@@ -1840,20 +1377,9 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     end
 
     DropdownFunc:SetValues(DropdownFunc.Options, DropdownFunc.Value)
-    
-    if Elements_Table then
-        Elements_Table[configKey] = DropdownFunc
-    end
-    AllElements[configKey] = DropdownFunc
+    Elements_Table[configKey] = DropdownFunc
     return DropdownFunc
 end
-
--- Alias for backward compatibility
-Elements.AddDropdown = Elements.CreateDropdown
-
--- ============================================================================
--- DIVIDER COMPONENT
--- ============================================================================
 
 function Elements:CreateDivider(parent, countItem)
     local Divider = Instance.new("Frame")
@@ -1867,12 +1393,10 @@ function Elements:CreateDivider(parent, countItem)
     Divider.BorderSizePixel = 0
     Divider.LayoutOrder = countItem
 
-    local color = GuiConfig.Color or MainColor
-    
     local UIGradient = Instance.new("UIGradient")
     UIGradient.Color = ColorSequence.new {
         ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
-        ColorSequenceKeypoint.new(0.5, color),
+        ColorSequenceKeypoint.new(0.5, GuiConfig.Color),
         ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
     }
     UIGradient.Parent = Divider
@@ -1883,13 +1407,6 @@ function Elements:CreateDivider(parent, countItem)
 
     return Divider
 end
-
--- Alias for backward compatibility
-Elements.AddDivider = Elements.CreateDivider
-
--- ============================================================================
--- SUB SECTION COMPONENT
--- ============================================================================
 
 function Elements:CreateSubSection(parent, title, countItem)
     title = title or "Sub Section"
@@ -1923,8 +1440,5 @@ function Elements:CreateSubSection(parent, title, countItem)
 
     return SubSection
 end
-
--- Alias for backward compatibility
-Elements.AddSubSection = Elements.CreateSubSection
 
 return Elements
