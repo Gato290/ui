@@ -1,4 +1,24 @@
-local HttpService = game:GetService("HttpService") -- V0.0.2
+local HttpService = game:GetService("HttpService") -- V0.0.3
+
+-- Load Elements from external files
+local Elements = {}
+
+-- Load semua elemen dari file terpisah
+local elementFiles = {
+    "Dropdown", "Panel", "Input", "Toggle", "Slider", "Button", "Paragraph"
+}
+
+for _, elementName in ipairs(elementFiles) do
+    local success, result = pcall(function()
+        return loadstring(game:HttpGet(("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/%s.lua"):format(elementName)))()
+    end)
+    
+    if success then
+        Elements[elementName] = result
+    else
+        warn("Failed to load element: " .. elementName)
+    end
+end
 
 if not isfolder("NateiraHub") then
     makefolder("NateiraHub")
@@ -14,7 +34,6 @@ gameName         = gameName:gsub("%s+", "_")
 local ConfigFile = "NateiraHub/Config/CHX_" .. gameName .. ".json"
 
 ConfigData       = {}
-Elements         = {}
 CURRENT_VERSION  = nil
 
 function SaveConfig()
@@ -45,11 +64,7 @@ function LoadConfigFromFile()
 end
 
 function LoadConfigElements()
-    for key, element in pairs(Elements) do
-        if ConfigData[key] ~= nil and element.Set then
-            element:Set(ConfigData[key], true)
-        end
-    end
+    -- Akan diimplementasikan melalui elemen masing-masing
 end
 
 local Icons = {
@@ -230,18 +245,6 @@ function CircleClick(Button, X, Y)
 end
 
 local Chloex = {}
-
--- Load element modules
-local Elements = {
-    Dropdown = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Dropdown.lua"))(),
-    Panel = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Panel.lua"))(),
-    Input = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Input.lua"))(),
-    Toggle = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Toggle.lua"))(),
-    Slider = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Slider.lua"))(),
-    Button = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Button.lua"))(),
-    Paragraph = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Paragraph.lua"))(),
-}
-
 function Chloex:MakeNotify(NotifyConfig)
     local NotifyConfig = NotifyConfig or {}
     NotifyConfig.Title = NotifyConfig.Title or "Chloe X"
@@ -460,6 +463,13 @@ function Chloex:Window(GuiConfig)
 
     CURRENT_VERSION        = GuiConfig.Version
     LoadConfigFromFile()
+
+    -- Initialize elements with config
+    for _, element in pairs(Elements) do
+        if element and type(element) == "table" and element.Initialize then
+            element.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
+        end
+    end
 
     local GuiFunc = {}
 
@@ -1023,12 +1033,10 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.Archivable = false
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
-
     --// Tabs
     local Tabs = {}
     local CountTab = 0
     local CountDropdown = 0
-    
     function Tabs:AddTab(TabConfig)
         local TabConfig = TabConfig or {}
         TabConfig.Name = TabConfig.Name or "Tab"
@@ -1186,11 +1194,9 @@ function Chloex:Window(GuiConfig)
                 ):Play()
             end
         end)
-        
         --// Section
         local Sections = {}
         local CountSection = 0
-        
         function Sections:AddSection(Title, AlwaysOpen)
             local Title = Title or "Title"
             local Section = Instance.new("Frame");
@@ -1412,138 +1418,63 @@ function Chloex:Window(GuiConfig)
             local Items = {}
             local CountItem = 0
 
-            -- Initialize elements with proper context
-            local elementContext = {
-                ConfigData = ConfigData,
-                Elements = Elements,
-                SaveConfig = SaveConfig,
-                GuiConfig = GuiConfig,
-                CountItem = function() return CountItem end,
-                IncrementItem = function() CountItem = CountItem + 1 end,
-                SectionAdd = SectionAdd,
-                UpdateSizeSection = UpdateSizeSection,
-                TweenService = TweenService,
-                Mouse = Mouse,
-                UserInputService = UserInputService,
-                CircleClick = CircleClick
-            }
-
-            -- Load element functions from modules
-            Items.AddParagraph = function(ParagraphConfig)
-                local result = Elements.Paragraph(ParagraphConfig, elementContext)
+            function Items:AddParagraph(config)
+                local result = Elements.Paragraph.Create(SectionAdd, config, CountItem, UpdateSizeSection, Icons)
                 CountItem = CountItem + 1
                 return result
             end
 
-            Items.AddPanel = function(PanelConfig)
-                local result = Elements.Panel(PanelConfig, elementContext)
+            function Items:AddPanel(config)
+                local result = Elements.panel.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
                 CountItem = CountItem + 1
                 return result
             end
 
-            Items.AddButton = function(ButtonConfig)
-                local result = Elements.Button(ButtonConfig, elementContext)
+            function Items:AddButton(config)
+                local result = Elements.Button.Create(SectionAdd, config, CountItem, UpdateSizeSection)
                 CountItem = CountItem + 1
                 return result
             end
 
-            Items.AddToggle = function(ToggleConfig)
-                local result = Elements.Toggle(ToggleConfig, elementContext)
-                if result and result.key then
-                    Elements[result.key] = result
-                end
+            function Items:AddToggle(config)
+                local result = Elements.toggle.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
                 CountItem = CountItem + 1
                 return result
             end
 
-            Items.AddSlider = function(SliderConfig)
-                local result = Elements.Slider(SliderConfig, elementContext)
-                if result and result.key then
-                    Elements[result.key] = result
-                end
+            function Items:AddSlider(config)
+                local result = Elements.slider.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
                 CountItem = CountItem + 1
                 return result
             end
 
-            Items.AddInput = function(InputConfig)
-                local result = Elements.Input(InputConfig, elementContext)
-                if result and result.key then
-                    Elements[result.key] = result
-                end
+            function Items:AddInput(config)
+                local result = Elements.input.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
                 CountItem = CountItem + 1
                 return result
             end
 
-            Items.AddDropdown = function(DropdownConfig)
-                local result = Elements.Dropdown(DropdownConfig, elementContext)
-                if result and result.key then
-                    Elements[result.key] = result
-                end
+            function Items:AddDropdown(config)
+                local result = Elements.Dropdown.Create(
+                    SectionAdd, config, CountItem, CountDropdown, 
+                    MoreBlur, DropPageLayout, UpdateSizeSection, 
+                    SaveConfig, ConfigData, GuiConfig.Color
+                )
                 CountItem = CountItem + 1
                 CountDropdown = CountDropdown + 1
                 return result
             end
 
             function Items:AddDivider()
-                local Divider = Instance.new("Frame")
-                Divider.Name = "Divider"
-                Divider.Parent = SectionAdd
-                Divider.AnchorPoint = Vector2.new(0.5, 0)
-                Divider.Position = UDim2.new(0.5, 0, 0, 0)
-                Divider.Size = UDim2.new(1, 0, 0, 2)
-                Divider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                Divider.BackgroundTransparency = 0
-                Divider.BorderSizePixel = 0
-                Divider.LayoutOrder = CountItem
-
-                local UIGradient = Instance.new("UIGradient")
-                UIGradient.Color = ColorSequence.new {
-                    ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
-                    ColorSequenceKeypoint.new(0.5, GuiConfig.Color),
-                    ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
-                }
-                UIGradient.Parent = Divider
-
-                local UICorner = Instance.new("UICorner")
-                UICorner.CornerRadius = UDim.new(0, 2)
-                UICorner.Parent = Divider
-
+                local result = Elements.Dropdown.AddDivider(SectionAdd, CountItem, GuiConfig.Color)
                 CountItem = CountItem + 1
-                return Divider
+                return result
             end
 
             function Items:AddSubSection(title)
-                title = title or "Sub Section"
-
-                local SubSection = Instance.new("Frame")
-                SubSection.Name = "SubSection"
-                SubSection.Parent = SectionAdd
-                SubSection.BackgroundTransparency = 1
-                SubSection.Size = UDim2.new(1, 0, 0, 22)
-                SubSection.LayoutOrder = CountItem
-
-                local Background = Instance.new("Frame")
-                Background.Parent = SubSection
-                Background.Size = UDim2.new(1, 0, 1, 0)
-                Background.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                Background.BackgroundTransparency = 0.935
-                Background.BorderSizePixel = 0
-                Instance.new("UICorner", Background).CornerRadius = UDim.new(0, 6)
-
-                local Label = Instance.new("TextLabel")
-                Label.Parent = SubSection
-                Label.AnchorPoint = Vector2.new(0, 0.5)
-                Label.Position = UDim2.new(0, 10, 0.5, 0)
-                Label.Size = UDim2.new(1, -20, 1, 0)
-                Label.BackgroundTransparency = 1
-                Label.Font = Enum.Font.GothamBold
-                Label.Text = "── [ " .. title .. " ] ──"
-                Label.TextColor3 = Color3.fromRGB(230, 230, 230)
-                Label.TextSize = 12
-                Label.TextXAlignment = Enum.TextXAlignment.Left
-
+                local result = Elements.Dropdown.AddSubSection(SectionAdd, title, CountItem)
                 CountItem = CountItem + 1
-                return SubSection
+                return result
             end
 
             CountSection = CountSection + 1
