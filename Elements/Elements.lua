@@ -1,5 +1,6 @@
 -- Elements.lua V0.0.5
 -- UI Elements Module for NexaHub
+-- Added: Button Click Highlight Animations
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -17,50 +18,31 @@ function Elements:Initialize(config, saveFunc, configData, icons)
     Icons = icons
 end
 
--- Helper function untuk animasi button click (hanya highlight dan hover)
-local function AddButtonHighlight(button, config)
-    config = config or {}
-    local highlightColor = config.HighlightColor or GuiConfig.Color
-    local duration = config.Duration or 0.15
+-- Helper function for button click animation
+local function AnimateButtonClick(button, color)
+    color = color or GuiConfig.Color
     
-    button.MouseButton1Click:Connect(function()
-        -- Efek highlight kilatan
-        local originalColor = button.BackgroundColor3
-        local originalTransparency = button.BackgroundTransparency
-        
-        local highlightTween = TweenService:Create(button, TweenInfo.new(duration/2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-            BackgroundColor3 = highlightColor,
-            BackgroundTransparency = originalTransparency - 0.2
-        })
-        highlightTween:Play()
-        
-        highlightTween.Completed:Connect(function()
-            local revertTween = TweenService:Create(button, TweenInfo.new(duration/2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundColor3 = originalColor,
-                BackgroundTransparency = originalTransparency
-            })
-            revertTween:Play()
-        end)
-    end)
+    -- Create highlight effect
+    local originalTransparency = button.BackgroundTransparency
+    local originalColor = button.BackgroundColor3
     
-    -- Hover effects
-    button.MouseEnter:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundTransparency = button.BackgroundTransparency - 0.1,
-            TextTransparency = button.TextTransparency - 0.1
-        }):Play()
-    end)
+    -- Flash effect on click
+    TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = 0.7,
+        BackgroundColor3 = color
+    }):Play()
     
-    button.MouseLeave:Connect(function()
-        TweenService:Create(button, TweenInfo.new(0.2), {
-            BackgroundTransparency = button.BackgroundTransparency + 0.1,
-            TextTransparency = button.TextTransparency + 0.1
-        }):Play()
-    end)
+    task.wait(0.1)
+    
+    TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+        BackgroundTransparency = originalTransparency,
+        BackgroundColor3 = originalColor
+    }):Play()
 end
 
 --[[
-    PERBAIKAN: CreateParagraph - Button sekarang dinamis dan paragraph menyesuaikan height
+    PERBAIKAN: CreateParagraph - Button sekarang full-width dan paragraph menyesuaikan height
+    TAMBAHAN: Animasi highlight saat button diklik
 ]]
 function Elements:CreateParagraph(parent, config, countItem)
     local ParagraphConfig = config or {}
@@ -110,7 +92,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphTitle.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphTitle.BackgroundTransparency = 1
     ParagraphTitle.Position = UDim2.new(0, iconOffset, 0, 10)
-    ParagraphTitle.Size = UDim2.new(1, -16, 0, 13)
+    ParagraphTitle.Size = UDim2.new(1, -(iconOffset + 6), 0, 13)
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Parent = Paragraph
 
@@ -121,18 +103,21 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
     ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphContent.BackgroundTransparency = 1
-    ParagraphContent.Position = UDim2.new(0, iconOffset, 0, 25)
+    ParagraphContent.Position = UDim2.new(0, iconOffset, 0, 26)
     ParagraphContent.Name = "ParagraphContent"
-    ParagraphContent.TextWrapped = true
+    ParagraphContent.TextWrapped = true  -- Enable text wrapping
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
-    ParagraphContent.Size = UDim2.new(1, -16, 0, ParagraphContent.TextBounds.Y)
+    -- Set proper width for content to wrap correctly
+    ParagraphContent.Size = UDim2.new(1, -(iconOffset + 6), 1, 0)
 
     local ParagraphButton
     if ParagraphConfig.ButtonText then
         ParagraphButton = Instance.new("TextButton")
-        ParagraphButton.Size = UDim2.new(1, -22, 0, 28)
+        -- PERBAIKAN: Button sekarang full-width dengan padding yang sama
+        ParagraphButton.Size = UDim2.new(1, -20, 0, 28)  -- Full width minus padding
+        ParagraphButton.Position = UDim2.new(0, 10, 0, 0)  -- Will be updated by UpdateSize
         ParagraphButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         ParagraphButton.BackgroundTransparency = 0.935
         ParagraphButton.Font = Enum.Font.GothamBold
@@ -146,32 +131,43 @@ function Elements:CreateParagraph(parent, config, countItem)
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
 
-        -- Tambahkan animasi highlight untuk button paragraph
-        AddButtonHighlight(ParagraphButton, {
-            HighlightColor = GuiConfig.Color,
-            Duration = 0.15
-        })
-
-        if ParagraphConfig.ButtonCallback then
-            ParagraphButton.MouseButton1Click:Connect(ParagraphConfig.ButtonCallback)
-        end
+        -- ANIMASI HIGHLIGHT
+        ParagraphButton.MouseButton1Click:Connect(function()
+            AnimateButtonClick(ParagraphButton)
+            if ParagraphConfig.ButtonCallback then
+                ParagraphConfig.ButtonCallback()
+            end
+        end)
     end
 
     local function UpdateSize()
-        -- Calculate content height
-        local contentHeight = ParagraphContent.TextBounds.Y
-        local totalHeight = contentHeight + 33
+        -- Wait for text to be rendered and measure actual bounds
+        task.wait()
+        
+        -- Calculate content height based on TextBounds
+        local contentHeight = math.max(12, ParagraphContent.TextBounds.Y)
+        
+        -- Update content label size to fit text
+        ParagraphContent.Size = UDim2.new(1, -(iconOffset + 6), 0, contentHeight)
+        
+        -- Calculate total height: title (10) + title height (13) + spacing (3) + content height + bottom padding (10)
+        local totalHeight = 10 + 13 + 3 + contentHeight + 10
         
         if ParagraphButton then
-            ParagraphButton.Position = UDim2.new(0, 10, 0, contentHeight + 35)
-            totalHeight = totalHeight + ParagraphButton.Size.Y.Offset + 10
+            -- Position button below content with proper spacing
+            local buttonY = 10 + 13 + 3 + contentHeight + 8
+            ParagraphButton.Position = UDim2.new(0, 10, 0, buttonY)
+            -- Add button height + spacing to total
+            totalHeight = buttonY + ParagraphButton.Size.Y.Offset + 10
         end
         
         Paragraph.Size = UDim2.new(1, 0, 0, totalHeight)
     end
 
+    -- Initial size update
     UpdateSize()
     
+    -- Update size when content changes
     ParagraphContent:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
@@ -179,6 +175,174 @@ function Elements:CreateParagraph(parent, config, countItem)
     function ParagraphFunc:SetContent(content)
         content = content or "Content"
         ParagraphContent.Text = content
+        -- UpdateSize will be called automatically via signals
+    end
+
+    return ParagraphFunc
+end
+
+--[[
+    CreateEditableParagraph - Paragraph dengan TextBox yang bisa diedit
+    Teks otomatis menyesuaikan tinggi dan support teks panjang
+]]
+function Elements:CreateEditableParagraph(parent, config, countItem)
+    local ParagraphConfig = config or {}
+    ParagraphConfig.Title = ParagraphConfig.Title or "Title"
+    ParagraphConfig.Content = ParagraphConfig.Content or "Type here..."
+    ParagraphConfig.Placeholder = ParagraphConfig.Placeholder or "Type something..."
+    ParagraphConfig.Callback = ParagraphConfig.Callback or function() end
+    ParagraphConfig.Default = ParagraphConfig.Default or ""
+    
+    local configKey = "EditableParagraph_" .. ParagraphConfig.Title
+    if ConfigData[configKey] ~= nil then
+        ParagraphConfig.Default = ConfigData[configKey]
+    end
+
+    local ParagraphFunc = { Value = ParagraphConfig.Default }
+
+    local Paragraph = Instance.new("Frame")
+    local UICorner = Instance.new("UICorner")
+    local ParagraphTitle = Instance.new("TextLabel")
+    local TextBoxFrame = Instance.new("Frame")
+    local TextBoxCorner = Instance.new("UICorner")
+    local ParagraphTextBox = Instance.new("TextBox")
+
+    Paragraph.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Paragraph.BackgroundTransparency = 0.935
+    Paragraph.BorderSizePixel = 0
+    Paragraph.LayoutOrder = countItem
+    Paragraph.Size = UDim2.new(1, 0, 0, 80)
+    Paragraph.Name = "EditableParagraph"
+    Paragraph.Parent = parent
+
+    UICorner.CornerRadius = UDim.new(0, 4)
+    UICorner.Parent = Paragraph
+
+    local iconOffset = 10
+    if ParagraphConfig.Icon then
+        local IconImg = Instance.new("ImageLabel")
+        IconImg.Size = UDim2.new(0, 20, 0, 20)
+        IconImg.Position = UDim2.new(0, 8, 0, 10)
+        IconImg.BackgroundTransparency = 1
+        IconImg.Name = "ParagraphIcon"
+        IconImg.Parent = Paragraph
+
+        if Icons and Icons[ParagraphConfig.Icon] then
+            IconImg.Image = Icons[ParagraphConfig.Icon]
+        else
+            IconImg.Image = ParagraphConfig.Icon
+        end
+
+        iconOffset = 35
+    end
+
+    ParagraphTitle.Font = Enum.Font.GothamBold
+    ParagraphTitle.Text = ParagraphConfig.Title
+    ParagraphTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
+    ParagraphTitle.TextSize = 13
+    ParagraphTitle.TextXAlignment = Enum.TextXAlignment.Left
+    ParagraphTitle.TextYAlignment = Enum.TextYAlignment.Top
+    ParagraphTitle.BackgroundTransparency = 1
+    ParagraphTitle.Position = UDim2.new(0, iconOffset, 0, 10)
+    ParagraphTitle.Size = UDim2.new(1, -iconOffset - 10, 0, 13)
+    ParagraphTitle.Name = "ParagraphTitle"
+    ParagraphTitle.Parent = Paragraph
+
+    TextBoxFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    TextBoxFrame.BackgroundTransparency = 0.95
+    TextBoxFrame.BorderSizePixel = 0
+    TextBoxFrame.Position = UDim2.new(0, 10, 0, 30)
+    TextBoxFrame.Size = UDim2.new(1, -20, 0, 40)
+    TextBoxFrame.Name = "TextBoxFrame"
+    TextBoxFrame.Parent = Paragraph
+
+    TextBoxCorner.CornerRadius = UDim.new(0, 4)
+    TextBoxCorner.Parent = TextBoxFrame
+
+    ParagraphTextBox.Font = Enum.Font.Gotham
+    ParagraphTextBox.PlaceholderText = ParagraphConfig.Placeholder
+    ParagraphTextBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
+    ParagraphTextBox.Text = ParagraphConfig.Default
+    ParagraphTextBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+    ParagraphTextBox.TextSize = 12
+    ParagraphTextBox.TextXAlignment = Enum.TextXAlignment.Left
+    ParagraphTextBox.TextYAlignment = Enum.TextYAlignment.Top
+    ParagraphTextBox.BackgroundTransparency = 1
+    ParagraphTextBox.Position = UDim2.new(0, 8, 0, 6)
+    ParagraphTextBox.Size = UDim2.new(1, -16, 1, -12)
+    ParagraphTextBox.Name = "ParagraphTextBox"
+    ParagraphTextBox.TextWrapped = true
+    ParagraphTextBox.MultiLine = true
+    ParagraphTextBox.ClearTextOnFocus = false
+    ParagraphTextBox.RichText = false
+    ParagraphTextBox.Parent = TextBoxFrame
+
+    local ParagraphButton
+    if ParagraphConfig.ButtonText then
+        ParagraphButton = Instance.new("TextButton")
+        ParagraphButton.Size = UDim2.new(1, -20, 0, 28)
+        ParagraphButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ParagraphButton.BackgroundTransparency = 0.935
+        ParagraphButton.Font = Enum.Font.GothamBold
+        ParagraphButton.TextSize = 12
+        ParagraphButton.TextTransparency = 0.3
+        ParagraphButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ParagraphButton.Text = ParagraphConfig.ButtonText
+        ParagraphButton.Position = UDim2.new(0, 10, 0, 75)
+        ParagraphButton.Parent = Paragraph
+
+        local btnCorner = Instance.new("UICorner")
+        btnCorner.CornerRadius = UDim.new(0, 6)
+        btnCorner.Parent = ParagraphButton
+
+        ParagraphButton.MouseButton1Click:Connect(function()
+            AnimateButtonClick(ParagraphButton)
+            if ParagraphConfig.ButtonCallback then
+                ParagraphConfig.ButtonCallback(ParagraphTextBox.Text)
+            end
+        end)
+    end
+
+    local function UpdateSize()
+        -- Calculate required height for text
+        local textHeight = math.max(40, ParagraphTextBox.TextBounds.Y + 12)
+        TextBoxFrame.Size = UDim2.new(1, -20, 0, textHeight)
+        
+        local totalHeight = 30 + textHeight + 10  -- Title + TextBox + padding
+        
+        if ParagraphButton then
+            ParagraphButton.Position = UDim2.new(0, 10, 0, 30 + textHeight + 5)
+            totalHeight = totalHeight + ParagraphButton.Size.Y.Offset + 10
+        end
+        
+        Paragraph.Size = UDim2.new(1, 0, 0, totalHeight)
+    end
+
+    -- Initial size update
+    UpdateSize()
+    
+    -- Update size when text changes
+    ParagraphTextBox:GetPropertyChangedSignal("Text"):Connect(function()
+        UpdateSize()
+        ParagraphFunc.Value = ParagraphTextBox.Text
+        ConfigData[configKey] = ParagraphTextBox.Text
+        SaveConfig()
+        
+        if ParagraphConfig.Callback then
+            ParagraphConfig.Callback(ParagraphTextBox.Text)
+        end
+    end)
+
+    ParagraphTextBox:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
+    Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
+
+    function ParagraphFunc:SetContent(content)
+        content = content or ""
+        ParagraphTextBox.Text = content
+    end
+
+    function ParagraphFunc:GetContent()
+        return ParagraphTextBox.Text
     end
 
     return ParagraphFunc
@@ -293,13 +457,9 @@ function Elements:CreatePanel(parent, config, countItem)
     btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = ButtonMain
 
-    -- Tambahkan animasi highlight untuk button utama
-    AddButtonHighlight(ButtonMain, {
-        HighlightColor = GuiConfig.Color,
-        Duration = 0.15
-    })
-
+    -- ANIMASI HIGHLIGHT
     ButtonMain.MouseButton1Click:Connect(function()
+        AnimateButtonClick(ButtonMain)
         config.ButtonCallback(InputBox and InputBox.Text or "")
     end)
 
@@ -320,13 +480,9 @@ function Elements:CreatePanel(parent, config, countItem)
         subCorner.CornerRadius = UDim.new(0, 6)
         subCorner.Parent = SubButton
 
-        -- Tambahkan animasi highlight untuk sub button
-        AddButtonHighlight(SubButton, {
-            HighlightColor = GuiConfig.Color,
-            Duration = 0.15
-        })
-
+        -- ANIMASI HIGHLIGHT
         SubButton.MouseButton1Click:Connect(function()
+            AnimateButtonClick(SubButton)
             config.SubButtonCallback(InputBox and InputBox.Text or "")
         end)
     end
@@ -380,13 +536,11 @@ function Elements:CreateButton(parent, config, countItem)
     mainCorner.CornerRadius = UDim.new(0, 4)
     mainCorner.Parent = MainButton
 
-    -- Tambahkan animasi highlight untuk main button
-    AddButtonHighlight(MainButton, {
-        HighlightColor = GuiConfig.Color,
-        Duration = 0.15
-    })
-
-    MainButton.MouseButton1Click:Connect(config.Callback)
+    -- ANIMASI HIGHLIGHT
+    MainButton.MouseButton1Click:Connect(function()
+        AnimateButtonClick(MainButton)
+        config.Callback()
+    end)
 
     if config.SubTitle then
         local SubButton = Instance.new("TextButton")
@@ -405,13 +559,11 @@ function Elements:CreateButton(parent, config, countItem)
         subCorner.CornerRadius = UDim.new(0, 4)
         subCorner.Parent = SubButton
 
-        -- Tambahkan animasi highlight untuk sub button
-        AddButtonHighlight(SubButton, {
-            HighlightColor = GuiConfig.Color,
-            Duration = 0.15
-        })
-
-        SubButton.MouseButton1Click:Connect(config.SubCallback)
+        -- ANIMASI HIGHLIGHT
+        SubButton.MouseButton1Click:Connect(function()
+            AnimateButtonClick(SubButton)
+            config.SubCallback()
+        end)
     end
 end
 
@@ -523,12 +675,6 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleButton.Size = UDim2.new(1, 0, 1, 0)
     ToggleButton.Name = "ToggleButton"
     ToggleButton.Parent = Toggle
-
-    -- Tambahkan animasi highlight untuk toggle button
-    AddButtonHighlight(ToggleButton, {
-        HighlightColor = GuiConfig.Color,
-        Duration = 0.15
-    })
 
     FeatureFrame2.AnchorPoint = Vector2.new(1, 0.5)
     FeatureFrame2.BackgroundTransparency = 0.92
@@ -960,12 +1106,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     DropdownButton.Name = "ToggleButton"
     DropdownButton.Parent = Dropdown
 
-    -- Tambahkan animasi highlight untuk dropdown button
-    AddButtonHighlight(DropdownButton, {
-        HighlightColor = GuiConfig.Color,
-        Duration = 0.15
-    })
-
     UICorner10.CornerRadius = UDim.new(0, 4)
     UICorner10.Parent = Dropdown
 
@@ -1128,12 +1268,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         OptionButton.Text = ""
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
-
-        -- Tambahkan animasi highlight untuk option button
-        AddButtonHighlight(OptionButton, {
-            HighlightColor = GuiConfig.Color,
-            Duration = 0.15
-        })
 
         OptionText.Font = Enum.Font.GothamBold
         OptionText.Text = label
