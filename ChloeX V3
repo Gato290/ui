@@ -1,5 +1,8 @@
 local HttpService = game:GetService("HttpService") -- V0.0.4
 
+-- Load Color Module
+local ColorModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/color.lua"))()
+
 -- Load Elements Module
 local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
 
@@ -42,6 +45,29 @@ local function getIconId(iconName)
     end
     
     return ""
+end
+
+-- Function to get color from name or direct Color3
+local function getColor(colorInput)
+    -- If it's already a Color3, return as is
+    if typeof(colorInput) == "Color3" then
+        return colorInput
+    end
+    
+    -- If it's a string, look up in ColorModule
+    if type(colorInput) == "string" then
+        -- Check if the color exists in the module
+        if ColorModule[colorInput] then
+            return ColorModule[colorInput]
+        else
+            -- Default to Default color if not found
+            warn("Color '" .. colorInput .. "' not found, using Default")
+            return ColorModule["Default"] or Color3.fromRGB(0, 208, 255)
+        end
+    end
+    
+    -- Default fallback
+    return ColorModule["Default"] or Color3.fromRGB(0, 208, 255)
 end
 
 -- Variables that will be set when window is created
@@ -265,7 +291,7 @@ function Chloex:MakeNotify(NotifyConfig)
     NotifyConfig.Title = NotifyConfig.Title or "Chloe X"
     NotifyConfig.Description = NotifyConfig.Description or "Notification"
     NotifyConfig.Content = NotifyConfig.Content or "Content"
-    NotifyConfig.Color = NotifyConfig.Color or Color3.fromRGB(255, 0, 255)
+    NotifyConfig.Color = getColor(NotifyConfig.Color or "Default")
     NotifyConfig.Time = NotifyConfig.Time or 0.5
     NotifyConfig.Delay = NotifyConfig.Delay or 5
     local NotifyFunction = {}
@@ -463,7 +489,7 @@ function Nt(msg, delay, color, title, desc)
         Title = title or "NexaHub",
         Description = desc or "Notification",
         Content = msg or "Content",
-        Color = color or Color3.fromRGB(0, 208, 255),
+        Color = getColor(color or "Default"),
         Delay = delay or 4
     })
 end
@@ -472,7 +498,8 @@ function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
     GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
-    GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
+    -- Convert color string to Color3 if needed
+    GuiConfig.Color        = getColor(GuiConfig.Color or "Default")
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
     GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- Default to 0 (solid)
@@ -838,7 +865,6 @@ function Chloex:Window(GuiConfig)
         Gradient.Rotation = 90
         Gradient.Parent = DialogGlow
 
-        -- PERBAIKAN: Gunakan GuiConfig.Configname bukan hardcoded "NexaHub"
         local Title = Instance.new("TextLabel")
         Title.Size = UDim2.new(1, 0, 0, 40)
         Title.Position = UDim2.new(0, 0, 0, 4)
@@ -1547,5 +1573,3 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
-
-NexaHub
