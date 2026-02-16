@@ -1,17 +1,32 @@
-return function(ToggleConfig, ctx)
-    local ToggleConfig = ToggleConfig or {}
-    ToggleConfig.Title = ToggleConfig.Title or "Title"
-    ToggleConfig.Title2 = ToggleConfig.Title2 or ""
-    ToggleConfig.Content = ToggleConfig.Content or ""
-    ToggleConfig.Default = ToggleConfig.Default or false
-    ToggleConfig.Callback = ToggleConfig.Callback or function() end
+-- toggle.lua
+local TweenService = game:GetService("TweenService")
 
-    local configKey = "Toggle_" .. ToggleConfig.Title
-    if ctx.ConfigData[configKey] ~= nil then
-        ToggleConfig.Default = ctx.ConfigData[configKey]
+local ToggleModule = {}
+
+local MainColor = Color3.fromRGB(255, 0, 255)
+local SaveConfigFunc = function() end
+local ConfigData = {}
+
+function ToggleModule.Initialize(color, saveFunc, config)
+    MainColor = color or MainColor
+    SaveConfigFunc = saveFunc or function() end
+    ConfigData = config or {}
+end
+
+function ToggleModule.Create(parent, config, countItem, updateSizeCallback, saveConfig, configData)
+    config = config or {}
+    config.Title = config.Title or "Title"
+    config.Title2 = config.Title2 or ""
+    config.Content = config.Content or ""
+    config.Default = config.Default or false
+    config.Callback = config.Callback or function() end
+
+    local configKey = "Toggle_" .. config.Title
+    if configData and configData[configKey] ~= nil then
+        config.Default = configData[configKey]
     end
 
-    local ToggleFunc = { Value = ToggleConfig.Default, key = configKey }
+    local ToggleFunc = { Value = config.Default }
 
     local Toggle = Instance.new("Frame")
     local UICorner20 = Instance.new("UICorner")
@@ -27,15 +42,15 @@ return function(ToggleConfig, ctx)
     Toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Toggle.BackgroundTransparency = 0.935
     Toggle.BorderSizePixel = 0
-    Toggle.LayoutOrder = ctx.CountItem()
+    Toggle.LayoutOrder = countItem
     Toggle.Name = "Toggle"
-    Toggle.Parent = ctx.SectionAdd
+    Toggle.Parent = parent
 
     UICorner20.CornerRadius = UDim.new(0, 4)
     UICorner20.Parent = Toggle
 
     ToggleTitle.Font = Enum.Font.GothamBold
-    ToggleTitle.Text = ToggleConfig.Title
+    ToggleTitle.Text = config.Title
     ToggleTitle.TextSize = 13
     ToggleTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
     ToggleTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -48,7 +63,7 @@ return function(ToggleConfig, ctx)
 
     local ToggleTitle2 = Instance.new("TextLabel")
     ToggleTitle2.Font = Enum.Font.GothamBold
-    ToggleTitle2.Text = ToggleConfig.Title2
+    ToggleTitle2.Text = config.Title2
     ToggleTitle2.TextSize = 12
     ToggleTitle2.TextColor3 = Color3.fromRGB(231, 231, 231)
     ToggleTitle2.TextXAlignment = Enum.TextXAlignment.Left
@@ -60,7 +75,7 @@ return function(ToggleConfig, ctx)
     ToggleTitle2.Parent = Toggle
 
     ToggleContent.Font = Enum.Font.GothamBold
-    ToggleContent.Text = ToggleConfig.Content
+    ToggleContent.Text = config.Content
     ToggleContent.TextColor3 = Color3.fromRGB(255, 255, 255)
     ToggleContent.TextSize = 12
     ToggleContent.TextTransparency = 0.6
@@ -71,7 +86,7 @@ return function(ToggleConfig, ctx)
     ToggleContent.Name = "ToggleContent"
     ToggleContent.Parent = Toggle
 
-    if ToggleConfig.Title2 ~= "" then
+    if config.Title2 ~= "" then
         Toggle.Size = UDim2.new(1, 0, 0, 57)
         ToggleContent.Position = UDim2.new(0, 10, 0, 36)
         ToggleTitle2.Visible = true
@@ -81,10 +96,9 @@ return function(ToggleConfig, ctx)
         ToggleTitle2.Visible = false
     end
 
-    ToggleContent.Size = UDim2.new(1, -100, 0,
-        12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+    ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
     ToggleContent.TextWrapped = true
-    if ToggleConfig.Title2 ~= "" then
+    if config.Title2 ~= "" then
         Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
     else
         Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 33)
@@ -92,15 +106,14 @@ return function(ToggleConfig, ctx)
 
     ToggleContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         ToggleContent.TextWrapped = false
-        ToggleContent.Size = UDim2.new(1, -100, 0,
-            12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
-        if ToggleConfig.Title2 ~= "" then
+        ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+        if config.Title2 ~= "" then
             Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
         else
             Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 33)
         end
         ToggleContent.TextWrapped = true
-        ctx.UpdateSizeSection()
+        if updateSizeCallback then updateSizeCallback() end
     end)
 
     ToggleButton.Font = Enum.Font.SourceSans
@@ -135,40 +148,38 @@ return function(ToggleConfig, ctx)
     UICorner23.Parent = ToggleCircle
 
     ToggleButton.Activated:Connect(function()
-        ctx.CircleClick(ToggleButton, ctx.Mouse.X, ctx.Mouse.Y)
         ToggleFunc.Value = not ToggleFunc.Value
         ToggleFunc:Set(ToggleFunc.Value)
     end)
 
     function ToggleFunc:Set(Value)
-        if typeof(ToggleConfig.Callback) == "function" then
+        if typeof(config.Callback) == "function" then
             local ok, err = pcall(function()
-                ToggleConfig.Callback(Value)
+                config.Callback(Value)
             end)
             if not ok then warn("Toggle Callback error:", err) end
         end
-        ctx.ConfigData[configKey] = Value
-        ctx.SaveConfig()
+        configData[configKey] = Value
+        SaveConfigFunc()
         if Value then
-            ctx.TweenService:Create(ToggleTitle, ctx.TweenInfo.new(0.2), { TextColor3 = ctx.GuiConfig.Color }):Play()
-            ctx.TweenService:Create(ToggleCircle, ctx.TweenInfo.new(0.2), { Position = UDim2.new(0, 15, 0, 0) })
-                :Play()
-            ctx.TweenService:Create(UIStroke8, ctx.TweenInfo.new(0.2), { Color = ctx.GuiConfig.Color, Transparency = 0 })
-                :Play()
-            ctx.TweenService:Create(FeatureFrame2, ctx.TweenInfo.new(0.2),
-                { BackgroundColor3 = ctx.GuiConfig.Color, BackgroundTransparency = 0 }):Play()
+            TweenService:Create(ToggleTitle, TweenInfo.new(0.2), { TextColor3 = MainColor }):Play()
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 15, 0, 0) }):Play()
+            TweenService:Create(UIStroke8, TweenInfo.new(0.2), { Color = MainColor, Transparency = 0 }):Play()
+            TweenService:Create(FeatureFrame2, TweenInfo.new(0.2),
+                { BackgroundColor3 = MainColor, BackgroundTransparency = 0 }):Play()
         else
-            ctx.TweenService:Create(ToggleTitle, ctx.TweenInfo.new(0.2),
+            TweenService:Create(ToggleTitle, TweenInfo.new(0.2),
                 { TextColor3 = Color3.fromRGB(230, 230, 230) }):Play()
-            ctx.TweenService:Create(ToggleCircle, ctx.TweenInfo.new(0.2), { Position = UDim2.new(0, 0, 0, 0) }):Play()
-            ctx.TweenService:Create(UIStroke8, ctx.TweenInfo.new(0.2),
+            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 0, 0, 0) }):Play()
+            TweenService:Create(UIStroke8, TweenInfo.new(0.2),
                 { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 }):Play()
-            ctx.TweenService:Create(FeatureFrame2, ctx.TweenInfo.new(0.2),
+            TweenService:Create(FeatureFrame2, TweenInfo.new(0.2),
                 { BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92 }):Play()
         end
     end
 
     ToggleFunc:Set(ToggleFunc.Value)
-    
     return ToggleFunc
 end
+
+return ToggleModule
