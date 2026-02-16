@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.5
+local HttpService = game:GetService("HttpService") -- V0.0.5 new
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -562,92 +562,6 @@ function Chloex:Window(GuiConfig)
     local ImageLabel1 = Instance.new("ImageLabel");
     local Min = Instance.new("TextButton");
     local ImageLabel2 = Instance.new("ImageLabel");
-    
-    -- User Info Frame (if ShowUser is enabled)
-    local UserInfoFrame = nil
-    if GuiConfig.ShowUser then
-        UserInfoFrame = Instance.new("Frame")
-        UserInfoFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-        UserInfoFrame.BackgroundTransparency = 0.3
-        UserInfoFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        UserInfoFrame.BorderSizePixel = 0
-        UserInfoFrame.Position = UDim2.new(0, 10, 0, 45)
-        UserInfoFrame.Size = UDim2.new(0, 200, 0, 50)
-        UserInfoFrame.Name = "UserInfoFrame"
-        UserInfoFrame.Parent = Main
-        
-        local UserInfoCorner = Instance.new("UICorner")
-        UserInfoCorner.CornerRadius = UDim.new(0, 6)
-        UserInfoCorner.Parent = UserInfoFrame
-        
-        -- User Avatar
-        local Avatar = Instance.new("ImageLabel")
-        Avatar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Avatar.BackgroundTransparency = 0.5
-        Avatar.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        Avatar.BorderSizePixel = 0
-        Avatar.Position = UDim2.new(0, 5, 0.5, -20)
-        Avatar.Size = UDim2.new(0, 40, 0, 40)
-        Avatar.Name = "Avatar"
-        Avatar.Parent = UserInfoFrame
-        
-        local AvatarCorner = Instance.new("UICorner")
-        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Circle
-        AvatarCorner.Parent = Avatar
-        
-        -- Try to load user avatar
-        local userId = LocalPlayer.UserId
-        local thumbType = Enum.ThumbnailType.HeadShot
-        local thumbSize = Enum.ThumbnailSize.Size48x48
-        local content, isReady = Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
-        if content then
-            Avatar.Image = content
-        else
-            Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-        end
-        
-        -- Display Name
-        local DisplayName = Instance.new("TextLabel")
-        DisplayName.Font = Enum.Font.GothamBold
-        DisplayName.Text = LocalPlayer.DisplayName
-        DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        DisplayName.TextSize = 14
-        DisplayName.TextXAlignment = Enum.TextXAlignment.Left
-        DisplayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        DisplayName.BackgroundTransparency = 1
-        DisplayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        DisplayName.BorderSizePixel = 0
-        DisplayName.Position = UDim2.new(0, 50, 0, 8)
-        DisplayName.Size = UDim2.new(1, -55, 0, 16)
-        DisplayName.Name = "DisplayName"
-        DisplayName.Parent = UserInfoFrame
-        
-        -- Username with @
-        local Username = Instance.new("TextLabel")
-        Username.Font = Enum.Font.Gotham
-        Username.Text = "@" .. LocalPlayer.Name
-        Username.TextColor3 = Color3.fromRGB(150, 150, 150)
-        Username.TextSize = 12
-        Username.TextXAlignment = Enum.TextXAlignment.Left
-        Username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Username.BackgroundTransparency = 1
-        Username.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        Username.BorderSizePixel = 0
-        Username.Position = UDim2.new(0, 50, 0, 26)
-        Username.Size = UDim2.new(1, -55, 0, 14)
-        Username.Name = "Username"
-        Username.Parent = UserInfoFrame
-    end
-
-    local LayersTab = Instance.new("Frame");
-    local UICorner2 = Instance.new("UICorner");
-    local DecideFrame = Instance.new("Frame");
-    local Layers = Instance.new("Frame");
-    local UICorner6 = Instance.new("UICorner");
-    local NameTab = Instance.new("TextLabel");
-    local LayersReal = Instance.new("Frame");
-    local LayersFolder = Instance.new("Folder");
-    local LayersPageLayout = Instance.new("UIPageLayout");
 
     Chloeex.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     Chloeex.Name = "Chloeex"
@@ -790,11 +704,18 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
-    -- Adjust LayersTab position based on ShowUser
+    local LayersTab = Instance.new("Frame");
+    local UICorner2 = Instance.new("UICorner");
+    local DecideFrame = Instance.new("Frame");
+    local Layers = Instance.new("Frame");
+    local UICorner6 = Instance.new("UICorner");
+    local NameTab = Instance.new("TextLabel");
+    local LayersReal = Instance.new("Frame");
+    local LayersFolder = Instance.new("Folder");
+    local LayersPageLayout = Instance.new("UIPageLayout");
+
+    -- Adjust LayersTab position
     local topOffset = 50
-    if GuiConfig.ShowUser then
-        topOffset = 105 -- Move down to make room for user info
-    end
     
     LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     LayersTab.BackgroundTransparency = 0.9990000128746033
@@ -807,6 +728,154 @@ function Chloex:Window(GuiConfig)
 
     UICorner2.CornerRadius = UDim.new(0, 2)
     UICorner2.Parent = LayersTab
+
+    -- User Info inside LayersTab (if ShowUser is enabled)
+    if GuiConfig.ShowUser then
+        local UserInfoFrame = Instance.new("Frame")
+        UserInfoFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+        UserInfoFrame.BackgroundTransparency = 0.3
+        UserInfoFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        UserInfoFrame.BorderSizePixel = 0
+        UserInfoFrame.Position = UDim2.new(0, 5, 0, 5)
+        UserInfoFrame.Size = UDim2.new(1, -10, 0, 50)
+        UserInfoFrame.Name = "UserInfoFrame"
+        UserInfoFrame.Parent = LayersTab
+        
+        local UserInfoCorner = Instance.new("UICorner")
+        UserInfoCorner.CornerRadius = UDim.new(0, 6)
+        UserInfoCorner.Parent = UserInfoFrame
+        
+        -- User Avatar
+        local Avatar = Instance.new("ImageLabel")
+        Avatar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Avatar.BackgroundTransparency = 0.5
+        Avatar.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Avatar.BorderSizePixel = 0
+        Avatar.Position = UDim2.new(0, 5, 0.5, -20)
+        Avatar.Size = UDim2.new(0, 40, 0, 40)
+        Avatar.Name = "Avatar"
+        Avatar.Parent = UserInfoFrame
+        
+        local AvatarCorner = Instance.new("UICorner")
+        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Circle
+        AvatarCorner.Parent = Avatar
+        
+        -- Try to load user avatar
+        local userId = LocalPlayer.UserId
+        local thumbType = Enum.ThumbnailType.HeadShot
+        local thumbSize = Enum.ThumbnailSize.Size48x48
+        local success, content = pcall(function()
+            return Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+        end)
+        if success and content then
+            Avatar.Image = content
+        else
+            Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
+        end
+        
+        -- Display Name
+        local DisplayName = Instance.new("TextLabel")
+        DisplayName.Font = Enum.Font.GothamBold
+        DisplayName.Text = LocalPlayer.DisplayName
+        DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
+        DisplayName.TextSize = 14
+        DisplayName.TextXAlignment = Enum.TextXAlignment.Left
+        DisplayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        DisplayName.BackgroundTransparency = 1
+        DisplayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        DisplayName.BorderSizePixel = 0
+        DisplayName.Position = UDim2.new(0, 50, 0, 8)
+        DisplayName.Size = UDim2.new(1, -55, 0, 16)
+        DisplayName.Name = "DisplayName"
+        DisplayName.Parent = UserInfoFrame
+        
+        -- Username with @
+        local Username = Instance.new("TextLabel")
+        Username.Font = Enum.Font.Gotham
+        Username.Text = "@" .. LocalPlayer.Name
+        Username.TextColor3 = Color3.fromRGB(150, 150, 150)
+        Username.TextSize = 12
+        Username.TextXAlignment = Enum.TextXAlignment.Left
+        Username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Username.BackgroundTransparency = 1
+        Username.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Username.BorderSizePixel = 0
+        Username.Position = UDim2.new(0, 50, 0, 26)
+        Username.Size = UDim2.new(1, -55, 0, 14)
+        Username.Name = "Username"
+        Username.Parent = UserInfoFrame
+
+        -- Adjust ScrollTab position to make room for user info
+        local ScrollTab = Instance.new("ScrollingFrame");
+        local UIListLayout = Instance.new("UIListLayout");
+
+        ScrollTab.CanvasSize = UDim2.new(0, 0, 1.10000002, 0)
+        ScrollTab.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
+        ScrollTab.ScrollBarThickness = 0
+        ScrollTab.Active = true
+        ScrollTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ScrollTab.BackgroundTransparency = 0.9990000128746033
+        ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ScrollTab.BorderSizePixel = 0
+        ScrollTab.Position = UDim2.new(0, 0, 0, 60) -- Position below user info
+        ScrollTab.Size = UDim2.new(1, 0, 1, -60)
+        ScrollTab.Name = "ScrollTab"
+        ScrollTab.Parent = LayersTab
+
+        UIListLayout.Padding = UDim.new(0, 3)
+        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        UIListLayout.Parent = ScrollTab
+
+        local function UpdateSize1()
+            local OffsetY = 0
+            for _, child in ScrollTab:GetChildren() do
+                if child.Name ~= "UIListLayout" then
+                    OffsetY = OffsetY + 3 + child.Size.Y.Offset
+                end
+            end
+            ScrollTab.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
+        end
+        ScrollTab.ChildAdded:Connect(UpdateSize1)
+        ScrollTab.ChildRemoved:Connect(UpdateSize1)
+        
+        -- Store ScrollTab for later use
+        _G.ScrollTab = ScrollTab
+    else
+        -- Original ScrollTab without user info
+        local ScrollTab = Instance.new("ScrollingFrame");
+        local UIListLayout = Instance.new("UIListLayout");
+
+        ScrollTab.CanvasSize = UDim2.new(0, 0, 1.10000002, 0)
+        ScrollTab.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
+        ScrollTab.ScrollBarThickness = 0
+        ScrollTab.Active = true
+        ScrollTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ScrollTab.BackgroundTransparency = 0.9990000128746033
+        ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ScrollTab.BorderSizePixel = 0
+        ScrollTab.Size = UDim2.new(1, 0, 1, 0)
+        ScrollTab.Name = "ScrollTab"
+        ScrollTab.Parent = LayersTab
+
+        UIListLayout.Padding = UDim.new(0, 3)
+        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+        UIListLayout.Parent = ScrollTab
+
+        local function UpdateSize1()
+            local OffsetY = 0
+            for _, child in ScrollTab:GetChildren() do
+                if child.Name ~= "UIListLayout" then
+                    OffsetY = OffsetY + 3 + child.Size.Y.Offset
+                end
+            end
+            ScrollTab.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
+        end
+        ScrollTab.ChildAdded:Connect(UpdateSize1)
+        ScrollTab.ChildRemoved:Connect(UpdateSize1)
+        
+        -- Store ScrollTab for later use
+        _G.ScrollTab = ScrollTab
+    end
 
     DecideFrame.AnchorPoint = Vector2.new(0.5, 0)
     DecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -864,37 +933,6 @@ function Chloex:Window(GuiConfig)
     LayersPageLayout.TweenTime = 0.5
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
-
-    local ScrollTab = Instance.new("ScrollingFrame");
-    local UIListLayout = Instance.new("UIListLayout");
-
-    ScrollTab.CanvasSize = UDim2.new(0, 0, 1.10000002, 0)
-    ScrollTab.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
-    ScrollTab.ScrollBarThickness = 0
-    ScrollTab.Active = true
-    ScrollTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ScrollTab.BackgroundTransparency = 0.9990000128746033
-    ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    ScrollTab.BorderSizePixel = 0
-    ScrollTab.Size = UDim2.new(1, 0, 1, 0)
-    ScrollTab.Name = "ScrollTab"
-    ScrollTab.Parent = LayersTab
-
-    UIListLayout.Padding = UDim.new(0, 3)
-    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    UIListLayout.Parent = ScrollTab
-
-    local function UpdateSize1()
-        local OffsetY = 0
-        for _, child in ScrollTab:GetChildren() do
-            if child.Name ~= "UIListLayout" then
-                OffsetY = OffsetY + 3 + child.Size.Y.Offset
-            end
-        end
-        ScrollTab.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
-    end
-    ScrollTab.ChildAdded:Connect(UpdateSize1)
-    ScrollTab.ChildRemoved:Connect(UpdateSize1)
 
     function GuiFunc:DestroyGui()
         if CoreGui:FindFirstChild("Chloeex") then
@@ -1241,7 +1279,7 @@ function Chloex:Window(GuiConfig)
         Tab.LayoutOrder = CountTab
         Tab.Size = UDim2.new(1, 0, 0, 30)
         Tab.Name = "Tab"
-        Tab.Parent = ScrollTab
+        Tab.Parent = _G.ScrollTab
 
         UICorner3.CornerRadius = UDim.new(0, 4)
         UICorner3.Parent = Tab
@@ -1312,7 +1350,7 @@ function Chloex:Window(GuiConfig)
         TabButton.Activated:Connect(function()
             CircleClick(TabButton, Mouse.X, Mouse.Y)
             local FrameChoose
-            for a, s in ScrollTab:GetChildren() do
+            for a, s in _G.ScrollTab:GetChildren() do
                 for i, v in s:GetChildren() do
                     if v.Name == "ChooseFrame" then
                         FrameChoose = v
@@ -1321,7 +1359,7 @@ function Chloex:Window(GuiConfig)
                 end
             end
             if FrameChoose ~= nil and Tab.LayoutOrder ~= LayersPageLayout.CurrentPage.LayoutOrder then
-                for _, TabFrame in ScrollTab:GetChildren() do
+                for _, TabFrame in _G.ScrollTab:GetChildren() do
                     if TabFrame.Name == "Tab" then
                         TweenService:Create(
                             TabFrame,
