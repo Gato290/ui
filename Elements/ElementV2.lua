@@ -207,7 +207,7 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     config.New = config.New or "false"
 
     local configKey = "Panel_" .. config.Title
-    if ConfigData[configKey] ~= nil then
+    if ConfigData and ConfigData[configKey] ~= nil then
         config.Default = ConfigData[configKey]
     end
 
@@ -360,8 +360,10 @@ function ElementsModule.AddPanel(parent, config, countItem, updateSizeCallback)
     if InputBox then
         InputBox.FocusLost:Connect(function()
             PanelFunc.Value = InputBox.Text
-            ConfigData[configKey] = InputBox.Text
-            SaveConfigFunc()
+            if ConfigData then
+                ConfigData[configKey] = InputBox.Text
+                SaveConfigFunc()
+            end
         end)
     end
 
@@ -585,7 +587,7 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
     config.New = config.New or "false"
 
     local configKey = "Toggle_" .. config.Title
-    if ConfigData[configKey] ~= nil then
+    if ConfigData and ConfigData[configKey] ~= nil then
         config.Default = ConfigData[configKey]
     end
 
@@ -727,8 +729,10 @@ function ElementsModule.AddToggle(parent, config, countItem, updateSizeCallback)
             end)
             if not ok then warn("Toggle Callback error:", err) end
         end
-        ConfigData[configKey] = Value
-        SaveConfigFunc()
+        if ConfigData then
+            ConfigData[configKey] = Value
+            SaveConfigFunc()
+        end
         if Value then
             TweenService:Create(ToggleTitle, TweenInfoPresets.Normal, { TextColor3 = MainColor }):Play()
             TweenService:Create(ToggleCircle, TweenInfoPresets.Slow, { Position = UDim2.new(0, 15, 0, 0) }):Play()
@@ -763,7 +767,7 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
     config.New = config.New or "false"
 
     local configKey = "Slider_" .. config.Title
-    if ConfigData[configKey] ~= nil then
+    if ConfigData and ConfigData[configKey] ~= nil then
         config.Default = ConfigData[configKey]
     end
 
@@ -931,8 +935,10 @@ function ElementsModule.AddSlider(parent, config, countItem, updateSizeCallback)
         end)
         if not success then warn("Slider Callback error:", err) end
         
-        ConfigData[configKey] = Value
-        SaveConfigFunc()
+        if ConfigData then
+            ConfigData[configKey] = Value
+            SaveConfigFunc()
+        end
     end
 
     SliderFrame.InputBegan:Connect(function(Input)
@@ -996,7 +1002,7 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
     config.New = config.New or "false"
 
     local configKey = "Input_" .. config.Title
-    if ConfigData[configKey] ~= nil then
+    if ConfigData and ConfigData[configKey] ~= nil then
         config.Default = ConfigData[configKey]
     end
 
@@ -1115,8 +1121,10 @@ function ElementsModule.AddInput(parent, config, countItem, updateSizeCallback)
         InputTextBox.Text = Value
         InputFunc.Value = Value
         config.Callback(Value)
-        ConfigData[configKey] = Value
-        SaveConfigFunc()
+        if ConfigData then
+            ConfigData[configKey] = Value
+            SaveConfigFunc()
+        end
     end
 
     InputFunc:Set(InputFunc.Value)
@@ -1143,7 +1151,9 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
     config.New = config.New or "false"
 
     local configKey = "Dropdown_" .. config.Title
-    if ConfigData[configKey] ~= nil then
+    
+    -- FIX: Safety check untuk ConfigData
+    if ConfigData and ConfigData[configKey] ~= nil then
         config.Default = ConfigData[configKey]
     end
 
@@ -1530,8 +1540,10 @@ function ElementsModule.AddDropdown(parent, config, countItem, countDropdown, mo
             DropdownFunc.Value = Value
         end
 
-        ConfigData[configKey] = DropdownFunc.Value
-        SaveConfigFunc()
+        if ConfigData then
+            ConfigData[configKey] = DropdownFunc.Value
+            SaveConfigFunc()
+        end
 
         -- Update all options
         for _, Drop in ScrollSelect:GetChildren() do
