@@ -73,7 +73,7 @@ local function getColor(colorInput)
 end
 
 -- Variables that will be set when window is created
-local ConfigFolder = "NexaHub"  -- Default folder name
+local ConfigFolder = "Velaris UI"  -- Default folder name
 local ConfigFile = ""
 local ConfigData = {}
 local Elements = {}
@@ -487,7 +487,7 @@ end
 
 function Nt(msg, delay, color, title, desc)
     return Chloex:MakeNotify({
-        Title = title or "NexaHub",
+        Title = title or "Velaris UI",
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = getColor(color or "Default"),
@@ -498,36 +498,17 @@ end
 -- Variable untuk menyimpan dialog aktif
 local ActiveDialog = nil
 
--- Fungsi untuk membuat dialog (DESAIN LAMA dengan overlay transparan)
+-- Fungsi untuk membuat dialog dengan blur pada DropShadowHolder
 function Chloex:Dialog(DialogConfig)
     DialogConfig = DialogConfig or {}
     DialogConfig.Title = DialogConfig.Title or "Dialog"
     DialogConfig.Content = DialogConfig.Content or ""
     DialogConfig.Buttons = DialogConfig.Buttons or {}
     
-    -- Dapatkan referensi ke window utama (DropShadowHolder)
-    local MainWindow = nil
-    for _, v in pairs(CoreGui:GetChildren()) do
-        if v.Name == "Chloeex" then
-            for _, child in pairs(v:GetChildren()) do
-                if child.Name == "DropShadowHolder" then
-                    MainWindow = child
-                    break
-                end
-            end
-        end
-    end
-    
     -- Hapus dialog yang sudah ada (anti-spam)
     if ActiveDialog and ActiveDialog.Parent then
         pcall(function()
             ActiveDialog:Destroy()
-            -- Kembalikan blur window ke normal
-            if MainWindow then
-                TweenService:Create(MainWindow, TweenInfo.new(0.3), {
-                    ImageTransparency = 1
-                }):Play()
-            end
         end)
     end
     
@@ -537,44 +518,55 @@ function Chloex:Dialog(DialogConfig)
     DialogGui.Name = "DialogGui"
     DialogGui.Parent = CoreGui
     
-    -- Buat blur effect untuk window utama
-    if MainWindow then
-        TweenService:Create(MainWindow, TweenInfo.new(0.3), {
-            ImageTransparency = 0.5
-        }):Play()
-    end
+    -- Overlay dengan blur effect (menggunakan ImageLabel untuk blur)
+    local BlurOverlay = Instance.new("ImageLabel")
+    BlurOverlay.Size = UDim2.new(1, 0, 1, 0)
+    BlurOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    BlurOverlay.BackgroundTransparency = 0.3 -- Sedikit gelap
+    BlurOverlay.Image = "rbxassetid://149868374" -- Image dengan blur built-in
+    BlurOverlay.ImageColor3 = Color3.fromRGB(0, 0, 0)
+    BlurOverlay.ImageTransparency = 0.3
+    BlurOverlay.ScaleType = Enum.ScaleType.Slice
+    BlurOverlay.SliceCenter = Rect.new(0, 0, 0, 0)
+    BlurOverlay.ZIndex = 50
+    BlurOverlay.Name = "BlurOverlay"
+    BlurOverlay.Parent = DialogGui
     
-    -- Overlay transparan (tanpa background gelap)
-    local Overlay = Instance.new("Frame")
-    Overlay.Size = UDim2.new(1, 0, 1, 0)
-    Overlay.BackgroundTransparency = 1 -- Transparan penuh
-    Overlay.ZIndex = 50
-    Overlay.Name = "Overlay"
-    Overlay.Parent = DialogGui
+    -- Tambahkan Frame transparan untuk efek gelap tambahan (opsional)
+    local DarkOverlay = Instance.new("Frame")
+    DarkOverlay.Size = UDim2.new(1, 0, 1, 0)
+    DarkOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    DarkOverlay.BackgroundTransparency = 0.5
+    DarkOverlay.BorderSizePixel = 0
+    DarkOverlay.ZIndex = 51
+    DarkOverlay.Name = "DarkOverlay"
+    DarkOverlay.Parent = DialogGui
     
-    -- Dialog container (menggunakan ImageLabel seperti desain lama)
+    -- Dialog container (menggunakan ImageLabel)
     local Dialog = Instance.new("ImageLabel")
     Dialog.Size = UDim2.new(0, 300, 0, 150)
     Dialog.Position = UDim2.new(0.5, -150, 0.5, -75)
     Dialog.Image = "rbxassetid://9542022979"
     Dialog.ImageTransparency = 0
     Dialog.BorderSizePixel = 0
-    Dialog.ZIndex = 51
-    Dialog.Parent = Overlay
+    Dialog.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    Dialog.BackgroundTransparency = 0.2
+    Dialog.ZIndex = 52
+    Dialog.Parent = DialogGui
     
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 8)
     UICorner.Parent = Dialog
     
-    -- Glow effect (tetap ada)
+    -- Glow effect
     local DialogGlow = Instance.new("Frame")
     DialogGlow.Size = UDim2.new(0, 310, 0, 160)
     DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80)
     DialogGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DialogGlow.BackgroundTransparency = 0.75
     DialogGlow.BorderSizePixel = 0
-    DialogGlow.ZIndex = 50
-    DialogGlow.Parent = Overlay
+    DialogGlow.ZIndex = 51
+    DialogGlow.Parent = DialogGui
     
     local GlowCorner = Instance.new("UICorner")
     GlowCorner.CornerRadius = UDim.new(0, 10)
@@ -582,11 +574,11 @@ function Chloex:Dialog(DialogConfig)
     
     local Gradient = Instance.new("UIGradient")
     Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(0, 191, 255)),
+        ColorSequenceKeypoint.new(0.0, getColor(DialogConfig.Color or "Default") or Color3.fromRGB(0, 191, 255)),
         ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 140, 255)),
+        ColorSequenceKeypoint.new(0.5, getColor(DialogConfig.Color or "Default") or Color3.fromRGB(0, 140, 255)),
         ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(0, 191, 255))
+        ColorSequenceKeypoint.new(1.0, getColor(DialogConfig.Color or "Default") or Color3.fromRGB(0, 191, 255))
     })
     Gradient.Rotation = 90
     Gradient.Parent = DialogGlow
@@ -600,7 +592,7 @@ function Chloex:Dialog(DialogConfig)
     Title.Text = DialogConfig.Title
     Title.TextSize = 22
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.ZIndex = 52
+    Title.ZIndex = 53
     Title.Parent = Dialog
     
     -- Content
@@ -613,7 +605,7 @@ function Chloex:Dialog(DialogConfig)
     Message.TextSize = 14
     Message.TextColor3 = Color3.fromRGB(200, 200, 200)
     Message.TextWrapped = true
-    Message.ZIndex = 52
+    Message.ZIndex = 53
     Message.Parent = Dialog
     
     -- Buat buttons berdasarkan konfigurasi
@@ -634,7 +626,7 @@ function Chloex:Dialog(DialogConfig)
         Button.TextSize = 15
         Button.TextColor3 = Color3.fromRGB(255, 255, 255)
         Button.TextTransparency = 0.3
-        Button.ZIndex = 52
+        Button.ZIndex = 53
         Button.Name = "DialogButton_" .. i
         Button.Parent = Dialog
         
@@ -657,13 +649,6 @@ function Chloex:Dialog(DialogConfig)
             
             -- Close dialog (hapus GUI)
             pcall(function()
-                -- Kembalikan blur window ke normal
-                if MainWindow then
-                    TweenService:Create(MainWindow, TweenInfo.new(0.3), {
-                        ImageTransparency = 1
-                    }):Play()
-                end
-                
                 DialogGui:Destroy()
                 if ActiveDialog == DialogGui then
                     ActiveDialog = nil
@@ -708,7 +693,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Image        = GuiConfig.Image or "70884221600423"
     
     -- Get Configname or use default
-    GuiConfig.Configname = GuiConfig.Configname or "NexaHub"
+    GuiConfig.Configname = GuiConfig.Configname or "Velaris UI"
     
     -- Config settings
     GuiConfig.Config = GuiConfig.Config or {}
