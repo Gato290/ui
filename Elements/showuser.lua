@@ -1,4 +1,4 @@
--- Elements/showuser.lua
+-- showuser.lua
 -- Fungsi untuk membuat dan mengatur bagian user profile di UI
 
 local HttpService = game:GetService("HttpService")
@@ -192,7 +192,7 @@ local function updatePlayerStats(localPlayer, statsContainer, color)
 end
 
 -- ==============================================
--- USER PROFILE FUNCTIONS (ORIGINAL)
+-- USER PROFILE FUNCTIONS
 -- ==============================================
 
 local function createUserProfile(parentFrame, showUser, uitransparent, color)
@@ -326,7 +326,7 @@ local function createUserProfile(parentFrame, showUser, uitransparent, color)
 end
 
 -- ==============================================
--- SIMPLE USER PROFILE (ORIGINAL)
+-- SIMPLE USER PROFILE
 -- ==============================================
 
 local function createSimpleUserProfile(parentFrame, showUser, uitransparent, color)
