@@ -1,4 +1,4 @@
--- Main.lua v0.0.1
+-- Main.lua v0.0.1 (Updated with Enhanced Dropdown)
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local UserInputService = game:GetService("UserInputService")
@@ -1313,6 +1313,7 @@ function Chloex:Window(GuiConfig)
     DropdownFolder.Name = "DropdownFolder"
     DropdownFolder.Parent = Chloeex
 
+    -- ENHANCED DROPDOWN UI COMPONENTS
     local MoreBlur = Instance.new("Frame")
     MoreBlur.Name = "MoreBlur"
     MoreBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -1372,6 +1373,24 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.TweenTime = 0.3
     DropPageLayout.EasingDirection = Enum.EasingDirection.InOut
     DropPageLayout.EasingStyle = Enum.EasingStyle.Quad
+
+    -- Close dropdown when clicking outside
+    local ConnectButton = Instance.new("TextButton")
+    ConnectButton.Font = Enum.Font.SourceSans
+    ConnectButton.Text = ""
+    ConnectButton.BackgroundTransparency = 0.999
+    ConnectButton.Size = UDim2.new(1, 0, 1, 0)
+    ConnectButton.Name = "ConnectButton"
+    ConnectButton.Parent = MoreBlur
+
+    ConnectButton.MouseButton1Click:Connect(function()
+        if MoreBlur.Visible then
+            TweenService:Create(MoreBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
+            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
+            task.wait(0.3)
+            MoreBlur.Visible = false
+        end
+    end)
 
     -- Tabs
     local Tabs = {}
@@ -1825,19 +1844,18 @@ function Chloex:Window(GuiConfig)
                 DropdownConfig.Options = DropdownConfig.Options or {}
                 DropdownConfig.Default = DropdownConfig.Default or (DropdownConfig.Multi and {} or nil)
                 DropdownConfig.Callback = DropdownConfig.Callback or function() end
-                DropdownConfig.New = DropdownConfig.New or "false"
 
                 local configKey = "Dropdown_" .. DropdownConfig.Title
                 
-                -- FIX: Safety check untuk ConfigData
-                if ConfigData and ConfigData[configKey] ~= nil then
+                if ConfigData[configKey] ~= nil then
                     DropdownConfig.Default = ConfigData[configKey]
                 else
-                    -- Jika tidak ada di config, set default ke ConfigData untuk pertama kali
                     ConfigData[configKey] = DropdownConfig.Default
                 end
 
                 CountDropdown = CountDropdown + 1
+                
+                -- Create enhanced dropdown using Elements module with our UI components
                 local DropdownFunc = Elements.AddDropdown(
                     SectionAdd, 
                     DropdownConfig, 
@@ -1851,7 +1869,6 @@ function Chloex:Window(GuiConfig)
                 )
                 
                 CountItem = CountItem + 1
-                AllElements[configKey] = DropdownFunc
                 return DropdownFunc
             end
 
