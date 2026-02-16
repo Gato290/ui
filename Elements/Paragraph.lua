@@ -1,10 +1,21 @@
-return function(ParagraphConfig, ctx)
-    local ParagraphConfig = ParagraphConfig or {}
-    ParagraphConfig.Title = ParagraphConfig.Title or "Title"
-    ParagraphConfig.Content = ParagraphConfig.Content or "Content"
-    ParagraphConfig.Icon = ParagraphConfig.Icon
-    ParagraphConfig.ButtonText = ParagraphConfig.ButtonText
-    ParagraphConfig.ButtonCallback = ParagraphConfig.ButtonCallback
+-- Paragraph.lua
+local TweenService = game:GetService("TweenService")
+
+local ParagraphModule = {}
+
+local MainColor = Color3.fromRGB(255, 0, 255)
+
+function ParagraphModule.Initialize(color, saveFunc, config)
+    MainColor = color or MainColor
+end
+
+function ParagraphModule.Create(parent, config, countItem, updateSizeCallback, Icons)
+    config = config or {}
+    config.Title = config.Title or "Title"
+    config.Content = config.Content or "Content"
+    config.Icon = config.Icon or nil
+    config.ButtonText = config.ButtonText or nil
+    config.ButtonCallback = config.ButtonCallback or function() end
 
     local ParagraphFunc = {}
 
@@ -16,16 +27,16 @@ return function(ParagraphConfig, ctx)
     Paragraph.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Paragraph.BackgroundTransparency = 0.935
     Paragraph.BorderSizePixel = 0
-    Paragraph.LayoutOrder = ctx.CountItem()
+    Paragraph.LayoutOrder = countItem
     Paragraph.Size = UDim2.new(1, 0, 0, 46)
     Paragraph.Name = "Paragraph"
-    Paragraph.Parent = ctx.SectionAdd
+    Paragraph.Parent = parent
 
     UICorner14.CornerRadius = UDim.new(0, 4)
     UICorner14.Parent = Paragraph
 
     local iconOffset = 10
-    if ParagraphConfig.Icon then
+    if config.Icon then
         local IconImg = Instance.new("ImageLabel")
         IconImg.Size = UDim2.new(0, 20, 0, 20)
         IconImg.Position = UDim2.new(0, 8, 0, 12)
@@ -33,17 +44,17 @@ return function(ParagraphConfig, ctx)
         IconImg.Name = "ParagraphIcon"
         IconImg.Parent = Paragraph
 
-        if ctx.GuiConfig and ctx.GuiConfig.Icons and ctx.GuiConfig.Icons[ParagraphConfig.Icon] then
-            IconImg.Image = ctx.GuiConfig.Icons[ParagraphConfig.Icon]
+        if Icons and Icons[config.Icon] then
+            IconImg.Image = Icons[config.Icon]
         else
-            IconImg.Image = ParagraphConfig.Icon
+            IconImg.Image = config.Icon
         end
 
         iconOffset = 30
     end
 
     ParagraphTitle.Font = Enum.Font.GothamBold
-    ParagraphTitle.Text = ParagraphConfig.Title
+    ParagraphTitle.Text = config.Title
     ParagraphTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
     ParagraphTitle.TextSize = 13
     ParagraphTitle.TextXAlignment = Enum.TextXAlignment.Left
@@ -55,7 +66,7 @@ return function(ParagraphConfig, ctx)
     ParagraphTitle.Parent = Paragraph
 
     ParagraphContent.Font = Enum.Font.Gotham
-    ParagraphContent.Text = ParagraphConfig.Content
+    ParagraphContent.Text = config.Content
     ParagraphContent.TextColor3 = Color3.fromRGB(255, 255, 255)
     ParagraphContent.TextSize = 12
     ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
@@ -70,7 +81,7 @@ return function(ParagraphConfig, ctx)
     ParagraphContent.Size = UDim2.new(1, -16, 0, ParagraphContent.TextBounds.Y)
 
     local ParagraphButton
-    if ParagraphConfig.ButtonText then
+    if config.ButtonText then
         ParagraphButton = Instance.new("TextButton")
         ParagraphButton.Position = UDim2.new(0, 10, 0, 42)
         ParagraphButton.Size = UDim2.new(1, -22, 0, 28)
@@ -80,15 +91,15 @@ return function(ParagraphConfig, ctx)
         ParagraphButton.TextSize = 12
         ParagraphButton.TextTransparency = 0.3
         ParagraphButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        ParagraphButton.Text = ParagraphConfig.ButtonText
+        ParagraphButton.Text = config.ButtonText
         ParagraphButton.Parent = Paragraph
 
         local btnCorner = Instance.new("UICorner")
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
 
-        if ParagraphConfig.ButtonCallback then
-            ParagraphButton.MouseButton1Click:Connect(ParagraphConfig.ButtonCallback)
+        if config.ButtonCallback then
+            ParagraphButton.MouseButton1Click:Connect(config.ButtonCallback)
         end
     end
 
@@ -98,6 +109,7 @@ return function(ParagraphConfig, ctx)
             totalHeight = totalHeight + ParagraphButton.Size.Y.Offset + 5
         end
         Paragraph.Size = UDim2.new(1, 0, 0, totalHeight)
+        if updateSizeCallback then updateSizeCallback() end
     end
 
     UpdateSize()
@@ -112,3 +124,5 @@ return function(ParagraphConfig, ctx)
 
     return ParagraphFunc
 end
+
+return ParagraphModule
