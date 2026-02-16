@@ -1,4 +1,4 @@
--- toggle.lua
+-- toggle.lua - V2.0 (Fixed)
 local TweenService = game:GetService("TweenService")
 
 local ToggleModule = {}
@@ -14,6 +14,12 @@ function ToggleModule.Initialize(color, saveFunc, config)
 end
 
 function ToggleModule.Create(parent, config, countItem, updateSizeCallback, saveConfig, configData)
+    -- Validasi parameter
+    if not parent then
+        warn("Toggle.Create: parent is nil")
+        return
+    end
+    
     config = config or {}
     config.Title = config.Title or "Title"
     config.Title2 = config.Title2 or ""
@@ -28,6 +34,7 @@ function ToggleModule.Create(parent, config, countItem, updateSizeCallback, save
 
     local ToggleFunc = { Value = config.Default }
 
+    -- Buat semua instance dengan pengecekan
     local Toggle = Instance.new("Frame")
     local UICorner20 = Instance.new("UICorner")
     local ToggleTitle = Instance.new("TextLabel")
@@ -38,11 +45,13 @@ function ToggleModule.Create(parent, config, countItem, updateSizeCallback, save
     local UIStroke8 = Instance.new("UIStroke")
     local ToggleCircle = Instance.new("Frame")
     local UICorner23 = Instance.new("UICorner")
+    local ToggleTitle2 = Instance.new("TextLabel")  -- Pindah ke sini
 
+    -- Set properties dengan pengecekan
     Toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Toggle.BackgroundTransparency = 0.935
     Toggle.BorderSizePixel = 0
-    Toggle.LayoutOrder = countItem
+    Toggle.LayoutOrder = countItem or 0
     Toggle.Name = "Toggle"
     Toggle.Parent = parent
 
@@ -61,7 +70,6 @@ function ToggleModule.Create(parent, config, countItem, updateSizeCallback, save
     ToggleTitle.Name = "ToggleTitle"
     ToggleTitle.Parent = Toggle
 
-    local ToggleTitle2 = Instance.new("TextLabel")
     ToggleTitle2.Font = Enum.Font.GothamBold
     ToggleTitle2.Text = config.Title2
     ToggleTitle2.TextSize = 12
@@ -86,6 +94,7 @@ function ToggleModule.Create(parent, config, countItem, updateSizeCallback, save
     ToggleContent.Name = "ToggleContent"
     ToggleContent.Parent = Toggle
 
+    -- Set ukuran berdasarkan konten
     if config.Title2 ~= "" then
         Toggle.Size = UDim2.new(1, 0, 0, 57)
         ToggleContent.Position = UDim2.new(0, 10, 0, 36)
@@ -96,24 +105,47 @@ function ToggleModule.Create(parent, config, countItem, updateSizeCallback, save
         ToggleTitle2.Visible = false
     end
 
-    ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+    -- Hitung ukuran konten dengan aman
+    local textBoundsX = 0
+    local success, bounds = pcall(function()
+        return ToggleContent.TextBounds.X
+    end)
+    if success then
+        textBoundsX = bounds
+    end
+    
+    local absoluteSizeX = 1
+    success, bounds = pcall(function()
+        return ToggleContent.AbsoluteSize.X
+    end)
+    if success and bounds > 0 then
+        absoluteSizeX = bounds
+    end
+
+    local extraLines = math.floor(textBoundsX / math.max(1, absoluteSizeX))
+    ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * extraLines))
     ToggleContent.TextWrapped = true
+    
     if config.Title2 ~= "" then
         Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
     else
         Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 33)
     end
 
+    -- Signal untuk update ukuran
     ToggleContent:GetPropertyChangedSignal("AbsoluteSize"):Connect(function()
         ToggleContent.TextWrapped = false
-        ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * (ToggleContent.TextBounds.X // ToggleContent.AbsoluteSize.X)))
+        local newExtraLines = math.floor(ToggleContent.TextBounds.X / math.max(1, ToggleContent.AbsoluteSize.X))
+        ToggleContent.Size = UDim2.new(1, -100, 0, 12 + (12 * newExtraLines))
         if config.Title2 ~= "" then
             Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 47)
         else
             Toggle.Size = UDim2.new(1, 0, 0, ToggleContent.AbsoluteSize.Y + 33)
         end
         ToggleContent.TextWrapped = true
-        if updateSizeCallback then updateSizeCallback() end
+        if updateSizeCallback and type(updateSizeCallback) == "function" then
+            updateSizeCallback()
+        end
     end)
 
     ToggleButton.Font = Enum.Font.SourceSans
@@ -131,6 +163,7 @@ function ToggleModule.Create(parent, config, countItem, updateSizeCallback, save
     FeatureFrame2.Name = "FeatureFrame"
     FeatureFrame2.Parent = Toggle
 
+    UICorner22.CornerRadius = UDim.new(0, 15)
     UICorner22.Parent = FeatureFrame2
 
     UIStroke8.Color = Color3.fromRGB(255, 255, 255)
@@ -153,14 +186,20 @@ function ToggleModule.Create(parent, config, countItem, updateSizeCallback, save
     end)
 
     function ToggleFunc:Set(Value)
-        if typeof(config.Callback) == "function" then
+        if type(config.Callback) == "function" then
             local ok, err = pcall(function()
                 config.Callback(Value)
             end)
             if not ok then warn("Toggle Callback error:", err) end
         end
-        configData[configKey] = Value
-        SaveConfigFunc()
+        
+        if configData then
+            configData[configKey] = Value
+        end
+        if SaveConfigFunc and type(SaveConfigFunc) == "function" then
+            SaveConfigFunc()
+        end
+        
         if Value then
             TweenService:Create(ToggleTitle, TweenInfo.new(0.2), { TextColor3 = MainColor }):Play()
             TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 15, 0, 0) }):Play()
