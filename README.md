@@ -42,8 +42,6 @@ local Window = Chloex:Window({
     Image = "70884221600423", -- Window icon asset ID (replace with your own)
     Configname = "MyCustomConfig", -- Configuration file name for saving settings
     Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
-   -- ShowUser = true, -- Enable player profile display
-   -- UserProfileType = "simple", -- Profile display style
    --[[ Config = {
         AutoSave = true, -- Automatically save settings
         AutoLoad = true -- Automatically load saved settings 
@@ -157,14 +155,7 @@ Sec.Botton:AddButton({
 
 ## Button V2
 ```lua
-Sec.Weapon:AddButton({
-    Title = "Example",
-    Title2 = "Example Sub Title",
-    Callback = function()
-        print("This is an example button")
-        Notify("Example clicked!", 2)
-    end
-})
+Soon
 ```
 
 # 🔁 Toggle
@@ -533,65 +524,8 @@ Sec.Other:AddSubSection("Example Sub Section")
 
 # Keybind
 ```lua
-Sec.Section:AddKeybind({
-    Title = "Keybind",
-    Value = "V",  -- Default key
-    Placeholder = "Click to set key",
-    Callback = function(key)
-        print("Key pressed:", key)
-    end
-})
+Soon
 ```
-
-## Funcion Keybind
-### 1️⃣ `:Set(key)`
-
-Ganti key manual
-
-```lua
-keybind:Set("F")
-```
-
----
-
-### 2️⃣ `:Get()`
-
-Ambil key sekarang
-
-```lua
-print(keybind:Get())
-```
-
----
-
-### 3️⃣ `:Enable()`
-
-Aktifkan keybind
-
-```lua
-keybind:Enable()
-```
-
----
-
-### 4️⃣ `:Disable()`
-
-Nonaktifkan
-
-```lua
-keybind:Disable()
-```
-
----
-
-### 5️⃣ `:Destroy()`
-
-Hapus & disconnect semua
-
-```lua
-keybind:Destroy()
-```
-
 # 🔔 Notification
 ```lua
 -- Basic notification
@@ -660,27 +594,12 @@ local exampleCustomNotify = Chloex:MakeNotify({
 
 ## Icon Notification
 ```lua
-Chloex:MakeNotify({
-    Title = "Icon",
-    Icon = "lucide:info",
-    Description = "System",
-    Content = "This is a short message.",
-    Color = Color3.fromRGB(0, 150, 255),
-    Delay = 3,
-})
+Soon
 ```
 
 ## Mini Notification
 ```lua
-Chloex:MakeNotify({
-    Title = "Small Notification",
-    Icon = "lucide:info",
-    Description = "System",
-    Content = "This is a short message.",
-    Color = Color3.fromRGB(0, 150, 255),
-    Delay = 3,
-    Mini = true, -- Parameter untuk membuat notifikasi mini
-})
+Soon
 ```
 
 ## Funcions Notify
