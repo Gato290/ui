@@ -63,7 +63,7 @@ local Sec = {}
 
 Sec.Button = Tabs.Button:AddSection({
     Title = "Button Section",
-    AlwaysOpen = true
+    Open = true
 })
 
 -- Example Button (Single)
@@ -71,7 +71,7 @@ Sec.Button:AddButton({
     Title = "Example",
     Callback = function()
         print("This is an example button")
-        Notify("Example clicked!", 2)
+        Nt("Example clicked!", 2)
     end
 })
 
@@ -80,20 +80,20 @@ Sec.Button:AddButton({
     Title = "Example",
     Callback = function()
         print("Example ON")
-        Notify("Example enabled!", 2)
+        Nt("Example enabled!", 2)
     end,
 
     SubTitle = "Example Off",
     SubCallback = function()
         print("Example OFF")
-        Notify("Example disabled!", 2)
+        Nt("Example disabled!", 2)
     end
 })
 
 
 Sec.Toggle = Tabs.Toggle:AddSection({
     Title = "Toggle Section",
-    AlwaysOpen = true
+    Open = true
 })
 
 -- Example Basic
@@ -104,9 +104,9 @@ Sec.Toggle:AddToggle({
         print("Example toggle:", value)
 
         if value then
-            Notify("Example enabled!", 2)
+            Nt("Example enabled!", 2)
         else
-            Notify("Example disabled!", 2)
+            Nt("Example disabled!", 2)
         end
     end
 })
@@ -119,10 +119,10 @@ Sec.Toggle:AddToggle({
     Callback = function(value)
         if value then
             print("Example ON")
-            Notify("Example enabled!", 2)
+            Nt("Example enabled!", 2)
         else
             print("Example OFF")
-            Notify("Example disabled!", 2)
+            Nt("Example disabled!", 2)
         end
     end
 })
@@ -134,16 +134,16 @@ Sec.Toggle:AddToggle({
     Default = false,
     Callback = function(value)
         if value then
-            Notify("Example enabled!", 2)
+            Nt("Example enabled!", 2)
         else
-            Notify("Example disabled!", 2)
+            Nt("Example disabled!", 2)
         end
     end
 })
 
 Sec.Dropdown = Tabs.Dropdown:AddSection({
     Title = "Dropdown Section",
-    AlwaysOpen = true
+    Open = true
 })
 
 -- Example Single
@@ -188,7 +188,7 @@ Sec.Dropdown:AddDropdown({
 
 Sec.Input = Tabs.Input:AddSection({
     Title = "Input Section",
-    AlwaysOpen = true
+    Open = true
 })
 
 Sec.Input:AddInput({
@@ -215,7 +215,7 @@ Sec.Input:AddInput({
 
 Sec.Panel = Tabs.Panel:AddSection({
     Title = "Panel Section",
-    AlwaysOpen = true
+    Open = true
 })
 
 -- Example Panel (Single Button)
@@ -228,7 +228,7 @@ Sec.Panel:AddPanel({
     ButtonCallback = function(value)
         print("Example value:", value)
         -- Example logic here
-        Notify("Example action executed!", 2)
+        Nt("Example action executed!", 2)
     end
 })
 
@@ -242,9 +242,9 @@ Sec.Panel:AddPanel({
     ButtonCallback = function(value)
         if value ~= "" then
             print("Example save:", value)
-            Notify("Example saved!", 2)
+            Nt("Example saved!", 2)
         else
-            Notify("Example name required!", 2)
+            Nt("Example name required!", 2)
         end
     end,
 
@@ -252,21 +252,21 @@ Sec.Panel:AddPanel({
     SubButtonCallback = function(value)
         if value ~= "" then
             print("Example load:", value)
-            Notify("Example loaded!", 2)
+            Nt("Example loaded!", 2)
         else
-            Notify("Example name required!", 2)
+            Nt("Example name required!", 2)
         end
     end
 })
 
 Sec.Keybind = Tabs.Keybind:AddSection({
     Title = "Keybind Section (Soon)",
-    AlwaysOpen = true
+    Open = true
 })
 
 Sec.Slider = Tabs.Slider:AddSection({
     Title = "Slider Section",
-    AlwaysOpen = true
+    Open = true
 })
 
 -- Example Basic
@@ -297,7 +297,7 @@ Sec.Slider:AddSlider({
 
 Sec.Paragraph = Tabs.Paragraph:AddSection({
     Title = "Paragraph Section",
-    AlwaysOpen = true
+    Open = true
 })
 
 -- Example Paragraph (Simple)
