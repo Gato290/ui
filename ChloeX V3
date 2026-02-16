@@ -1,50 +1,29 @@
-local HttpService = game:GetService("HttpService") -- V0.0.4
+local HttpService = game:GetService("HttpService") -- V0.0.3
 
--- Load Elements from external files
-local Elements = {}
+-- Load Elements Module
+local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
 
--- Load semua elemen dari file terpisah
-local elementFiles = {
-    "Dropdown", "Panel", "Input", "Toggle", "Slider", "Button", "Paragraph"
-}
-
-for _, elementName in ipairs(elementFiles) do
-    local success, result = pcall(function()
-        return loadstring(game:HttpGet(("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/%s.lua"):format(elementName)))()
-    end)
-    
-    if success and result then
-        Elements[elementName] = result
-    else
-        warn("Failed to load element: " .. elementName)
-    end
+if not isfolder("NexaHub") then
+    makefolder("NexaHub")
 end
-
-if not isfolder("NateiraHub") then
-    makefolder("NateiraHub")
-end
-if not isfolder("NateiraHub/Config") then
-    makefolder("NateiraHub/Config")
+if not isfolder("NexaHub/Config") then
+    makefolder("NexaHub/Config")
 end
 
 local gameName   = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
 gameName         = gameName:gsub("[^%w_ ]", "")
 gameName         = gameName:gsub("%s+", "_")
 
-local ConfigFile = "NateiraHub/Config/CHX_" .. gameName .. ".json"
+local ConfigFile = "NexaHub/Config/CHX_" .. gameName .. ".json"
 
 ConfigData       = {}
+Elements         = {}
 CURRENT_VERSION  = nil
 
 function SaveConfig()
     if writefile then
         ConfigData._version = CURRENT_VERSION
-        local success, encoded = pcall(function()
-            return HttpService:JSONEncode(ConfigData)
-        end)
-        if success then
-            writefile(ConfigFile, encoded)
-        end
+        writefile(ConfigFile, HttpService:JSONEncode(ConfigData))
     end
 end
 
@@ -68,10 +47,53 @@ function LoadConfigFromFile()
     end
 end
 
+function LoadConfigElements()
+    for key, element in pairs(Elements) do
+        if ConfigData[key] ~= nil and element.Set then
+            element:Set(ConfigData[key], true)
+        end
+    end
+end
+
 local Icons = {
-    Nt        = "rbxassetid://84946340265305", 
+    alert     = "rbxassetid://73186275216515",
+    bag       = "rbxassetid://8601111810",
+    boss      = "rbxassetid://13132186360",
+    cart      = "rbxassetid://128874923961846",
+    compas    = "rbxassetid://125300760963399",
+    crosshair = "rbxassetid://12614416478",
+    dcs       = "rbxassetid://15310731934",
+    discord   = "rbxassetid://94434236999817",
+    eyes      = "rbxassetid://14321059114",
+    fish      = "rbxassetid://97167558235554",
+    folder      = "rbxassetid://111411260968321",
+    gamepad   = "rbxassetid://84173963561612",
+    gps       = "rbxassetid://17824309485",
+    home       = "rbxassetid://70416927963252",
+    idea      = "rbxassetid://16833255748",
     lexshub   = "rbxassetid://71947103252559",
+    loop      = "rbxassetid://122032243989747",
+    menu      = "rbxassetid://6340513838",
+    next      = "rbxassetid://12662718374",
+    Nt        = "rbxassetid://70884221600423",
+    payment   = "rbxassetid://18747025078",
     player    = "rbxassetid://12120698352",
+    plug      = "rbxassetid://137601480983962",
+    question  = "rbxassetid://17510196486",
+    rod       = "rbxassetid://103247953194129",
+    scan      = "rbxassetid://109869955247116",
+    scroll    = "rbxassetid://114127804740858",
+    settings  = "rbxassetid://70386228443175",
+    shop      = "rbxassetid://4985385964",
+    skeleton  = "rbxassetid://17313330026",
+    star      = "rbxassetid://107005941750079",
+    start     = "rbxassetid://108886429866687",
+    stat      = "rbxassetid://12094445329",
+    strom     = "rbxassetid://13321880293",
+    sword     = "rbxassetid://82472368671405",
+    user      = "rbxassetid://108483430622128",
+    water     = "rbxassetid://100076212630732",
+    web       = "rbxassetid://137601480983962",
 }
 
 local UserInputService = game:GetService("UserInputService")
@@ -102,8 +124,6 @@ local function safeSize(pxWidth, pxHeight)
 end
 
 local function MakeDraggable(topbarobject, object)
-    if not topbarobject or not object then return end
-    
     local function CustomPos(topbarobject, object)
         local Dragging, DragInput, DragStart, StartPosition
 
@@ -212,7 +232,6 @@ local function MakeDraggable(topbarobject, object)
 end
 
 function CircleClick(Button, X, Y)
-    if not Button then return end
     spawn(function()
         Button.ClipsDescendants = true
         local Circle = Instance.new("ImageLabel")
@@ -410,7 +429,7 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.Parent = NotifyFrameReal
         TextLabel2.Size = UDim2.new(1, -20, 0, 13)
 
-        TextLabel2.Size = UDim2.new(1, -20, 0, 13 + (13 * (TextLabel2.TextBounds.X // math.max(1, TextLabel2.AbsoluteSize.X))))
+        TextLabel2.Size = UDim2.new(1, -20, 0, 13 + (13 * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
         TextLabel2.TextWrapped = true
 
         if TextLabel2.AbsoluteSize.Y < 27 then
@@ -449,7 +468,7 @@ end
 
 function Nt(msg, delay, color, title, desc)
     return Chloex:MakeNotify({
-        Title = title or "NateiraHub",
+        Title = title or "NexaHub",
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = color or Color3.fromRGB(0, 208, 255),
@@ -468,17 +487,8 @@ function Chloex:Window(GuiConfig)
     CURRENT_VERSION        = GuiConfig.Version
     LoadConfigFromFile()
 
-    -- Initialize elements with config
-    for name, element in pairs(Elements) do
-        if element and type(element) == "table" and element.Initialize then
-            local success, err = pcall(function()
-                element.Initialize(GuiConfig.Color, SaveConfig, ConfigData)
-            end)
-            if not success then
-                warn("Failed to initialize element " .. tostring(name) .. ": " .. tostring(err))
-            end
-        end
-    end
+    -- Initialize Elements Module with required data
+    ElementsModule:Initialize(GuiConfig, SaveConfig, ConfigData, Icons)
 
     local GuiFunc = {}
 
@@ -756,6 +766,7 @@ function Chloex:Window(GuiConfig)
         CircleClick(Min, Mouse.X, Mouse.Y)
         DropShadowHolder.Visible = false
     end)
+    
     Close.Activated:Connect(function()
         CircleClick(Close, Mouse.X, Mouse.Y)
 
@@ -805,7 +816,7 @@ function Chloex:Window(GuiConfig)
         Title.Position = UDim2.new(0, 0, 0, 4)
         Title.BackgroundTransparency = 1
         Title.Font = Enum.Font.GothamBold
-        Title.Text = "NateiraHub Window"
+        Title.Text = "NexaHub Window"
         Title.TextSize = 22
         Title.TextColor3 = Color3.fromRGB(255, 255, 255)
         Title.ZIndex = 52
@@ -876,7 +887,7 @@ function Chloex:Window(GuiConfig)
         MainButton.Size = UDim2.new(0, 40, 0, 40)
         MainButton.Position = UDim2.new(0, 20, 0, 100)
         MainButton.BackgroundTransparency = 1
-        MainButton.Image = "rbxassetid://" .. (GuiConfig.Image or "71947103252559")
+        MainButton.Image = "rbxassetid://" .. GuiConfig.Image
         MainButton.ScaleType = Enum.ScaleType.Fit
 
         local UICorner = Instance.new("UICorner")
@@ -994,7 +1005,7 @@ function Chloex:Window(GuiConfig)
     local DropPageLayout = Instance.new("UIPageLayout");
 
     DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
-    DropdownSelect.BackgroundColor3 = Color3.fromRGB(30.00000011175871, 30.00000011175871, 30.00000011175871)
+    DropdownSelect.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
     DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
     DropdownSelect.BorderSizePixel = 0
     DropdownSelect.LayoutOrder = 1
@@ -1042,6 +1053,7 @@ function Chloex:Window(GuiConfig)
     DropPageLayout.Archivable = false
     DropPageLayout.Name = "DropPageLayout"
     DropPageLayout.Parent = DropdownFolder
+    
     --// Tabs
     local Tabs = {}
     local CountTab = 0
@@ -1054,7 +1066,7 @@ function Chloex:Window(GuiConfig)
         local ScrolLayers = Instance.new("ScrollingFrame");
         local UIListLayout1 = Instance.new("UIListLayout");
 
-        ScrolLayers.ScrollBarImageColor3 = Color3.fromRGB(80.00000283122063, 80.00000283122063, 80.00000283122063)
+        ScrolLayers.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
         ScrolLayers.ScrollBarThickness = 0
         ScrolLayers.Active = true
         ScrolLayers.LayoutOrder = CountTab
@@ -1142,7 +1154,7 @@ function Chloex:Window(GuiConfig)
             ChooseFrame.Parent = Tab
 
             UIStroke2.Color = GuiConfig.Color
-            UIStroke2.Thickness = 1.600000023841858
+            UIStroke2.Thickness = 1.6
             UIStroke2.Parent = ChooseFrame
 
             UICorner4.Parent = ChooseFrame
@@ -1203,6 +1215,7 @@ function Chloex:Window(GuiConfig)
                 ):Play()
             end
         end)
+        
         --// Section
         local Sections = {}
         local CountSection = 0
@@ -1219,6 +1232,7 @@ function Chloex:Window(GuiConfig)
             Section.BorderSizePixel = 0
             Section.LayoutOrder = CountSection
             Section.ClipsDescendants = true
+            Section.LayoutOrder = 1
             Section.Size = UDim2.new(1, 0, 0, 30)
             Section.Name = "Section"
             Section.Parent = ScrolLayers
@@ -1233,7 +1247,7 @@ function Chloex:Window(GuiConfig)
 
             SectionReal.AnchorPoint = Vector2.new(0.5, 0)
             SectionReal.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionReal.BackgroundTransparency = 0.9350000023841858
+            SectionReal.BackgroundTransparency = 0.935
             SectionReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionReal.BorderSizePixel = 0
             SectionReal.LayoutOrder = 1
@@ -1281,7 +1295,7 @@ function Chloex:Window(GuiConfig)
 
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = Title
-            SectionTitle.TextColor3 = Color3.fromRGB(230.77499270439148, 230.77499270439148, 230.77499270439148)
+            SectionTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
             SectionTitle.TextSize = 13
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             SectionTitle.TextYAlignment = Enum.TextYAlignment.Top
@@ -1426,153 +1440,58 @@ function Chloex:Window(GuiConfig)
             local Items = {}
             local CountItem = 0
 
-            function Items:AddParagraph(config)
-                if not Elements.Paragraph then
-                    warn("Paragraph element not loaded")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.Paragraph.Create(SectionAdd, config, CountItem, UpdateSizeSection, Icons)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating Paragraph: " .. tostring(result))
-                end
+            function Items:AddParagraph(ParagraphConfig)
+                local func = ElementsModule:CreateParagraph(SectionAdd, ParagraphConfig, CountItem)
+                CountItem = CountItem + 1
+                return func
             end
 
-            function Items:AddPanel(config)
-                if not Elements.panel then
-                    warn("Panel element not loaded")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.panel.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating Panel: " .. tostring(result))
-                end
+            function Items:AddPanel(PanelConfig)
+                local func = ElementsModule:CreatePanel(SectionAdd, PanelConfig, CountItem)
+                CountItem = CountItem + 1
+                return func
             end
 
-            function Items:AddButton(config)
-                if not Elements.Button then
-                    warn("Button element not loaded")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.Button.Create(SectionAdd, config, CountItem, UpdateSizeSection)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating Button: " .. tostring(result))
-                end
+            function Items:AddButton(ButtonConfig)
+                ElementsModule:CreateButton(SectionAdd, ButtonConfig, CountItem)
+                CountItem = CountItem + 1
             end
 
-            function Items:AddToggle(config)
-                if not Elements.toggle then
-                    warn("Toggle element not loaded")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.toggle.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating Toggle: " .. tostring(result))
-                end
+            function Items:AddToggle(ToggleConfig)
+                local func = ElementsModule:CreateToggle(SectionAdd, ToggleConfig, CountItem, UpdateSizeSection, Elements)
+                CountItem = CountItem + 1
+                return func
             end
 
-            function Items:AddSlider(config)
-                if not Elements.slider then
-                    warn("Slider element not loaded")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.slider.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating Slider: " .. tostring(result))
-                end
+            function Items:AddSlider(SliderConfig)
+                local func = ElementsModule:CreateSlider(SectionAdd, SliderConfig, CountItem, UpdateSizeSection, Elements)
+                CountItem = CountItem + 1
+                return func
             end
 
-            function Items:AddInput(config)
-                if not Elements.input then
-                    warn("Input element not loaded")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.input.Create(SectionAdd, config, CountItem, UpdateSizeSection, SaveConfig, ConfigData)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating Input: " .. tostring(result))
-                end
+            function Items:AddInput(InputConfig)
+                local func = ElementsModule:CreateInput(SectionAdd, InputConfig, CountItem, UpdateSizeSection, Elements)
+                CountItem = CountItem + 1
+                return func
             end
 
-            function Items:AddDropdown(config)
-                if not Elements.Dropdown then
-                    warn("Dropdown element not loaded")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.Dropdown.Create(
-                        SectionAdd, config, CountItem, CountDropdown, 
-                        MoreBlur, DropPageLayout, UpdateSizeSection, 
-                        SaveConfig, ConfigData, GuiConfig.Color
-                    )
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    CountDropdown = CountDropdown + 1
-                    return result
-                else
-                    warn("Error creating Dropdown: " .. tostring(result))
-                end
+            function Items:AddDropdown(DropdownConfig)
+                local func = ElementsModule:CreateDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, DropdownFolder, MoreBlur, DropdownSelect, DropPageLayout, Elements)
+                CountItem = CountItem + 1
+                CountDropdown = CountDropdown + 1
+                return func
             end
 
             function Items:AddDivider()
-                if not Elements.Dropdown then
-                    warn("Dropdown element not loaded for AddDivider")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.Dropdown.AddDivider(SectionAdd, CountItem, GuiConfig.Color)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating Divider: " .. tostring(result))
-                end
+                local divider = ElementsModule:CreateDivider(SectionAdd, CountItem)
+                CountItem = CountItem + 1
+                return divider
             end
 
             function Items:AddSubSection(title)
-                if not Elements.Dropdown then
-                    warn("Dropdown element not loaded for AddSubSection")
-                    return
-                end
-                local success, result = pcall(function()
-                    return Elements.Dropdown.AddSubSection(SectionAdd, title, CountItem)
-                end)
-                if success then
-                    CountItem = CountItem + 1
-                    return result
-                else
-                    warn("Error creating SubSection: " .. tostring(result))
-                end
+                local subsection = ElementsModule:CreateSubSection(SectionAdd, title, CountItem)
+                CountItem = CountItem + 1
+                return subsection
             end
 
             CountSection = CountSection + 1
