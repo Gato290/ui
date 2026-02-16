@@ -41,7 +41,7 @@ local function AnimateButtonClick(button, color)
 end
 
 --[[
-    PERBAIKAN: CreateParagraph - Button sekarang full-width dan paragraph menyesuaikan height
+    PERBAIKAN: CreateParagraph - Button sekarang dinamis dan paragraph menyesuaikan height
     TAMBAHAN: Animasi highlight saat button diklik
 ]]
 function Elements:CreateParagraph(parent, config, countItem)
@@ -115,20 +115,18 @@ function Elements:CreateParagraph(parent, config, countItem)
     local ParagraphButton
     if ParagraphConfig.ButtonText then
         ParagraphButton = Instance.new("TextButton")
-        -- PERBAIKAN: Button sekarang full-width dengan padding yang sama
-        ParagraphButton.Size = UDim2.new(1, -20, 0, 28)  -- Full width minus padding
-        ParagraphButton.Position = UDim2.new(0, 10, 0, 0)  -- Will be updated by UpdateSize
+        ParagraphButton.Size = UDim2.new(0, 120, 0, 26)  -- Fixed width button
         ParagraphButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         ParagraphButton.BackgroundTransparency = 0.935
         ParagraphButton.Font = Enum.Font.GothamBold
-        ParagraphButton.TextSize = 12
+        ParagraphButton.TextSize = 11
         ParagraphButton.TextTransparency = 0.3
         ParagraphButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         ParagraphButton.Text = ParagraphConfig.ButtonText
         ParagraphButton.Parent = Paragraph
 
         local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 6)
+        btnCorner.CornerRadius = UDim.new(0, 4)
         btnCorner.Parent = ParagraphButton
 
         -- ANIMASI HIGHLIGHT
@@ -154,11 +152,9 @@ function Elements:CreateParagraph(parent, config, countItem)
         local totalHeight = 10 + 13 + 3 + contentHeight + 10
         
         if ParagraphButton then
-            -- Position button below content with proper spacing
-            local buttonY = 10 + 13 + 3 + contentHeight + 8
-            ParagraphButton.Position = UDim2.new(0, 10, 0, buttonY)
-            -- Add button height + spacing to total
-            totalHeight = buttonY + ParagraphButton.Size.Y.Offset + 10
+            -- Position button below content with some spacing (aligned to left)
+            ParagraphButton.Position = UDim2.new(0, iconOffset, 0, 10 + 13 + 3 + contentHeight + 6)
+            totalHeight = totalHeight + 6 + ParagraphButton.Size.Y.Offset + 8
         end
         
         Paragraph.Size = UDim2.new(1, 0, 0, totalHeight)
@@ -330,25 +326,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         
         if ParagraphConfig.Callback then
             ParagraphConfig.Callback(ParagraphTextBox.Text)
-        end
-    end)
-
-    ParagraphTextBox:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
-    Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
-
-    function ParagraphFunc:SetContent(content)
-        content = content or ""
-        ParagraphTextBox.Text = content
-    end
-
-    function ParagraphFunc:GetContent()
-        return ParagraphTextBox.Text
-    end
-
-    return ParagraphFunc
-end
-
-function Elements:CreatePanel(parent, config, countItem)
     config = config or {}
     config.Title = config.Title or "Title"
     config.Content = config.Content or ""
