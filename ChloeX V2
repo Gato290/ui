@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.6
+local HttpService = game:GetService("HttpService") -- V0.0.5
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -498,7 +498,7 @@ end
 -- Variable untuk menyimpan dialog aktif
 local ActiveDialog = nil
 
--- Fungsi untuk membuat dialog dengan blur pada DropShadowHolder
+-- Fungsi untuk membuat dialog (DESAIN LAMA dengan overlay transparan)
 function Chloex:Dialog(DialogConfig)
     DialogConfig = DialogConfig or {}
     DialogConfig.Title = DialogConfig.Title or "Dialog"
@@ -518,55 +518,37 @@ function Chloex:Dialog(DialogConfig)
     DialogGui.Name = "DialogGui"
     DialogGui.Parent = CoreGui
     
-    -- Overlay dengan blur effect (menggunakan ImageLabel untuk blur)
-    local BlurOverlay = Instance.new("ImageLabel")
-    BlurOverlay.Size = UDim2.new(1, 0, 1, 0)
-    BlurOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    BlurOverlay.BackgroundTransparency = 0.3 -- Sedikit gelap
-    BlurOverlay.Image = "rbxassetid://149868374" -- Image dengan blur built-in
-    BlurOverlay.ImageColor3 = Color3.fromRGB(0, 0, 0)
-    BlurOverlay.ImageTransparency = 0.3
-    BlurOverlay.ScaleType = Enum.ScaleType.Slice
-    BlurOverlay.SliceCenter = Rect.new(0, 0, 0, 0)
-    BlurOverlay.ZIndex = 50
-    BlurOverlay.Name = "BlurOverlay"
-    BlurOverlay.Parent = DialogGui
+    -- Overlay transparan (tanpa background gelap)
+    local Overlay = Instance.new("Frame")
+    Overlay.Size = UDim2.new(1, 0, 1, 0)
+    Overlay.BackgroundTransparency = 1 -- Transparan penuh
+    Overlay.ZIndex = 50
+    Overlay.Name = "Overlay"
+    Overlay.Parent = DialogGui
     
-    -- Tambahkan Frame transparan untuk efek gelap tambahan (opsional)
-    local DarkOverlay = Instance.new("Frame")
-    DarkOverlay.Size = UDim2.new(1, 0, 1, 0)
-    DarkOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    DarkOverlay.BackgroundTransparency = 0.5
-    DarkOverlay.BorderSizePixel = 0
-    DarkOverlay.ZIndex = 51
-    DarkOverlay.Name = "DarkOverlay"
-    DarkOverlay.Parent = DialogGui
-    
-    -- Dialog container (menggunakan ImageLabel)
+    -- Dialog container (menggunakan ImageLabel seperti desain lama)
     local Dialog = Instance.new("ImageLabel")
     Dialog.Size = UDim2.new(0, 300, 0, 150)
     Dialog.Position = UDim2.new(0.5, -150, 0.5, -75)
     Dialog.Image = "rbxassetid://9542022979"
     Dialog.ImageTransparency = 0
     Dialog.BorderSizePixel = 0
-    Dialog.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    Dialog.BackgroundTransparency = 0.2
-    Dialog.ZIndex = 52
-    Dialog.Parent = DialogGui
+    Dialog.ZIndex = 51
+    Dialog.Parent = Overlay
     
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 8)
     UICorner.Parent = Dialog
     
-    -- Glow effect
+    -- Glow effect (tetap ada)
     local DialogGlow = Instance.new("Frame")
     DialogGlow.Size = UDim2.new(0, 310, 0, 160)
     DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80)
     DialogGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DialogGlow.BackgroundTransparency = 0.75
     DialogGlow.BorderSizePixel = 0
-    DialogGlow.ZIndex = 51
-    DialogGlow.Parent = DialogGui
+    DialogGlow.ZIndex = 50
+    DialogGlow.Parent = Overlay
     
     local GlowCorner = Instance.new("UICorner")
     GlowCorner.CornerRadius = UDim.new(0, 10)
@@ -574,11 +556,11 @@ function Chloex:Dialog(DialogConfig)
     
     local Gradient = Instance.new("UIGradient")
     Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, getColor(DialogConfig.Color or "Default") or Color3.fromRGB(0, 191, 255)),
+        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(0, 191, 255)),
         ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, getColor(DialogConfig.Color or "Default") or Color3.fromRGB(0, 140, 255)),
+        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 140, 255)),
         ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1.0, getColor(DialogConfig.Color or "Default") or Color3.fromRGB(0, 191, 255))
+        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(0, 191, 255))
     })
     Gradient.Rotation = 90
     Gradient.Parent = DialogGlow
@@ -592,7 +574,7 @@ function Chloex:Dialog(DialogConfig)
     Title.Text = DialogConfig.Title
     Title.TextSize = 22
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-    Title.ZIndex = 53
+    Title.ZIndex = 52
     Title.Parent = Dialog
     
     -- Content
@@ -605,7 +587,7 @@ function Chloex:Dialog(DialogConfig)
     Message.TextSize = 14
     Message.TextColor3 = Color3.fromRGB(200, 200, 200)
     Message.TextWrapped = true
-    Message.ZIndex = 53
+    Message.ZIndex = 52
     Message.Parent = Dialog
     
     -- Buat buttons berdasarkan konfigurasi
@@ -626,7 +608,7 @@ function Chloex:Dialog(DialogConfig)
         Button.TextSize = 15
         Button.TextColor3 = Color3.fromRGB(255, 255, 255)
         Button.TextTransparency = 0.3
-        Button.ZIndex = 53
+        Button.ZIndex = 52
         Button.Name = "DialogButton_" .. i
         Button.Parent = Dialog
         
