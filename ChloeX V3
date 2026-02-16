@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.3
+local HttpService = game:GetService("HttpService") -- V0.0.4
 
 -- Load Elements Module
 local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
@@ -44,32 +44,24 @@ local function getIconId(iconName)
     return ""
 end
 
-if not isfolder("NexaHub") then
-    makefolder("NexaHub")
-end
-if not isfolder("NexaHub/Config") then
-    makefolder("NexaHub/Config")
-end
-
-local gameName   = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-gameName         = gameName:gsub("[^%w_ ]", "")
-gameName         = gameName:gsub("%s+", "_")
-
-local ConfigFile = "NexaHub/Config/CHX_" .. gameName .. ".json"
-
-ConfigData       = {}
-Elements         = {}
-CURRENT_VERSION  = nil
+-- Variables that will be set when window is created
+local ConfigFolder = "NexaHub"  -- Default folder name
+local ConfigFile = ""
+local ConfigData = {}
+local Elements = {}
+local CURRENT_VERSION = nil
+local AUTO_SAVE = false
+local AUTO_LOAD = false
 
 function SaveConfig()
-    if writefile then
+    if writefile and ConfigFile ~= "" then
         ConfigData._version = CURRENT_VERSION
         writefile(ConfigFile, HttpService:JSONEncode(ConfigData))
     end
 end
 
 function LoadConfigFromFile()
-    if not CURRENT_VERSION then return end
+    if not CURRENT_VERSION or ConfigFile == "" then return end
     if isfile and isfile(ConfigFile) then
         local success, result = pcall(function()
             return HttpService:JSONDecode(readfile(ConfigFile))
@@ -483,9 +475,44 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Color        = GuiConfig.Color or Color3.fromRGB(255, 0, 255)
     GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
     GuiConfig.Version      = GuiConfig.Version or 1
+    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0 -- Default to 0 (solid)
+    GuiConfig.Image        = GuiConfig.Image or "70884221600423"
+    
+    -- Get Configname or use default
+    GuiConfig.Configname = GuiConfig.Configname or "NexaHub"
+    
+    -- Config settings
+    GuiConfig.Config = GuiConfig.Config or {}
+    GuiConfig.Config.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
+    GuiConfig.Config.AutoLoad = GuiConfig.Config.AutoLoad ~= nil and GuiConfig.Config.AutoLoad or true
 
     CURRENT_VERSION        = GuiConfig.Version
-    LoadConfigFromFile()
+    AUTO_SAVE              = GuiConfig.Config.AutoSave
+    AUTO_LOAD              = GuiConfig.Config.AutoLoad
+    
+    -- Set ConfigFolder and ConfigFile based on Configname
+    ConfigFolder = GuiConfig.Configname
+    
+    -- Create folders with Configname
+    if not isfolder(ConfigFolder) then
+        makefolder(ConfigFolder)
+    end
+    if not isfolder(ConfigFolder .. "/Config") then
+        makefolder(ConfigFolder .. "/Config")
+    end
+
+    -- Get game name for config file
+    local gameName = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
+    gameName = gameName:gsub("[^%w_ ]", "")
+    gameName = gameName:gsub("%s+", "_")
+
+    -- Set ConfigFile path using Configname
+    ConfigFile = ConfigFolder .. "/Config/CHX_" .. gameName .. ".json"
+    
+    -- Load config if AutoLoad is enabled
+    if AUTO_LOAD then
+        LoadConfigFromFile()
+    end
 
     -- Initialize Elements Module with required data
     ElementsModule:Initialize(GuiConfig, SaveConfig, ConfigData, Icons)
@@ -555,10 +582,10 @@ function Chloex:Window(GuiConfig)
         Main.Image = "rbxassetid://" .. GuiConfig.Theme
         Main.ScaleType = Enum.ScaleType.Crop
         Main.BackgroundTransparency = 1
-        Main.ImageTransparency = GuiConfig.ThemeTransparency or 0.15
+        Main.ImageTransparency = GuiConfig.ThemeTransparency or GuiConfig.Uitransparent or 0.15
     else
         Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Main.BackgroundTransparency = 0
+        Main.BackgroundTransparency = GuiConfig.Uitransparent or 0
     end
 
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -811,12 +838,13 @@ function Chloex:Window(GuiConfig)
         Gradient.Rotation = 90
         Gradient.Parent = DialogGlow
 
+        -- PERBAIKAN: Gunakan GuiConfig.Configname bukan hardcoded "NexaHub"
         local Title = Instance.new("TextLabel")
         Title.Size = UDim2.new(1, 0, 0, 40)
         Title.Position = UDim2.new(0, 0, 0, 4)
         Title.BackgroundTransparency = 1
         Title.Font = Enum.Font.GothamBold
-        Title.Text = "NexaHub Window"
+        Title.Text = GuiConfig.Configname .. " Window"
         Title.TextSize = 22
         Title.TextColor3 = Color3.fromRGB(255, 255, 255)
         Title.ZIndex = 52
