@@ -495,7 +495,7 @@ function Nt(msg, delay, color, title, desc)
     })
 end
 
--- Fungsi untuk membuat dialog (DIPERBAIKI)
+-- Fungsi untuk membuat dialog (DIPERBAIKI - MODERN DESIGN)
 function Chloex:Dialog(DialogConfig)
     DialogConfig = DialogConfig or {}
     DialogConfig.Title = DialogConfig.Title or "Dialog"
@@ -514,17 +514,17 @@ function Chloex:Dialog(DialogConfig)
     local Overlay = Instance.new("Frame")
     Overlay.Size = UDim2.new(1, 0, 1, 0)
     Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Overlay.BackgroundTransparency = 0.5
+    Overlay.BackgroundTransparency = 0.3
     Overlay.ZIndex = 100
     Overlay.Name = "Overlay"
     Overlay.Parent = DialogGui
     
     -- Container dialog
     local DialogContainer = Instance.new("Frame")
-    DialogContainer.Size = UDim2.new(0, 350, 0, 200)
-    DialogContainer.Position = UDim2.new(0.5, -175, 0.5, -100)
-    DialogContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-    DialogContainer.BackgroundTransparency = 0.1
+    DialogContainer.Size = UDim2.new(0, 280, 0, 180)
+    DialogContainer.Position = UDim2.new(0.5, -140, 0.5, -90)
+    DialogContainer.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+    DialogContainer.BackgroundTransparency = 0
     DialogContainer.BorderSizePixel = 0
     DialogContainer.ZIndex = 101
     DialogContainer.Name = "DialogContainer"
@@ -532,70 +532,52 @@ function Chloex:Dialog(DialogConfig)
     
     -- Corner untuk dialog
     local DialogCorner = Instance.new("UICorner")
-    DialogCorner.CornerRadius = UDim.new(0, 8)
+    DialogCorner.CornerRadius = UDim.new(0, 10)
     DialogCorner.Parent = DialogContainer
-    
-    -- Stroke untuk border
-    local DialogStroke = Instance.new("UIStroke")
-    DialogStroke.Color = DialogConfig.Color
-    DialogStroke.Thickness = 2
-    DialogStroke.Transparency = 0.5
-    DialogStroke.Parent = DialogContainer
     
     -- Title dialog
     local DialogTitle = Instance.new("TextLabel")
-    DialogTitle.Size = UDim2.new(1, -20, 0, 30)
-    DialogTitle.Position = UDim2.new(0, 10, 0, 10)
+    DialogTitle.Size = UDim2.new(1, -30, 0, 25)
+    DialogTitle.Position = UDim2.new(0, 15, 0, 15)
     DialogTitle.BackgroundTransparency = 1
     DialogTitle.Font = Enum.Font.GothamBold
     DialogTitle.Text = DialogConfig.Title
-    DialogTitle.TextColor3 = DialogConfig.Color
-    DialogTitle.TextSize = 18
-    DialogTitle.TextXAlignment = Enum.TextXAlignment.Left
+    DialogTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+    DialogTitle.TextSize = 16
+    DialogTitle.TextXAlignment = Enum.TextXAlignment.Center
+    DialogTitle.TextYAlignment = Enum.TextYAlignment.Top
     DialogTitle.ZIndex = 102
     DialogTitle.Parent = DialogContainer
     
-    -- Description dialog
-    local DialogDesc = Instance.new("TextLabel")
-    DialogDesc.Size = UDim2.new(1, -20, 0, 20)
-    DialogDesc.Position = UDim2.new(0, 10, 0, 40)
-    DialogDesc.BackgroundTransparency = 1
-    DialogDesc.Font = Enum.Font.Gotham
-    DialogDesc.Text = DialogConfig.Description
-    DialogDesc.TextColor3 = Color3.fromRGB(200, 200, 200)
-    DialogDesc.TextSize = 14
-    DialogDesc.TextXAlignment = Enum.TextXAlignment.Left
-    DialogDesc.ZIndex = 102
-    DialogDesc.Parent = DialogContainer
-    
-    -- Content dialog (optional)
+    -- Content/Description dialog
     local DialogContent = Instance.new("TextLabel")
-    DialogContent.Size = UDim2.new(1, -20, 0, 60)
-    DialogContent.Position = UDim2.new(0, 10, 0, 60)
+    DialogContent.Size = UDim2.new(1, -30, 0, 70)
+    DialogContent.Position = UDim2.new(0, 15, 0, 45)
     DialogContent.BackgroundTransparency = 1
     DialogContent.Font = Enum.Font.Gotham
-    DialogContent.Text = DialogConfig.Content
-    DialogContent.TextColor3 = Color3.fromRGB(150, 150, 150)
+    DialogContent.Text = DialogConfig.Content ~= "" and DialogConfig.Content or DialogConfig.Description
+    DialogContent.TextColor3 = Color3.fromRGB(180, 180, 180)
     DialogContent.TextSize = 13
     DialogContent.TextWrapped = true
-    DialogContent.TextXAlignment = Enum.TextXAlignment.Left
+    DialogContent.TextXAlignment = Enum.TextXAlignment.Center
     DialogContent.TextYAlignment = Enum.TextYAlignment.Top
     DialogContent.ZIndex = 102
     DialogContent.Parent = DialogContainer
     
     -- Frame untuk buttons
     local ButtonFrame = Instance.new("Frame")
-    ButtonFrame.Size = UDim2.new(1, -20, 0, 35)
-    ButtonFrame.Position = UDim2.new(0, 10, 1, -45)
+    ButtonFrame.Size = UDim2.new(1, 0, 0, 60)
+    ButtonFrame.Position = UDim2.new(0, 0, 1, -60)
     ButtonFrame.BackgroundTransparency = 1
     ButtonFrame.ZIndex = 102
     ButtonFrame.Name = "ButtonFrame"
     ButtonFrame.Parent = DialogContainer
     
-    -- Layout untuk buttons
+    -- Layout untuk buttons (vertikal seperti gambar)
     local ButtonLayout = Instance.new("UIListLayout")
-    ButtonLayout.FillDirection = Enum.FillDirection.Horizontal
-    ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Right
+    ButtonLayout.FillDirection = Enum.FillDirection.Vertical
+    ButtonLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+    ButtonLayout.VerticalAlignment = Enum.VerticalAlignment.Center
     ButtonLayout.SortOrder = Enum.SortOrder.LayoutOrder
     ButtonLayout.Padding = UDim.new(0, 8)
     ButtonLayout.Parent = ButtonFrame
@@ -603,28 +585,34 @@ function Chloex:Dialog(DialogConfig)
     -- Buat buttons berdasarkan konfigurasi
     for i, buttonConfig in ipairs(DialogConfig.Buttons) do
         local Button = Instance.new("TextButton")
-        Button.Size = UDim2.new(0, 80, 1, 0)
-        Button.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-        Button.BackgroundTransparency = 0.3
+        Button.Size = UDim2.new(1, -30, 0, 22)
+        Button.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+        Button.BackgroundTransparency = 0
         Button.Text = buttonConfig.Name or "Button"
-        Button.Font = Enum.Font.GothamBold
-        Button.TextSize = 14
-        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+        Button.Font = Enum.Font.Gotham
+        Button.TextSize = 13
+        Button.TextColor3 = Color3.fromRGB(200, 200, 200)
         Button.ZIndex = 103
+        Button.LayoutOrder = i
         Button.Name = "DialogButton_" .. i
+        Button.AutoButtonColor = false
         Button.Parent = ButtonFrame
         
         local ButtonCorner = Instance.new("UICorner")
-        ButtonCorner.CornerRadius = UDim.new(0, 4)
+        ButtonCorner.CornerRadius = UDim.new(0, 6)
         ButtonCorner.Parent = Button
         
         -- Hover effect
         Button.MouseEnter:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), { BackgroundTransparency = 0.1 }):Play()
+            TweenService:Create(Button, TweenInfo.new(0.2), { 
+                BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            }):Play()
         end)
         
         Button.MouseLeave:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), { BackgroundTransparency = 0.3 }):Play()
+            TweenService:Create(Button, TweenInfo.new(0.2), { 
+                BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+            }):Play()
         end)
         
         -- Click handler dengan pcall untuk error handling
@@ -642,45 +630,31 @@ function Chloex:Dialog(DialogConfig)
             
             -- Close dialog after button click
             pcall(function()
+                TweenService:Create(DialogContainer, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    Size = UDim2.new(0, 0, 0, 0),
+                    Position = UDim2.new(0.5, 0, 0.5, 0)
+                }):Play()
+                TweenService:Create(Overlay, TweenInfo.new(0.2), {
+                    BackgroundTransparency = 1
+                }):Play()
+                task.wait(0.2)
                 DialogGui:Destroy()
             end)
         end)
     end
     
-    -- Close button (X)
-    local CloseButton = Instance.new("TextButton")
-    CloseButton.Size = UDim2.new(0, 25, 0, 25)
-    CloseButton.Position = UDim2.new(1, -30, 0, 5)
-    CloseButton.BackgroundTransparency = 1
-    CloseButton.Text = ""
-    CloseButton.ZIndex = 103
-    CloseButton.Name = "CloseButton"
-    CloseButton.Parent = DialogContainer
-    
-    local CloseIcon = Instance.new("ImageLabel")
-    CloseIcon.Image = "rbxassetid://9886659671"
-    CloseIcon.Size = UDim2.new(1, -6, 1, -6)
-    CloseIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-    CloseIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-    CloseIcon.BackgroundTransparency = 1
-    CloseIcon.ZIndex = 104
-    CloseIcon.Parent = CloseButton
-    
-    CloseButton.MouseButton1Click:Connect(function()
-        pcall(function()
-            CircleClick(CloseButton, Mouse.X, Mouse.Y)
-        end)
-        pcall(function()
-            DialogGui:Destroy()
-        end)
-    end)
-    
-    -- Animation
+    -- Animation masuk
     DialogContainer.Size = UDim2.new(0, 0, 0, 0)
     DialogContainer.Position = UDim2.new(0.5, 0, 0.5, 0)
+    Overlay.BackgroundTransparency = 1
+    
+    TweenService:Create(Overlay, TweenInfo.new(0.2), {
+        BackgroundTransparency = 0.3
+    }):Play()
+    
     TweenService:Create(DialogContainer, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 350, 0, 200),
-        Position = UDim2.new(0.5, -175, 0.5, -100)
+        Size = UDim2.new(0, 280, 0, 180),
+        Position = UDim2.new(0.5, -140, 0.5, -90)
     }):Play()
     
     return DialogGui
