@@ -1565,4 +1565,4 @@ function Elements:CreateSubSection(parent, title, countItem)
     return SubSection
 end
 
-return ElementsModule
+return Elements
