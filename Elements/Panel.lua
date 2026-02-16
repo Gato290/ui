@@ -1,40 +1,46 @@
-return function(PanelConfig, ctx)
-    PanelConfig = PanelConfig or {}
-    PanelConfig.Title = PanelConfig.Title or "Title"
-    PanelConfig.Content = PanelConfig.Content or ""
-    PanelConfig.Placeholder = PanelConfig.Placeholder or nil
-    PanelConfig.Default = PanelConfig.Default or ""
-    PanelConfig.ButtonText = PanelConfig.Button or PanelConfig.ButtonText or "Confirm"
-    PanelConfig.ButtonCallback = PanelConfig.Callback or PanelConfig.ButtonCallback or function() end
-    PanelConfig.SubButtonText = PanelConfig.SubButton or PanelConfig.SubButtonText or nil
-    PanelConfig.SubButtonCallback = PanelConfig.SubCallback or PanelConfig.SubButtonCallback or
-        function() end
+-- panel.lua
+local TweenService = game:GetService("TweenService")
 
-    local configKey = "Panel_" .. PanelConfig.Title
-    if ctx.ConfigData[configKey] ~= nil then
-        PanelConfig.Default = ctx.ConfigData[configKey]
+local PanelModule = {}
+
+local MainColor = Color3.fromRGB(255, 0, 255)
+local SaveConfigFunc = function() end
+local ConfigData = {}
+
+function PanelModule.Initialize(color, saveFunc, config)
+    MainColor = color or MainColor
+    SaveConfigFunc = saveFunc or function() end
+    ConfigData = config or {}
+end
+
+function PanelModule.Create(parent, config, countItem, updateSizeCallback, saveConfig, configData)
+    config = config or {}
+    config.Title = config.Title or "Title"
+    config.Content = config.Content or ""
+    config.Placeholder = config.Placeholder or nil
+    config.Default = config.Default or ""
+    config.ButtonText = config.Button or config.ButtonText or "Confirm"
+    config.ButtonCallback = config.Callback or config.ButtonCallback or function() end
+    config.SubButtonText = config.SubButton or config.SubButtonText or nil
+    config.SubButtonCallback = config.SubCallback or config.SubButtonCallback or function() end
+
+    local configKey = "Panel_" .. config.Title
+    if configData and configData[configKey] ~= nil then
+        config.Default = configData[configKey]
     end
 
-    local PanelFunc = { Value = PanelConfig.Default, key = configKey }
+    local PanelFunc = { Value = config.Default }
 
     local baseHeight = 50
-
-    if PanelConfig.Placeholder then
-        baseHeight = baseHeight + 40
-    end
-
-    if PanelConfig.SubButtonText then
-        baseHeight = baseHeight + 40
-    else
-        baseHeight = baseHeight + 36
-    end
+    if config.Placeholder then baseHeight = baseHeight + 40 end
+    if config.SubButtonText then baseHeight = baseHeight + 40 else baseHeight = baseHeight + 36 end
 
     local Panel = Instance.new("Frame")
     Panel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Panel.BackgroundTransparency = 0.935
     Panel.Size = UDim2.new(1, 0, 0, baseHeight)
-    Panel.LayoutOrder = ctx.CountItem()
-    Panel.Parent = ctx.SectionAdd
+    Panel.LayoutOrder = countItem
+    Panel.Parent = parent
 
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 4)
@@ -42,7 +48,7 @@ return function(PanelConfig, ctx)
 
     local Title = Instance.new("TextLabel")
     Title.Font = Enum.Font.GothamBold
-    Title.Text = PanelConfig.Title
+    Title.Text = config.Title
     Title.TextSize = 13
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextXAlignment = Enum.TextXAlignment.Left
@@ -53,7 +59,7 @@ return function(PanelConfig, ctx)
 
     local Content = Instance.new("TextLabel")
     Content.Font = Enum.Font.Gotham
-    Content.Text = PanelConfig.Content
+    Content.Text = config.Content
     Content.TextSize = 12
     Content.TextColor3 = Color3.fromRGB(255, 255, 255)
     Content.TextTransparency = 0
@@ -65,7 +71,7 @@ return function(PanelConfig, ctx)
     Content.Parent = Panel
 
     local InputBox
-    if PanelConfig.Placeholder then
+    if config.Placeholder then
         local InputFrame = Instance.new("Frame")
         InputFrame.AnchorPoint = Vector2.new(0.5, 0)
         InputFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -80,9 +86,9 @@ return function(PanelConfig, ctx)
 
         InputBox = Instance.new("TextBox")
         InputBox.Font = Enum.Font.GothamBold
-        InputBox.PlaceholderText = PanelConfig.Placeholder
+        InputBox.PlaceholderText = config.Placeholder
         InputBox.PlaceholderColor3 = Color3.fromRGB(120, 120, 120)
-        InputBox.Text = PanelConfig.Default
+        InputBox.Text = config.Default
         InputBox.TextSize = 11
         InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
         InputBox.BackgroundTransparency = 1
@@ -92,22 +98,17 @@ return function(PanelConfig, ctx)
         InputBox.Parent = InputFrame
     end
 
-    local yBtn = 0
-    if PanelConfig.Placeholder then
-        yBtn = 88
-    else
-        yBtn = 48
-    end
+    local yBtn = config.Placeholder and 88 or 48
 
     local ButtonMain = Instance.new("TextButton")
     ButtonMain.Font = Enum.Font.GothamBold
-    ButtonMain.Text = PanelConfig.ButtonText
+    ButtonMain.Text = config.ButtonText
     ButtonMain.TextColor3 = Color3.fromRGB(255, 255, 255)
     ButtonMain.TextSize = 12
     ButtonMain.TextTransparency = 0.3
     ButtonMain.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     ButtonMain.BackgroundTransparency = 0.935
-    ButtonMain.Size = PanelConfig.SubButtonText and UDim2.new(0.5, -12, 0, 30) or UDim2.new(1, -20, 0, 30)
+    ButtonMain.Size = config.SubButtonText and UDim2.new(0.5, -12, 0, 30) or UDim2.new(1, -20, 0, 30)
     ButtonMain.Position = UDim2.new(0, 10, 0, yBtn)
     ButtonMain.Parent = Panel
 
@@ -116,13 +117,13 @@ return function(PanelConfig, ctx)
     btnCorner.Parent = ButtonMain
 
     ButtonMain.MouseButton1Click:Connect(function()
-        PanelConfig.ButtonCallback(InputBox and InputBox.Text or "")
+        config.ButtonCallback(InputBox and InputBox.Text or "")
     end)
 
-    if PanelConfig.SubButtonText then
+    if config.SubButtonText then
         local SubButton = Instance.new("TextButton")
         SubButton.Font = Enum.Font.GothamBold
-        SubButton.Text = PanelConfig.SubButtonText
+        SubButton.Text = config.SubButtonText
         SubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         SubButton.TextSize = 12
         SubButton.TextTransparency = 0.3
@@ -137,15 +138,15 @@ return function(PanelConfig, ctx)
         subCorner.Parent = SubButton
 
         SubButton.MouseButton1Click:Connect(function()
-            PanelConfig.SubButtonCallback(InputBox and InputBox.Text or "")
+            config.SubButtonCallback(InputBox and InputBox.Text or "")
         end)
     end
 
     if InputBox then
         InputBox.FocusLost:Connect(function()
             PanelFunc.Value = InputBox.Text
-            ctx.ConfigData[configKey] = InputBox.Text
-            ctx.SaveConfig()
+            configData[configKey] = InputBox.Text
+            SaveConfigFunc()
         end)
     end
 
@@ -155,3 +156,5 @@ return function(PanelConfig, ctx)
 
     return PanelFunc
 end
+
+return PanelModule
