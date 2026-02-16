@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.5 new
+local HttpService = game:GetService("HttpService") -- V0.0.5
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -729,15 +729,55 @@ function Chloex:Window(GuiConfig)
     UICorner2.CornerRadius = UDim.new(0, 2)
     UICorner2.Parent = LayersTab
 
-    -- User Info inside LayersTab (if ShowUser is enabled)
+    -- ScrollTab for tabs (will be positioned above user info if ShowUser is enabled)
+    local ScrollTab = Instance.new("ScrollingFrame");
+    local UIListLayout = Instance.new("UIListLayout");
+
+    ScrollTab.CanvasSize = UDim2.new(0, 0, 1.10000002, 0)
+    ScrollTab.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
+    ScrollTab.ScrollBarThickness = 0
+    ScrollTab.Active = true
+    ScrollTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    ScrollTab.BackgroundTransparency = 0.9990000128746033
+    ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ScrollTab.BorderSizePixel = 0
+    
+    if GuiConfig.ShowUser then
+        ScrollTab.Position = UDim2.new(0, 0, 0, 0)
+        ScrollTab.Size = UDim2.new(1, 0, 1, -40) -- Beri ruang untuk user info di bawah
+    else
+        ScrollTab.Position = UDim2.new(0, 0, 0, 0)
+        ScrollTab.Size = UDim2.new(1, 0, 1, 0)
+    end
+    
+    ScrollTab.Name = "ScrollTab"
+    ScrollTab.Parent = LayersTab
+
+    UIListLayout.Padding = UDim.new(0, 3)
+    UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    UIListLayout.Parent = ScrollTab
+
+    local function UpdateSize1()
+        local OffsetY = 0
+        for _, child in ScrollTab:GetChildren() do
+            if child.Name ~= "UIListLayout" then
+                OffsetY = OffsetY + 3 + child.Size.Y.Offset
+            end
+        end
+        ScrollTab.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
+    end
+    ScrollTab.ChildAdded:Connect(UpdateSize1)
+    ScrollTab.ChildRemoved:Connect(UpdateSize1)
+
+    -- User Info di bagian bawah LayersTab (jika ShowUser diaktifkan)
     if GuiConfig.ShowUser then
         local UserInfoFrame = Instance.new("Frame")
         UserInfoFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         UserInfoFrame.BackgroundTransparency = 0.3
         UserInfoFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         UserInfoFrame.BorderSizePixel = 0
-        UserInfoFrame.Position = UDim2.new(0, 5, 0, 5)
-        UserInfoFrame.Size = UDim2.new(1, -10, 0, 50)
+        UserInfoFrame.Position = UDim2.new(0, 5, 1, -45) -- Posisi di bawah
+        UserInfoFrame.Size = UDim2.new(1, -10, 0, 40) -- Ukuran lebih kecil (40px)
         UserInfoFrame.Name = "UserInfoFrame"
         UserInfoFrame.Parent = LayersTab
         
@@ -745,14 +785,14 @@ function Chloex:Window(GuiConfig)
         UserInfoCorner.CornerRadius = UDim.new(0, 6)
         UserInfoCorner.Parent = UserInfoFrame
         
-        -- User Avatar
+        -- User Avatar (lebih kecil)
         local Avatar = Instance.new("ImageLabel")
         Avatar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Avatar.BackgroundTransparency = 0.5
         Avatar.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Avatar.BorderSizePixel = 0
-        Avatar.Position = UDim2.new(0, 5, 0.5, -20)
-        Avatar.Size = UDim2.new(0, 40, 0, 40)
+        Avatar.Position = UDim2.new(0, 5, 0.5, -15)
+        Avatar.Size = UDim2.new(0, 30, 0, 30) -- Ukuran avatar lebih kecil
         Avatar.Name = "Avatar"
         Avatar.Parent = UserInfoFrame
         
@@ -773,109 +813,41 @@ function Chloex:Window(GuiConfig)
             Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
         end
         
-        -- Display Name
+        -- Display Name (ukuran font lebih kecil)
         local DisplayName = Instance.new("TextLabel")
         DisplayName.Font = Enum.Font.GothamBold
         DisplayName.Text = LocalPlayer.DisplayName
         DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        DisplayName.TextSize = 14
+        DisplayName.TextSize = 13 -- Ukuran font lebih kecil
         DisplayName.TextXAlignment = Enum.TextXAlignment.Left
         DisplayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         DisplayName.BackgroundTransparency = 1
         DisplayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
         DisplayName.BorderSizePixel = 0
-        DisplayName.Position = UDim2.new(0, 50, 0, 8)
-        DisplayName.Size = UDim2.new(1, -55, 0, 16)
+        DisplayName.Position = UDim2.new(0, 40, 0, 6)
+        DisplayName.Size = UDim2.new(1, -45, 0, 16)
         DisplayName.Name = "DisplayName"
         DisplayName.Parent = UserInfoFrame
         
-        -- Username with @
+        -- Username with @ (ukuran font lebih kecil)
         local Username = Instance.new("TextLabel")
         Username.Font = Enum.Font.Gotham
         Username.Text = "@" .. LocalPlayer.Name
         Username.TextColor3 = Color3.fromRGB(150, 150, 150)
-        Username.TextSize = 12
+        Username.TextSize = 11 -- Ukuran font lebih kecil
         Username.TextXAlignment = Enum.TextXAlignment.Left
         Username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Username.BackgroundTransparency = 1
         Username.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Username.BorderSizePixel = 0
-        Username.Position = UDim2.new(0, 50, 0, 26)
-        Username.Size = UDim2.new(1, -55, 0, 14)
+        Username.Position = UDim2.new(0, 40, 0, 22)
+        Username.Size = UDim2.new(1, -45, 0, 14)
         Username.Name = "Username"
         Username.Parent = UserInfoFrame
-
-        -- Adjust ScrollTab position to make room for user info
-        local ScrollTab = Instance.new("ScrollingFrame");
-        local UIListLayout = Instance.new("UIListLayout");
-
-        ScrollTab.CanvasSize = UDim2.new(0, 0, 1.10000002, 0)
-        ScrollTab.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
-        ScrollTab.ScrollBarThickness = 0
-        ScrollTab.Active = true
-        ScrollTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ScrollTab.BackgroundTransparency = 0.9990000128746033
-        ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        ScrollTab.BorderSizePixel = 0
-        ScrollTab.Position = UDim2.new(0, 0, 0, 60) -- Position below user info
-        ScrollTab.Size = UDim2.new(1, 0, 1, -60)
-        ScrollTab.Name = "ScrollTab"
-        ScrollTab.Parent = LayersTab
-
-        UIListLayout.Padding = UDim.new(0, 3)
-        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout.Parent = ScrollTab
-
-        local function UpdateSize1()
-            local OffsetY = 0
-            for _, child in ScrollTab:GetChildren() do
-                if child.Name ~= "UIListLayout" then
-                    OffsetY = OffsetY + 3 + child.Size.Y.Offset
-                end
-            end
-            ScrollTab.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
-        end
-        ScrollTab.ChildAdded:Connect(UpdateSize1)
-        ScrollTab.ChildRemoved:Connect(UpdateSize1)
-        
-        -- Store ScrollTab for later use
-        _G.ScrollTab = ScrollTab
-    else
-        -- Original ScrollTab without user info
-        local ScrollTab = Instance.new("ScrollingFrame");
-        local UIListLayout = Instance.new("UIListLayout");
-
-        ScrollTab.CanvasSize = UDim2.new(0, 0, 1.10000002, 0)
-        ScrollTab.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
-        ScrollTab.ScrollBarThickness = 0
-        ScrollTab.Active = true
-        ScrollTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ScrollTab.BackgroundTransparency = 0.9990000128746033
-        ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        ScrollTab.BorderSizePixel = 0
-        ScrollTab.Size = UDim2.new(1, 0, 1, 0)
-        ScrollTab.Name = "ScrollTab"
-        ScrollTab.Parent = LayersTab
-
-        UIListLayout.Padding = UDim.new(0, 3)
-        UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-        UIListLayout.Parent = ScrollTab
-
-        local function UpdateSize1()
-            local OffsetY = 0
-            for _, child in ScrollTab:GetChildren() do
-                if child.Name ~= "UIListLayout" then
-                    OffsetY = OffsetY + 3 + child.Size.Y.Offset
-                end
-            end
-            ScrollTab.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
-        end
-        ScrollTab.ChildAdded:Connect(UpdateSize1)
-        ScrollTab.ChildRemoved:Connect(UpdateSize1)
-        
-        -- Store ScrollTab for later use
-        _G.ScrollTab = ScrollTab
     end
+
+    -- Store ScrollTab for later use
+    _G.ScrollTab = ScrollTab
 
     DecideFrame.AnchorPoint = Vector2.new(0.5, 0)
     DecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
