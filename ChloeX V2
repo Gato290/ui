@@ -495,10 +495,11 @@ function Nt(msg, delay, color, title, desc)
     })
 end
 
--- Variable untuk menyimpan dialog aktif
+-- Variable untuk menyimpan dialog aktif dan window reference
 local ActiveDialog = nil
+local WindowReference = nil
 
--- Fungsi untuk membuat dialog (DESAIN LAMA dengan overlay transparan)
+-- Fungsi untuk membuat dialog (DESAIN LAMA dengan efek blur pada window)
 function Chloex:Dialog(DialogConfig)
     DialogConfig = DialogConfig or {}
     DialogConfig.Title = DialogConfig.Title or "Dialog"
@@ -518,13 +519,19 @@ function Chloex:Dialog(DialogConfig)
     DialogGui.Name = "DialogGui"
     DialogGui.Parent = CoreGui
     
-    -- Overlay transparan (tanpa background gelap)
+    -- Overlay untuk menangkap input dan memberikan efek blur
     local Overlay = Instance.new("Frame")
     Overlay.Size = UDim2.new(1, 0, 1, 0)
-    Overlay.BackgroundTransparency = 1 -- Transparan penuh
+    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Overlay.BackgroundTransparency = 0.5 -- Semi transparan untuk efek gelap
     Overlay.ZIndex = 50
     Overlay.Name = "Overlay"
     Overlay.Parent = DialogGui
+    
+    -- Efek blur pada window (menggunakan ImageLabel dengan transparansi)
+    if WindowReference and WindowReference.Parent then
+        WindowReference.BackgroundTransparency = 0.3
+    end
     
     -- Dialog container (menggunakan ImageLabel seperti desain lama)
     local Dialog = Instance.new("ImageLabel")
@@ -540,7 +547,7 @@ function Chloex:Dialog(DialogConfig)
     UICorner.CornerRadius = UDim.new(0, 8)
     UICorner.Parent = Dialog
     
-    -- Glow effect (tetap ada)
+    -- Glow effect
     local DialogGlow = Instance.new("Frame")
     DialogGlow.Size = UDim2.new(0, 310, 0, 160)
     DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80)
@@ -622,6 +629,11 @@ function Chloex:Dialog(DialogConfig)
                 CircleClick(Button, Mouse.X, Mouse.Y)
             end)
             
+            -- Kembalikan efek window
+            if WindowReference and WindowReference.Parent then
+                WindowReference.BackgroundTransparency = 0
+            end
+            
             -- Jalankan callback jika ada
             if buttonConfig.Callback and type(buttonConfig.Callback) == "function" then
                 pcall(function()
@@ -642,7 +654,7 @@ function Chloex:Dialog(DialogConfig)
     -- Simpan dialog aktif
     ActiveDialog = DialogGui
     
-    -- Animasi masuk (optional)
+    -- Animasi masuk
     Dialog.Size = UDim2.new(0, 0, 0, 0)
     Dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
     DialogGlow.Size = UDim2.new(0, 0, 0, 0)
@@ -782,6 +794,9 @@ function Chloex:Window(GuiConfig)
     Main.Size = UDim2.new(1, -47, 1, -47)
     Main.Name = "Main"
     Main.Parent = DropShadow
+
+    -- Simpan reference ke Main untuk efek blur
+    WindowReference = Main
 
     UICorner.Parent = Main
 
@@ -1097,6 +1112,8 @@ function Chloex:Window(GuiConfig)
                         if game.CoreGui:FindFirstChild("ToggleUIButton") then
                             game.CoreGui.ToggleUIButton:Destroy()
                         end
+                        -- Reset window reference
+                        WindowReference = nil
                     end
                 },
                 {
