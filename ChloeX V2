@@ -495,7 +495,7 @@ function Nt(msg, delay, color, title, desc)
     })
 end
 
--- Fungsi untuk membuat dialog
+-- Fungsi untuk membuat dialog (DIPERBAIKI)
 function Chloex:Dialog(DialogConfig)
     DialogConfig = DialogConfig or {}
     DialogConfig.Title = DialogConfig.Title or "Dialog"
@@ -601,7 +601,6 @@ function Chloex:Dialog(DialogConfig)
     ButtonLayout.Parent = ButtonFrame
     
     -- Buat buttons berdasarkan konfigurasi
-    local ButtonCount = #DialogConfig.Buttons
     for i, buttonConfig in ipairs(DialogConfig.Buttons) do
         local Button = Instance.new("TextButton")
         Button.Size = UDim2.new(0, 80, 1, 0)
@@ -628,14 +627,23 @@ function Chloex:Dialog(DialogConfig)
             TweenService:Create(Button, TweenInfo.new(0.2), { BackgroundTransparency = 0.3 }):Play()
         end)
         
-        -- Click handler
+        -- Click handler dengan pcall untuk error handling
         Button.MouseButton1Click:Connect(function()
-            CircleClick(Button, Mouse.X, Mouse.Y)
-            if buttonConfig.Callback then
-                buttonConfig.Callback()
+            pcall(function()
+                CircleClick(Button, Mouse.X, Mouse.Y)
+            end)
+            
+            -- Jalankan callback jika ada
+            if buttonConfig.Callback and type(buttonConfig.Callback) == "function" then
+                pcall(function()
+                    buttonConfig.Callback()
+                end)
             end
-            -- Close dialog after button click (unless it's a cancel button with no callback?)
-            DialogGui:Destroy()
+            
+            -- Close dialog after button click
+            pcall(function()
+                DialogGui:Destroy()
+            end)
         end)
     end
     
@@ -659,8 +667,12 @@ function Chloex:Dialog(DialogConfig)
     CloseIcon.Parent = CloseButton
     
     CloseButton.MouseButton1Click:Connect(function()
-        CircleClick(CloseButton, Mouse.X, Mouse.Y)
-        DialogGui:Destroy()
+        pcall(function()
+            CircleClick(CloseButton, Mouse.X, Mouse.Y)
+        end)
+        pcall(function()
+            DialogGui:Destroy()
+        end)
     end)
     
     -- Animation
