@@ -495,12 +495,22 @@ function Nt(msg, delay, color, title, desc)
     })
 end
 
--- Fungsi untuk membuat dialog (DESAIN LAMA seperti tutup window)
+-- Variable untuk menyimpan dialog aktif
+local ActiveDialog = nil
+
+-- Fungsi untuk membuat dialog (DESAIN LAMA dengan overlay transparan)
 function Chloex:Dialog(DialogConfig)
     DialogConfig = DialogConfig or {}
     DialogConfig.Title = DialogConfig.Title or "Dialog"
     DialogConfig.Content = DialogConfig.Content or ""
     DialogConfig.Buttons = DialogConfig.Buttons or {}
+    
+    -- Hapus dialog yang sudah ada (anti-spam)
+    if ActiveDialog and ActiveDialog.Parent then
+        pcall(function()
+            ActiveDialog:Destroy()
+        end)
+    end
     
     -- Buat ScreenGui untuk dialog
     local DialogGui = Instance.new("ScreenGui")
@@ -508,11 +518,10 @@ function Chloex:Dialog(DialogConfig)
     DialogGui.Name = "DialogGui"
     DialogGui.Parent = CoreGui
     
-    -- Overlay untuk background gelap
+    -- Overlay transparan (tanpa background gelap)
     local Overlay = Instance.new("Frame")
     Overlay.Size = UDim2.new(1, 0, 1, 0)
-    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Overlay.BackgroundTransparency = 0.3
+    Overlay.BackgroundTransparency = 1 -- Transparan penuh
     Overlay.ZIndex = 50
     Overlay.Name = "Overlay"
     Overlay.Parent = DialogGui
@@ -531,7 +540,7 @@ function Chloex:Dialog(DialogConfig)
     UICorner.CornerRadius = UDim.new(0, 8)
     UICorner.Parent = Dialog
     
-    -- Glow effect
+    -- Glow effect (tetap ada)
     local DialogGlow = Instance.new("Frame")
     DialogGlow.Size = UDim2.new(0, 310, 0, 160)
     DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80)
@@ -620,12 +629,34 @@ function Chloex:Dialog(DialogConfig)
                 end)
             end
             
-            -- Close dialog
+            -- Close dialog (hapus GUI)
             pcall(function()
-                Overlay:Destroy()
+                DialogGui:Destroy()
+                if ActiveDialog == DialogGui then
+                    ActiveDialog = nil
+                end
             end)
         end)
     end
+    
+    -- Simpan dialog aktif
+    ActiveDialog = DialogGui
+    
+    -- Animasi masuk (optional)
+    Dialog.Size = UDim2.new(0, 0, 0, 0)
+    Dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
+    DialogGlow.Size = UDim2.new(0, 0, 0, 0)
+    DialogGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
+    
+    TweenService:Create(Dialog, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 300, 0, 150),
+        Position = UDim2.new(0.5, -150, 0.5, -75)
+    }):Play()
+    
+    TweenService:Create(DialogGlow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+        Size = UDim2.new(0, 310, 0, 160),
+        Position = UDim2.new(0.5, -155, 0.5, -80)
+    }):Play()
     
     return DialogGui
 end
@@ -1071,7 +1102,7 @@ function Chloex:Window(GuiConfig)
                 {
                     Name = "Cancel",
                     Callback = function()
-                        -- Dialog will auto-close
+                        -- Dialog akan otomatis tertutup
                     end
                 }
             }
