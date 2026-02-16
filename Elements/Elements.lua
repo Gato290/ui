@@ -1,4 +1,4 @@
--- Elements.lua V0.0.4
+-- Elements.lua V0.0.5
 -- UI Elements Module for NexaHub
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -15,6 +15,62 @@ function Elements:Initialize(config, saveFunc, configData, icons)
     SaveConfig = saveFunc
     ConfigData = configData
     Icons = icons
+end
+
+-- Helper function untuk animasi button click
+local function AddButtonHighlight(button, config)
+    config = config or {}
+    local highlightColor = config.HighlightColor or GuiConfig.Color
+    local duration = config.Duration or 0.15
+    local scale = config.Scale or 0.95
+    
+    button.MouseButton1Click:Connect(function()
+        -- Animasi press (mengecil)
+        local pressTween = TweenService:Create(button, TweenInfo.new(duration/2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+            Size = UDim2.new(button.Size.X.Scale * scale, button.Size.X.Offset * scale, 
+                           button.Size.Y.Scale * scale, button.Size.Y.Offset * scale),
+            BackgroundTransparency = button.BackgroundTransparency + 0.1
+        })
+        pressTween:Play()
+        
+        -- Animasi release (kembali ke ukuran normal dengan efek highlight)
+        pressTween.Completed:Connect(function()
+            local releaseTween = TweenService:Create(button, TweenInfo.new(duration/2, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                Size = button.Size,
+                BackgroundTransparency = button.BackgroundTransparency
+            })
+            releaseTween:Play()
+            
+            -- Efek highlight kilatan
+            local originalColor = button.BackgroundColor3
+            local highlightTween = TweenService:Create(button, TweenInfo.new(duration/2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                BackgroundColor3 = highlightColor
+            })
+            highlightTween:Play()
+            
+            highlightTween.Completed:Connect(function()
+                local revertColor = TweenService:Create(button, TweenInfo.new(duration/2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                    BackgroundColor3 = originalColor
+                })
+                revertColor:Play()
+            end)
+        end)
+    end)
+    
+    -- Hover effects
+    button.MouseEnter:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundTransparency = button.BackgroundTransparency - 0.1,
+            TextTransparency = button.TextTransparency - 0.1
+        }):Play()
+    end)
+    
+    button.MouseLeave:Connect(function()
+        TweenService:Create(button, TweenInfo.new(0.2), {
+            BackgroundTransparency = button.BackgroundTransparency + 0.1,
+            TextTransparency = button.TextTransparency + 0.1
+        }):Play()
+    end)
 end
 
 --[[
@@ -81,7 +137,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.BackgroundTransparency = 1
     ParagraphContent.Position = UDim2.new(0, iconOffset, 0, 25)
     ParagraphContent.Name = "ParagraphContent"
-    ParagraphContent.TextWrapped = true  -- FIX: Enable text wrapping
+    ParagraphContent.TextWrapped = true
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
@@ -104,6 +160,13 @@ function Elements:CreateParagraph(parent, config, countItem)
         btnCorner.CornerRadius = UDim.new(0, 6)
         btnCorner.Parent = ParagraphButton
 
+        -- Tambahkan animasi highlight untuk button paragraph
+        AddButtonHighlight(ParagraphButton, {
+            HighlightColor = GuiConfig.Color,
+            Duration = 0.15,
+            Scale = 0.98
+        })
+
         if ParagraphConfig.ButtonCallback then
             ParagraphButton.MouseButton1Click:Connect(ParagraphConfig.ButtonCallback)
         end
@@ -112,21 +175,18 @@ function Elements:CreateParagraph(parent, config, countItem)
     local function UpdateSize()
         -- Calculate content height
         local contentHeight = ParagraphContent.TextBounds.Y
-        local totalHeight = contentHeight + 33  -- Base height (title position + padding)
+        local totalHeight = contentHeight + 33
         
         if ParagraphButton then
-            -- Position button below content dynamically
             ParagraphButton.Position = UDim2.new(0, 10, 0, contentHeight + 35)
-            totalHeight = totalHeight + ParagraphButton.Size.Y.Offset + 10  -- Add button height + gap
+            totalHeight = totalHeight + ParagraphButton.Size.Y.Offset + 10
         end
         
         Paragraph.Size = UDim2.new(1, 0, 0, totalHeight)
     end
 
-    -- Initial size update
     UpdateSize()
     
-    -- Update size when content changes
     ParagraphContent:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
@@ -134,7 +194,6 @@ function Elements:CreateParagraph(parent, config, countItem)
     function ParagraphFunc:SetContent(content)
         content = content or "Content"
         ParagraphContent.Text = content
-        -- UpdateSize will be called automatically via signals
     end
 
     return ParagraphFunc
@@ -249,6 +308,13 @@ function Elements:CreatePanel(parent, config, countItem)
     btnCorner.CornerRadius = UDim.new(0, 6)
     btnCorner.Parent = ButtonMain
 
+    -- Tambahkan animasi highlight untuk button utama
+    AddButtonHighlight(ButtonMain, {
+        HighlightColor = GuiConfig.Color,
+        Duration = 0.15,
+        Scale = 0.97
+    })
+
     ButtonMain.MouseButton1Click:Connect(function()
         config.ButtonCallback(InputBox and InputBox.Text or "")
     end)
@@ -269,6 +335,13 @@ function Elements:CreatePanel(parent, config, countItem)
         local subCorner = Instance.new("UICorner")
         subCorner.CornerRadius = UDim.new(0, 6)
         subCorner.Parent = SubButton
+
+        -- Tambahkan animasi highlight untuk sub button
+        AddButtonHighlight(SubButton, {
+            HighlightColor = GuiConfig.Color,
+            Duration = 0.15,
+            Scale = 0.97
+        })
 
         SubButton.MouseButton1Click:Connect(function()
             config.SubButtonCallback(InputBox and InputBox.Text or "")
@@ -324,6 +397,13 @@ function Elements:CreateButton(parent, config, countItem)
     mainCorner.CornerRadius = UDim.new(0, 4)
     mainCorner.Parent = MainButton
 
+    -- Tambahkan animasi highlight untuk main button
+    AddButtonHighlight(MainButton, {
+        HighlightColor = GuiConfig.Color,
+        Duration = 0.15,
+        Scale = 0.96
+    })
+
     MainButton.MouseButton1Click:Connect(config.Callback)
 
     if config.SubTitle then
@@ -342,6 +422,13 @@ function Elements:CreateButton(parent, config, countItem)
         local subCorner = Instance.new("UICorner")
         subCorner.CornerRadius = UDim.new(0, 4)
         subCorner.Parent = SubButton
+
+        -- Tambahkan animasi highlight untuk sub button
+        AddButtonHighlight(SubButton, {
+            HighlightColor = GuiConfig.Color,
+            Duration = 0.15,
+            Scale = 0.96
+        })
 
         SubButton.MouseButton1Click:Connect(config.SubCallback)
     end
@@ -455,6 +542,13 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleButton.Size = UDim2.new(1, 0, 1, 0)
     ToggleButton.Name = "ToggleButton"
     ToggleButton.Parent = Toggle
+
+    -- Tambahkan animasi highlight untuk toggle button
+    AddButtonHighlight(ToggleButton, {
+        HighlightColor = GuiConfig.Color,
+        Duration = 0.15,
+        Scale = 0.98
+    })
 
     FeatureFrame2.AnchorPoint = Vector2.new(1, 0.5)
     FeatureFrame2.BackgroundTransparency = 0.92
@@ -886,6 +980,13 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     DropdownButton.Name = "ToggleButton"
     DropdownButton.Parent = Dropdown
 
+    -- Tambahkan animasi highlight untuk dropdown button
+    AddButtonHighlight(DropdownButton, {
+        HighlightColor = GuiConfig.Color,
+        Duration = 0.15,
+        Scale = 0.98
+    })
+
     UICorner10.CornerRadius = UDim.new(0, 4)
     UICorner10.Parent = Dropdown
 
@@ -1048,6 +1149,13 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         OptionButton.Text = ""
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
+
+        -- Tambahkan animasi highlight untuk option button
+        AddButtonHighlight(OptionButton, {
+            HighlightColor = GuiConfig.Color,
+            Duration = 0.15,
+            Scale = 0.98
+        })
 
         OptionText.Font = Enum.Font.GothamBold
         OptionText.Text = label
