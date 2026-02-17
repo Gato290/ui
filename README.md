@@ -15,17 +15,17 @@ Added Keybind
 ```
 # 📥 Load UI
 
-# loadstring
+# loadstring1
 ```lua
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V1"))()
 ```
 
-# loadstring Beta Tester
+# loadstring2 (Recomned)
 ```lua
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 ```
 
-# loadstring Optimize
+# loadstring3
 ```lua
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V3"))()
 ```
