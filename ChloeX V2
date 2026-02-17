@@ -665,7 +665,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
     GuiConfig.Title        = GuiConfig.Title or "Chloe X"
     GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
-    GuiConfig.Content      = GuiConfig.Content or ""  -- NEW: Content below title
+    GuiConfig.Content      = GuiConfig.Content or ""  -- Content di bawah Title
     -- ShowUser configuration
     GuiConfig.ShowUser     = GuiConfig.ShowUser or false
     -- Convert color string to Color3 if needed
@@ -786,19 +786,14 @@ function Chloex:Window(GuiConfig)
 
     UICorner.Parent = Main
 
-    -- Top bar height: lebih tinggi jika ada Content
-    local hasContent = GuiConfig.Content and GuiConfig.Content ~= ""
-    local topBarHeight = hasContent and 52 or 38
-
     Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     Top.BackgroundTransparency = 0.9990000128746033
     Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Top.BorderSizePixel = 0
-    Top.Size = UDim2.new(1, 0, 0, topBarHeight)
+    Top.Size = UDim2.new(1, 0, 0, 38)
     Top.Name = "Top"
     Top.Parent = Main
 
-    -- Title naik ke atas jika ada Content
     TextLabel.Font = Enum.Font.GothamBold
     TextLabel.Text = GuiConfig.Title
     TextLabel.TextColor3 = GuiConfig.Color
@@ -808,13 +803,8 @@ function Chloex:Window(GuiConfig)
     TextLabel.BackgroundTransparency = 0.9990000128746033
     TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
     TextLabel.BorderSizePixel = 0
-    if hasContent then
-        TextLabel.Size = UDim2.new(1, -100, 0, 20)
-        TextLabel.Position = UDim2.new(0, 10, 0, 4)
-    else
-        TextLabel.Size = UDim2.new(1, -100, 1, 0)
-        TextLabel.Position = UDim2.new(0, 10, 0, 0)
-    end
+    TextLabel.Size = UDim2.new(1, -100, 1, 0)
+    TextLabel.Position = UDim2.new(0, 10, 0, 0)
     TextLabel.Parent = Top
 
     UICorner1.Parent = Top
@@ -828,31 +818,9 @@ function Chloex:Window(GuiConfig)
     TextLabel1.BackgroundTransparency = 0.9990000128746033
     TextLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
     TextLabel1.BorderSizePixel = 0
-    TextLabel1.Size = UDim2.new(1, -(TextLabel.TextBounds.X + 104), 0, 20)
-    if hasContent then
-        TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 4)
-    else
-        TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
-        TextLabel1.Size = UDim2.new(1, -(TextLabel.TextBounds.X + 104), 1, 0)
-    end
+    TextLabel1.Size = UDim2.new(1, -(TextLabel.TextBounds.X + 104), 1, 0)
+    TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
-
-    -- Content label di bawah Title (hanya jika Content tidak kosong)
-    if hasContent then
-        local ContentLabel = Instance.new("TextLabel")
-        ContentLabel.Font = Enum.Font.Gotham
-        ContentLabel.Text = GuiConfig.Content
-        ContentLabel.TextColor3 = Color3.fromRGB(130, 130, 130)
-        ContentLabel.TextTransparency = 0.3
-        ContentLabel.TextSize = 11
-        ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
-        ContentLabel.BackgroundTransparency = 1
-        ContentLabel.BorderSizePixel = 0
-        ContentLabel.Size = UDim2.new(1, -100, 0, 16)
-        ContentLabel.Position = UDim2.new(0, 10, 0, 24) -- tepat di bawah Title
-        ContentLabel.Name = "ContentLabel"
-        ContentLabel.Parent = Top
-    end
 
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
@@ -903,6 +871,48 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
+    -- ==================== CONTENT DI BAWAH TITLE (STYLE SAMA DENGAN TITLE) ====================
+    -- Add Content TextLabel below Title if Content is provided
+    if GuiConfig.Content and GuiConfig.Content ~= "" then
+        -- Buat frame untuk content di bawah title
+        local ContentFrame = Instance.new("Frame")
+        ContentFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ContentFrame.BackgroundTransparency = 1
+        ContentFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ContentFrame.BorderSizePixel = 0
+        ContentFrame.Size = UDim2.new(1, 0, 0, 35) -- Tinggi frame 35px
+        ContentFrame.Position = UDim2.new(0, 0, 0, 38) -- Posisi di bawah Top bar (38px)
+        ContentFrame.Name = "ContentFrame"
+        ContentFrame.Parent = Main
+        
+        -- Content Label dengan style persis seperti Title
+        local ContentLabel = Instance.new("TextLabel")
+        ContentLabel.Font = Enum.Font.GothamBold  -- Font Bold sama seperti Title
+        ContentLabel.Text = GuiConfig.Content
+        ContentLabel.TextColor3 = GuiConfig.Color  -- Warna sama seperti Title
+        ContentLabel.TextSize = 14  -- Ukuran sama seperti Title (14)
+        ContentLabel.TextXAlignment = Enum.TextXAlignment.Center
+        ContentLabel.TextYAlignment = Enum.TextYAlignment.Center
+        ContentLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        ContentLabel.BackgroundTransparency = 1
+        ContentLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ContentLabel.BorderSizePixel = 0
+        ContentLabel.Size = UDim2.new(1, -20, 1, 0)  -- Lebar penuh dengan padding kiri-kanan
+        ContentLabel.Position = UDim2.new(0, 10, 0, 0)  -- Padding kiri 10px
+        ContentLabel.Parent = ContentFrame
+        
+        -- Garis pemisah tipis di bawah content (opsional)
+        local Divider = Instance.new("Frame")
+        Divider.BackgroundColor3 = GuiConfig.Color
+        Divider.BackgroundTransparency = 0.8
+        Divider.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Divider.BorderSizePixel = 0
+        Divider.Size = UDim2.new(1, -20, 0, 1)
+        Divider.Position = UDim2.new(0, 10, 1, -1)  -- Posisi di bagian bawah frame
+        Divider.Parent = ContentFrame
+    end
+    -- ==================== END CONTENT ====================
+
     local LayersTab = Instance.new("Frame");
     local UICorner2 = Instance.new("UICorner");
     local DecideFrame = Instance.new("Frame");
@@ -913,9 +923,14 @@ function Chloex:Window(GuiConfig)
     local LayersFolder = Instance.new("Folder");
     local LayersPageLayout = Instance.new("UIPageLayout");
 
-    -- topOffset ngikutin tinggi top bar
-    local topOffset = topBarHeight + 12
-
+    -- Adjust LayersTab position based on Content
+    local topOffset
+    if GuiConfig.Content and GuiConfig.Content ~= "" then
+        topOffset = 38 + 35 + 10 -- Top bar (38) + Content (35) + spacing (10)
+    else
+        topOffset = 50 -- Default tanpa Content
+    end
+    
     LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     LayersTab.BackgroundTransparency = 0.9990000128746033
     LayersTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -928,7 +943,7 @@ function Chloex:Window(GuiConfig)
     UICorner2.CornerRadius = UDim.new(0, 2)
     UICorner2.Parent = LayersTab
 
-    -- ScrollTab for tabs
+    -- ScrollTab for tabs (will be positioned above user info if ShowUser is enabled)
     local ScrollTab = Instance.new("ScrollingFrame");
     local UIListLayout = Instance.new("UIListLayout");
 
@@ -943,7 +958,7 @@ function Chloex:Window(GuiConfig)
     
     if GuiConfig.ShowUser then
         ScrollTab.Position = UDim2.new(0, 0, 0, 0)
-        ScrollTab.Size = UDim2.new(1, 0, 1, -40)
+        ScrollTab.Size = UDim2.new(1, 0, 1, -40) -- Beri ruang untuk user info di bawah
     else
         ScrollTab.Position = UDim2.new(0, 0, 0, 0)
         ScrollTab.Size = UDim2.new(1, 0, 1, 0)
@@ -975,8 +990,8 @@ function Chloex:Window(GuiConfig)
         UserInfoFrame.BackgroundTransparency = 0.3
         UserInfoFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         UserInfoFrame.BorderSizePixel = 0
-        UserInfoFrame.Position = UDim2.new(0, 5, 1, -45)
-        UserInfoFrame.Size = UDim2.new(1, -10, 0, 40)
+        UserInfoFrame.Position = UDim2.new(0, 5, 1, -45) -- Posisi di bawah
+        UserInfoFrame.Size = UDim2.new(1, -10, 0, 40) -- Ukuran lebih kecil (40px)
         UserInfoFrame.Name = "UserInfoFrame"
         UserInfoFrame.Parent = LayersTab
         
@@ -984,20 +999,22 @@ function Chloex:Window(GuiConfig)
         UserInfoCorner.CornerRadius = UDim.new(0, 6)
         UserInfoCorner.Parent = UserInfoFrame
         
+        -- User Avatar (lebih kecil)
         local Avatar = Instance.new("ImageLabel")
         Avatar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Avatar.BackgroundTransparency = 0.5
         Avatar.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Avatar.BorderSizePixel = 0
         Avatar.Position = UDim2.new(0, 5, 0.5, -15)
-        Avatar.Size = UDim2.new(0, 30, 0, 30)
+        Avatar.Size = UDim2.new(0, 30, 0, 30) -- Ukuran avatar lebih kecil
         Avatar.Name = "Avatar"
         Avatar.Parent = UserInfoFrame
         
         local AvatarCorner = Instance.new("UICorner")
-        AvatarCorner.CornerRadius = UDim.new(1, 0)
+        AvatarCorner.CornerRadius = UDim.new(1, 0) -- Circle
         AvatarCorner.Parent = Avatar
         
+        -- Try to load user avatar
         local userId = LocalPlayer.UserId
         local thumbType = Enum.ThumbnailType.HeadShot
         local thumbSize = Enum.ThumbnailSize.Size48x48
@@ -1010,11 +1027,12 @@ function Chloex:Window(GuiConfig)
             Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
         end
         
+        -- Display Name (ukuran font lebih kecil)
         local DisplayName = Instance.new("TextLabel")
         DisplayName.Font = Enum.Font.GothamBold
         DisplayName.Text = LocalPlayer.DisplayName
         DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        DisplayName.TextSize = 13
+        DisplayName.TextSize = 13 -- Ukuran font lebih kecil
         DisplayName.TextXAlignment = Enum.TextXAlignment.Left
         DisplayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         DisplayName.BackgroundTransparency = 1
@@ -1025,11 +1043,12 @@ function Chloex:Window(GuiConfig)
         DisplayName.Name = "DisplayName"
         DisplayName.Parent = UserInfoFrame
         
+        -- Username with @ (ukuran font lebih kecil)
         local Username = Instance.new("TextLabel")
         Username.Font = Enum.Font.Gotham
         Username.Text = "@" .. LocalPlayer.Name
         Username.TextColor3 = Color3.fromRGB(150, 150, 150)
-        Username.TextSize = 11
+        Username.TextSize = 11 -- Ukuran font lebih kecil
         Username.TextXAlignment = Enum.TextXAlignment.Left
         Username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Username.BackgroundTransparency = 1
@@ -1041,6 +1060,7 @@ function Chloex:Window(GuiConfig)
         Username.Parent = UserInfoFrame
     end
 
+    -- Store ScrollTab for later use
     _G.ScrollTab = ScrollTab
 
     DecideFrame.AnchorPoint = Vector2.new(0.5, 0)
@@ -1048,7 +1068,7 @@ function Chloex:Window(GuiConfig)
     DecideFrame.BackgroundTransparency = 0.85
     DecideFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     DecideFrame.BorderSizePixel = 0
-    DecideFrame.Position = UDim2.new(0.5, 0, 0, topBarHeight)
+    DecideFrame.Position = UDim2.new(0.5, 0, 0, 38)
     DecideFrame.Size = UDim2.new(1, 0, 0, 1)
     DecideFrame.Name = "DecideFrame"
     DecideFrame.Parent = Main
@@ -1403,6 +1423,7 @@ function Chloex:Window(GuiConfig)
         FeatureImg.Name = "FeatureImg"
         FeatureImg.Parent = Tab
         
+        -- Set icon based on TabConfig.Icon
         if TabConfig.Icon and TabConfig.Icon ~= "" then
             local iconId = getIconId(TabConfig.Icon)
             if iconId and iconId ~= "" then
@@ -1481,6 +1502,7 @@ function Chloex:Window(GuiConfig)
         local Sections = {}
         local CountSection = 0
         function Sections:AddSection(SectionConfig)
+            -- Handle different parameter types (string for backward compatibility or table for new format)
             local Title = "Section"
             local Icon = ""
             local Open = false
@@ -1532,6 +1554,7 @@ function Chloex:Window(GuiConfig)
             UICorner.CornerRadius = UDim.new(0, 4)
             UICorner.Parent = SectionReal
 
+            -- Section Icon (if provided)
             if Icon and Icon ~= "" then
                 SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
                 SectionIcon.BackgroundTransparency = 0.9990000128746033
@@ -1594,7 +1617,7 @@ function Chloex:Window(GuiConfig)
             SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionTitle.BorderSizePixel = 0
             if Icon and Icon ~= "" then
-                SectionTitle.Position = UDim2.new(0, 32, 0.5, 0)
+                SectionTitle.Position = UDim2.new(0, 32, 0.5, 0) -- Offset for icon
             else
                 SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
             end
@@ -1665,14 +1688,17 @@ function Chloex:Window(GuiConfig)
                         end
                     end
                     TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 90 }):Play()
-                    TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, SectionSizeYWitdh) }):Play()
-                    TweenService:Create(SectionAdd, TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38) }):Play()
+                    TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, SectionSizeYWitdh) })
+                        :Play()
+                    TweenService:Create(SectionAdd, TweenInfo.new(0.5),
+                        { Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38) }):Play()
                     TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, 2) }):Play()
                     task.wait(0.5)
                     UpdateSizeScroll()
                 end
             end
 
+            -- Handle section open state
             if OpenSection then
                 UpdateSizeSection()
             end
@@ -1682,7 +1708,8 @@ function Chloex:Window(GuiConfig)
                 if OpenSection then
                     TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 0 }):Play()
                     TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, 30) }):Play()
-                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(0, 0, 0, 2) }):Play()
+                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(0, 0, 0, 2) })
+                        :Play()
                     OpenSection = false
                     task.wait(0.5)
                     UpdateSizeScroll()
