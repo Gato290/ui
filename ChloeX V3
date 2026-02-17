@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.5
+local HttpService = game:GetService("HttpService") -- V0.0.6
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -15,68 +15,39 @@ local solarIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Ga
 
 -- Merge all icons
 local Icons = {}
-for name, id in pairs(defaultIcons) do
-    Icons[name] = id
-end
-for name, id in pairs(lucideIcons) do
-    Icons["lucide:" .. name] = id
-end
-for name, id in pairs(solarIcons) do
-    Icons["solar:" .. name] = id
-end
+for name, id in pairs(defaultIcons) do Icons[name] = id end
+for name, id in pairs(lucideIcons) do Icons["lucide:" .. name] = id end
+for name, id in pairs(solarIcons) do Icons["solar:" .. name] = id end
 
--- Function to get icon ID
 local function getIconId(iconName)
-    if not iconName or iconName == "" then
-        return ""
-    end
-    
-    -- Check if it's a direct asset ID (numbers only)
-    if iconName:match("^%d+$") then
-        return "rbxassetid://" .. iconName
-    end
-    
-    -- Check in icons table
-    if Icons[iconName] then
-        return Icons[iconName]
-    end
-    
-    -- If starts with http, use as is (for custom URLs)
-    if iconName:match("^https?://") then
-        return iconName
-    end
-    
+    if not iconName or iconName == "" then return "" end
+    if iconName:match("^%d+$") then return "rbxassetid://" .. iconName end
+    if Icons[iconName] then return Icons[iconName] end
+    if iconName:match("^https?://") then return iconName end
     return ""
 end
 
--- Function to get color from name or direct Color3
 local function getColor(colorInput)
-    -- If it's already a Color3, return as is
-    if typeof(colorInput) == "Color3" then
-        return colorInput
-    end
-    
-    -- If it's a string, look up in ColorModule
+    if typeof(colorInput) == "Color3" then return colorInput end
     if type(colorInput) == "string" then
-        -- Check if the color exists in the module
-        if ColorModule[colorInput] then
-            return ColorModule[colorInput]
-        else
-            -- Default to Default color if not found
-            warn("Color '" .. colorInput .. "' not found, using Default")
-            return ColorModule["Default"] or Color3.fromRGB(0, 208, 255)
-        end
+        if ColorModule[colorInput] then return ColorModule[colorInput] end
+        warn("Color '" .. colorInput .. "' not found, using Default")
+        return ColorModule["Default"] or Color3.fromRGB(0, 208, 255)
     end
-    
-    -- Default fallback
     return ColorModule["Default"] or Color3.fromRGB(0, 208, 255)
 end
 
--- Variables that will be set when window is created
-local ConfigFolder = "Velaris UI"  -- Default folder name
+local ConfigFolder = "Velaris UI"
 local ConfigFile = ""
+
+-- FIX: ConfigData dibuat sebagai shared reference table agar update dari
+--      Elements.lua (yang menerima referensi ini) langsung reflect di sini.
 local ConfigData = {}
+
+-- FIX: Elements table juga shared reference ke ElementsModule agar
+--      LoadConfigElements bisa memanggil :Set() pada semua elemen yang terdaftar.
 local Elements = {}
+
 local CURRENT_VERSION = nil
 local AUTO_SAVE = false
 local AUTO_LOAD = false
@@ -96,22 +67,32 @@ function LoadConfigFromFile()
         end)
         if success and type(result) == "table" then
             if result._version == CURRENT_VERSION then
-                ConfigData = result
+                -- FIX: copy isi result ke ConfigData (jaga referensi table yang sama)
+                for k, v in pairs(result) do
+                    ConfigData[k] = v
+                end
             else
-                ConfigData = { _version = CURRENT_VERSION }
+                -- version mismatch: reset tapi jaga referensi
+                for k in pairs(ConfigData) do ConfigData[k] = nil end
+                ConfigData._version = CURRENT_VERSION
             end
         else
-            ConfigData = { _version = CURRENT_VERSION }
+            for k in pairs(ConfigData) do ConfigData[k] = nil end
+            ConfigData._version = CURRENT_VERSION
         end
     else
-        ConfigData = { _version = CURRENT_VERSION }
+        ConfigData._version = CURRENT_VERSION
     end
 end
 
+-- FIX: LoadConfigElements sekarang dipanggil SETELAH semua elemen dibuat
+--      (bukan saat init). Fungsi ini iterate Elements table dan restore value.
 function LoadConfigElements()
     for key, element in pairs(Elements) do
         if ConfigData[key] ~= nil and element.Set then
-            element:Set(ConfigData[key], true)
+            pcall(function()
+                element:Set(ConfigData[key])
+            end)
         end
     end
 end
@@ -133,12 +114,10 @@ local isMobile = isMobileDevice()
 local function safeSize(pxWidth, pxHeight)
     local scaleX = pxWidth / viewport.X
     local scaleY = pxHeight / viewport.Y
-
     if isMobile then
         if scaleX > 0.5 then scaleX = 0.5 end
         if scaleY > 0.3 then scaleY = 0.3 end
     end
-
     return UDim2.new(scaleX, 0, scaleY, 0)
 end
 
@@ -154,8 +133,7 @@ local function MakeDraggable(topbarobject, object)
                 StartPosition.Y.Scale,
                 StartPosition.Y.Offset + Delta.Y
             )
-            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Position = pos })
-            Tween:Play()
+            TweenService:Create(object, TweenInfo.new(0.2), { Position = pos }):Play()
         end
 
         topbarobject.InputBegan:Connect(function(input)
@@ -178,23 +156,18 @@ local function MakeDraggable(topbarobject, object)
         end)
 
         UserInputService.InputChanged:Connect(function(input)
-            if input == DragInput and Dragging then
-                UpdatePos(input)
-            end
+            if input == DragInput and Dragging then UpdatePos(input) end
         end)
     end
 
     local function CustomSize(object)
         local Dragging, DragInput, DragStart, StartSize
-
-        local minSizeX, minSizeY
+        local minSizeX, minSizeY = 100, 100
         local defSizeX, defSizeY
 
         if isMobile then
-            minSizeX, minSizeY = 100, 100
             defSizeX, defSizeY = 470, 270
         else
-            minSizeX, minSizeY = 100, 100
             defSizeX, defSizeY = 640, 400
         end
 
@@ -210,14 +183,9 @@ local function MakeDraggable(topbarobject, object)
 
         local function UpdateSize(input)
             local Delta = input.Position - DragStart
-            local newWidth = StartSize.X.Offset + Delta.X
-            local newHeight = StartSize.Y.Offset + Delta.Y
-
-            newWidth = math.max(newWidth, minSizeX)
-            newHeight = math.max(newHeight, minSizeY)
-
-            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Size = UDim2.new(0, newWidth, 0, newHeight) })
-            Tween:Play()
+            local newWidth  = math.max(StartSize.X.Offset + Delta.X, minSizeX)
+            local newHeight = math.max(StartSize.Y.Offset + Delta.Y, minSizeY)
+            TweenService:Create(object, TweenInfo.new(0.2), { Size = UDim2.new(0, newWidth, 0, newHeight) }):Play()
         end
 
         changesizeobject.InputBegan:Connect(function(input)
@@ -226,9 +194,7 @@ local function MakeDraggable(topbarobject, object)
                 DragStart = input.Position
                 StartSize = object.Size
                 input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        Dragging = false
-                    end
+                    if input.UserInputState == Enum.UserInputState.End then Dragging = false end
                 end)
             end
         end)
@@ -240,9 +206,7 @@ local function MakeDraggable(topbarobject, object)
         end)
 
         UserInputService.InputChanged:Connect(function(input)
-            if input == DragInput and Dragging then
-                UpdateSize(input)
-            end
+            if input == DragInput and Dragging then UpdateSize(input) end
         end)
     end
 
@@ -256,7 +220,7 @@ function CircleClick(Button, X, Y)
         local Circle = Instance.new("ImageLabel")
         Circle.Image = "rbxassetid://266543268"
         Circle.ImageColor3 = Color3.fromRGB(80, 80, 80)
-        Circle.ImageTransparency = 0.8999999761581421
+        Circle.ImageTransparency = 0.9
         Circle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Circle.BackgroundTransparency = 1
         Circle.ZIndex = 10
@@ -266,18 +230,14 @@ function CircleClick(Button, X, Y)
         local NewX = X - Circle.AbsolutePosition.X
         local NewY = Y - Circle.AbsolutePosition.Y
         Circle.Position = UDim2.new(0, NewX, 0, NewY)
-        local Size = 0
-        if Button.AbsoluteSize.X > Button.AbsoluteSize.Y then
-            Size = Button.AbsoluteSize.X * 1.5
-        elseif Button.AbsoluteSize.X < Button.AbsoluteSize.Y then
-            Size = Button.AbsoluteSize.Y * 1.5
-        elseif Button.AbsoluteSize.X == Button.AbsoluteSize.Y then
-            Size = Button.AbsoluteSize.X * 1.5
-        end
 
+        local Size = math.max(Button.AbsoluteSize.X, Button.AbsoluteSize.Y) * 1.5
         local Time = 0.5
-        Circle:TweenSizeAndPosition(UDim2.new(0, Size, 0, Size), UDim2.new(0.5, -Size / 2, 0.5, -Size / 2), "Out", "Quad",
-            Time, false, nil)
+        Circle:TweenSizeAndPosition(
+            UDim2.new(0, Size, 0, Size),
+            UDim2.new(0.5, -Size / 2, 0.5, -Size / 2),
+            "Out", "Quad", Time, false, nil
+        )
         for i = 1, 10 do
             Circle.ImageTransparency = Circle.ImageTransparency + 0.01
             wait(Time / 10)
@@ -289,93 +249,80 @@ end
 local Chloex = {}
 
 function Chloex:MakeNotify(NotifyConfig)
-    local NotifyConfig = NotifyConfig or {}
-    NotifyConfig.Title = NotifyConfig.Title or "Chloe X"
+    NotifyConfig = NotifyConfig or {}
+    NotifyConfig.Title       = NotifyConfig.Title       or "Chloe X"
     NotifyConfig.Description = NotifyConfig.Description or "Notification"
-    NotifyConfig.Content = NotifyConfig.Content or "Content"
-    NotifyConfig.Color = getColor(NotifyConfig.Color or "Default")
-    NotifyConfig.Time = NotifyConfig.Time or 0.5
-    NotifyConfig.Delay = NotifyConfig.Delay or 5
+    NotifyConfig.Content     = NotifyConfig.Content     or "Content"
+    NotifyConfig.Color       = getColor(NotifyConfig.Color or "Default")
+    NotifyConfig.Time        = NotifyConfig.Time        or 0.5
+    NotifyConfig.Delay       = NotifyConfig.Delay       or 5
+
     local NotifyFunction = {}
     spawn(function()
         if not CoreGui:FindFirstChild("NotifyGui") then
-            local NotifyGui = Instance.new("ScreenGui");
+            local NotifyGui = Instance.new("ScreenGui")
             NotifyGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
             NotifyGui.Name = "NotifyGui"
             NotifyGui.Parent = CoreGui
         end
+
         if not CoreGui.NotifyGui:FindFirstChild("NotifyLayout") then
-            local NotifyLayout = Instance.new("Frame");
+            local NotifyLayout = Instance.new("Frame")
             NotifyLayout.AnchorPoint = Vector2.new(1, 1)
-            NotifyLayout.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            NotifyLayout.BackgroundTransparency = 0.9990000128746033
-            NotifyLayout.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            NotifyLayout.BackgroundTransparency = 0.999
             NotifyLayout.BorderSizePixel = 0
             NotifyLayout.Position = UDim2.new(1, -30, 1, -30)
             NotifyLayout.Size = UDim2.new(0, 320, 1, 0)
             NotifyLayout.Name = "NotifyLayout"
             NotifyLayout.Parent = CoreGui.NotifyGui
+
             local Count = 0
             CoreGui.NotifyGui.NotifyLayout.ChildRemoved:Connect(function()
                 Count = 0
-                for i, v in CoreGui.NotifyGui.NotifyLayout:GetChildren() do
-                    TweenService:Create(
-                        v,
-                        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                        { Position = UDim2.new(0, 0, 1, -((v.Size.Y.Offset + 12) * Count)) }
-                    ):Play()
+                for _, v in CoreGui.NotifyGui.NotifyLayout:GetChildren() do
+                    TweenService:Create(v, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut), {
+                        Position = UDim2.new(0, 0, 1, -((v.Size.Y.Offset + 12) * Count))
+                    }):Play()
                     Count = Count + 1
                 end
             end)
         end
+
         local NotifyPosHeigh = 0
-        for i, v in CoreGui.NotifyGui.NotifyLayout:GetChildren() do
+        for _, v in CoreGui.NotifyGui.NotifyLayout:GetChildren() do
             NotifyPosHeigh = -(v.Position.Y.Offset) + v.Size.Y.Offset + 12
         end
-        local NotifyFrame = Instance.new("Frame");
-        local NotifyFrameReal = Instance.new("Frame");
-        local UICorner = Instance.new("UICorner");
-        local DropShadowHolder = Instance.new("Frame");
-        local DropShadow = Instance.new("ImageLabel");
-        local Top = Instance.new("Frame");
-        local TextLabel = Instance.new("TextLabel");
-        local UICorner1 = Instance.new("UICorner");
-        local TextLabel1 = Instance.new("TextLabel");
-        local Close = Instance.new("TextButton");
-        local ImageLabel = Instance.new("ImageLabel");
-        local TextLabel2 = Instance.new("TextLabel");
 
-        NotifyFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        NotifyFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        local NotifyFrame     = Instance.new("Frame")
+        local NotifyFrameReal = Instance.new("Frame")
+        local UICorner        = Instance.new("UICorner")
+        local Top             = Instance.new("Frame")
+        local TextLabel       = Instance.new("TextLabel")
+        local UICorner1       = Instance.new("UICorner")
+        local TextLabel1      = Instance.new("TextLabel")
+        local Close           = Instance.new("TextButton")
+        local ImageLabel      = Instance.new("ImageLabel")
+        local TextLabel2      = Instance.new("TextLabel")
+
+        NotifyFrame.BackgroundTransparency = 1
         NotifyFrame.BorderSizePixel = 0
         NotifyFrame.Size = UDim2.new(1, 0, 0, 150)
         NotifyFrame.Name = "NotifyFrame"
-        NotifyFrame.BackgroundTransparency = 1
-        NotifyFrame.Parent = CoreGui.NotifyGui.NotifyLayout
         NotifyFrame.AnchorPoint = Vector2.new(0, 1)
-        NotifyFrame.Position = UDim2.new(0, 0, 1, -(NotifyPosHeigh))
+        NotifyFrame.Position = UDim2.new(0, 0, 1, -NotifyPosHeigh)
+        NotifyFrame.Parent = CoreGui.NotifyGui.NotifyLayout
 
         NotifyFrameReal.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        NotifyFrameReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
         NotifyFrameReal.BorderSizePixel = 0
         NotifyFrameReal.Position = UDim2.new(0, 400, 0, 0)
         NotifyFrameReal.Size = UDim2.new(1, 0, 1, 0)
         NotifyFrameReal.Name = "NotifyFrameReal"
         NotifyFrameReal.Parent = NotifyFrame
 
-        UICorner.Parent = NotifyFrameReal
         UICorner.CornerRadius = UDim.new(0, 8)
+        UICorner.Parent = NotifyFrameReal
 
-        DropShadowHolder.BackgroundTransparency = 1
-        DropShadowHolder.BorderSizePixel = 0
-        DropShadowHolder.Size = UDim2.new(1, 0, 1, 0)
-        DropShadowHolder.ZIndex = 0
-        DropShadowHolder.Name = "DropShadowHolder"
-        DropShadowHolder.Parent = NotifyFrameReal
-
-        Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        Top.BackgroundTransparency = 0.9990000128746033
-        Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Top.BackgroundTransparency = 0.999
         Top.BorderSizePixel = 0
         Top.Size = UDim2.new(1, 0, 0, 36)
         Top.Name = "Top"
@@ -386,25 +333,21 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
         TextLabel.TextSize = 14
         TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-        TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel.BackgroundTransparency = 0.9990000128746033
-        TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        TextLabel.BackgroundTransparency = 1
         TextLabel.BorderSizePixel = 0
         TextLabel.Size = UDim2.new(1, 0, 1, 0)
-        TextLabel.Parent = Top
         TextLabel.Position = UDim2.new(0, 10, 0, 0)
+        TextLabel.Parent = Top
 
-        UICorner1.Parent = Top
         UICorner1.CornerRadius = UDim.new(0, 5)
+        UICorner1.Parent = Top
 
         TextLabel1.Font = Enum.Font.GothamBold
         TextLabel1.Text = NotifyConfig.Description
         TextLabel1.TextColor3 = NotifyConfig.Color
         TextLabel1.TextSize = 14
         TextLabel1.TextXAlignment = Enum.TextXAlignment.Left
-        TextLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel1.BackgroundTransparency = 0.9990000128746033
-        TextLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        TextLabel1.BackgroundTransparency = 1
         TextLabel1.BorderSizePixel = 0
         TextLabel1.Size = UDim2.new(1, 0, 1, 0)
         TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
@@ -412,12 +355,8 @@ function Chloex:MakeNotify(NotifyConfig)
 
         Close.Font = Enum.Font.SourceSans
         Close.Text = ""
-        Close.TextColor3 = Color3.fromRGB(0, 0, 0)
-        Close.TextSize = 14
         Close.AnchorPoint = Vector2.new(1, 0.5)
-        Close.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Close.BackgroundTransparency = 0.9990000128746033
-        Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Close.BackgroundTransparency = 0.999
         Close.BorderSizePixel = 0
         Close.Position = UDim2.new(1, -5, 0.5, 0)
         Close.Size = UDim2.new(0, 25, 0, 25)
@@ -426,45 +365,38 @@ function Chloex:MakeNotify(NotifyConfig)
 
         ImageLabel.Image = "rbxassetid://9886659671"
         ImageLabel.AnchorPoint = Vector2.new(0.5, 0.5)
-        ImageLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ImageLabel.BackgroundTransparency = 0.9990000128746033
-        ImageLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ImageLabel.BackgroundTransparency = 1
         ImageLabel.BorderSizePixel = 0
-        ImageLabel.Position = UDim2.new(0.49000001, 0, 0.5, 0)
+        ImageLabel.Position = UDim2.new(0.49, 0, 0.5, 0)
         ImageLabel.Size = UDim2.new(1, -8, 1, -8)
         ImageLabel.Parent = Close
 
         TextLabel2.Font = Enum.Font.GothamBold
-        TextLabel2.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel2.TextSize = 13
         TextLabel2.Text = NotifyConfig.Content
+        TextLabel2.TextColor3 = Color3.fromRGB(150, 150, 150)
+        TextLabel2.TextSize = 13
         TextLabel2.TextXAlignment = Enum.TextXAlignment.Left
         TextLabel2.TextYAlignment = Enum.TextYAlignment.Top
-        TextLabel2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel2.BackgroundTransparency = 0.9990000128746033
-        TextLabel2.TextColor3 = Color3.fromRGB(150.0000062584877, 150.0000062584877, 150.0000062584877)
-        TextLabel2.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        TextLabel2.BackgroundTransparency = 1
         TextLabel2.BorderSizePixel = 0
         TextLabel2.Position = UDim2.new(0, 10, 0, 27)
-        TextLabel2.Parent = NotifyFrameReal
         TextLabel2.Size = UDim2.new(1, -20, 0, 13)
-
-        TextLabel2.Size = UDim2.new(1, -20, 0, 13 + (13 * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
         TextLabel2.TextWrapped = true
+        TextLabel2.Parent = NotifyFrameReal
+
+        TextLabel2.Size = UDim2.new(1, -20, 0, 13 + (13 * (TextLabel2.TextBounds.X // math.max(1, TextLabel2.AbsoluteSize.X))))
 
         if TextLabel2.AbsoluteSize.Y < 27 then
             NotifyFrame.Size = UDim2.new(1, 0, 0, 65)
         else
             NotifyFrame.Size = UDim2.new(1, 0, 0, TextLabel2.AbsoluteSize.Y + 40)
         end
+
         local waitbruh = false
         function NotifyFunction:Close()
-            if waitbruh then
-                return false
-            end
+            if waitbruh then return false end
             waitbruh = true
-            TweenService:Create(
-                NotifyFrameReal,
+            TweenService:Create(NotifyFrameReal,
                 TweenInfo.new(tonumber(NotifyConfig.Time), Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
                 { Position = UDim2.new(0, 400, 0, 0) }
             ):Play()
@@ -472,14 +404,13 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyFrame:Destroy()
         end
 
-        Close.Activated:Connect(function()
-            NotifyFunction:Close()
-        end)
-        TweenService:Create(
-            NotifyFrameReal,
+        Close.Activated:Connect(function() NotifyFunction:Close() end)
+
+        TweenService:Create(NotifyFrameReal,
             TweenInfo.new(tonumber(NotifyConfig.Time), Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
             { Position = UDim2.new(0, 0, 0, 0) }
         ):Play()
+
         task.wait(tonumber(NotifyConfig.Delay))
         NotifyFunction:Close()
     end)
@@ -488,128 +419,81 @@ end
 
 function Nt(msg, delay, color, title, desc)
     return Chloex:MakeNotify({
-        Title = title or "Velaris UI",
-        Description = desc or "Notification",
-        Content = msg or "Content",
-        Color = getColor(color or "Default"),
-        Delay = delay or 4
+        Title       = title or "Velaris UI",
+        Description = desc  or "Notification",
+        Content     = msg   or "Content",
+        Color       = getColor(color or "Default"),
+        Delay       = delay or 4,
     })
 end
 
--- Variable untuk menyimpan dialog aktif
 local ActiveDialog = nil
 
--- Fungsi untuk membuat dialog dengan dukungan color dan icon
 function Chloex:Dialog(DialogConfig)
-    DialogConfig = DialogConfig or {}
-    DialogConfig.Title = DialogConfig.Title or "Dialog"
+    DialogConfig         = DialogConfig or {}
+    DialogConfig.Title   = DialogConfig.Title   or "Dialog"
     DialogConfig.Content = DialogConfig.Content or ""
-    DialogConfig.Color = getColor(DialogConfig.Color or "Default")
-    DialogConfig.Icon = DialogConfig.Icon or ""
     DialogConfig.Buttons = DialogConfig.Buttons or {}
-    
-    -- Hapus dialog yang sudah ada (anti-spam)
+
     if ActiveDialog and ActiveDialog.Parent then
-        pcall(function()
-            ActiveDialog:Destroy()
-        end)
+        pcall(function() ActiveDialog:Destroy() end)
     end
-    
-    -- Buat ScreenGui untuk dialog
+
     local DialogGui = Instance.new("ScreenGui")
     DialogGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     DialogGui.Name = "DialogGui"
     DialogGui.Parent = CoreGui
-    
-    -- Overlay transparan (tanpa background gelap)
+
     local Overlay = Instance.new("Frame")
     Overlay.Size = UDim2.new(1, 0, 1, 0)
     Overlay.BackgroundTransparency = 1
     Overlay.ZIndex = 50
-    Overlay.Name = "Overlay"
     Overlay.Parent = DialogGui
-    
-    -- Dialog container
+
     local Dialog = Instance.new("ImageLabel")
     Dialog.Size = UDim2.new(0, 300, 0, 150)
     Dialog.Position = UDim2.new(0.5, -150, 0.5, -75)
     Dialog.Image = "rbxassetid://9542022979"
-    Dialog.ImageTransparency = 0
     Dialog.BorderSizePixel = 0
     Dialog.ZIndex = 51
     Dialog.Parent = Overlay
-    
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 8)
-    UICorner.Parent = Dialog
-    
-    -- Glow effect dengan warna dari config
+    Instance.new("UICorner", Dialog).CornerRadius = UDim.new(0, 8)
+
     local DialogGlow = Instance.new("Frame")
     DialogGlow.Size = UDim2.new(0, 310, 0, 160)
     DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80)
-    DialogGlow.BackgroundColor3 = DialogConfig.Color
+    DialogGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DialogGlow.BackgroundTransparency = 0.75
     DialogGlow.BorderSizePixel = 0
     DialogGlow.ZIndex = 50
     DialogGlow.Parent = Overlay
-    
-    local GlowCorner = Instance.new("UICorner")
-    GlowCorner.CornerRadius = UDim.new(0, 10)
-    GlowCorner.Parent = DialogGlow
-    
-    -- Gradient effect with the dialog color
+    Instance.new("UICorner", DialogGlow).CornerRadius = UDim.new(0, 10)
+
     local Gradient = Instance.new("UIGradient")
     Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, DialogConfig.Color),
+        ColorSequenceKeypoint.new(0.00, Color3.fromRGB(0, 191, 255)),
         ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, DialogConfig.Color),
+        ColorSequenceKeypoint.new(0.50, Color3.fromRGB(0, 140, 255)),
         ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1.0, DialogConfig.Color)
+        ColorSequenceKeypoint.new(1.00, Color3.fromRGB(0, 191, 255)),
     })
     Gradient.Rotation = 90
     Gradient.Parent = DialogGlow
-    
-    -- Title Frame (untuk icon dan title)
-    local TitleFrame = Instance.new("Frame")
-    TitleFrame.Size = UDim2.new(1, -20, 0, 40)
-    TitleFrame.Position = UDim2.new(0, 10, 0, 4)
-    TitleFrame.BackgroundTransparency = 1
-    TitleFrame.ZIndex = 52
-    TitleFrame.Parent = Dialog
-    
-    -- Icon (jika ada)
-    local IconLabel = nil
-    if DialogConfig.Icon and DialogConfig.Icon ~= "" then
-        IconLabel = Instance.new("ImageLabel")
-        IconLabel.Size = UDim2.new(0, 24, 0, 24)
-        IconLabel.Position = UDim2.new(0, 0, 0.5, -12)
-        IconLabel.BackgroundTransparency = 1
-        IconLabel.ZIndex = 52
-        IconLabel.Parent = TitleFrame
-        
-        local iconId = getIconId(DialogConfig.Icon)
-        if iconId and iconId ~= "" then
-            IconLabel.Image = iconId
-        end
-    end
-    
-    -- Title
+
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, IconLabel and -30 or 0, 0, 40)
-    Title.Position = UDim2.new(0, IconLabel and 30 or 0, 0, 0)
+    Title.Size = UDim2.new(1, 0, 0, 40)
+    Title.Position = UDim2.new(0, 0, 0, 4)
     Title.BackgroundTransparency = 1
     Title.Font = Enum.Font.GothamBold
     Title.Text = DialogConfig.Title
     Title.TextSize = 22
-    Title.TextColor3 = DialogConfig.Color
-    Title.TextXAlignment = Enum.TextXAlignment.Left
+    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.ZIndex = 52
-    Title.Parent = TitleFrame
-    
-    -- Content
+    Title.Parent = Dialog
+
     local Message = Instance.new("TextLabel")
     Message.Size = UDim2.new(1, -20, 0, 60)
-    Message.Position = UDim2.new(0, 10, 0, 45)
+    Message.Position = UDim2.new(0, 10, 0, 30)
     Message.BackgroundTransparency = 1
     Message.Font = Enum.Font.Gotham
     Message.Text = DialogConfig.Content
@@ -618,20 +502,15 @@ function Chloex:Dialog(DialogConfig)
     Message.TextWrapped = true
     Message.ZIndex = 52
     Message.Parent = Dialog
-    
-    -- Buat buttons berdasarkan konfigurasi
+
     for i, buttonConfig in ipairs(DialogConfig.Buttons) do
         local Button = Instance.new("TextButton")
         Button.Size = UDim2.new(0.45, -10, 0, 35)
-        
-        if i == 1 then
-            Button.Position = UDim2.new(0.05, 0, 1, -55)
-        else
-            Button.Position = UDim2.new(0.5, 10, 1, -55)
-        end
-        
-        Button.BackgroundColor3 = DialogConfig.Color
-        Button.BackgroundTransparency = 0.85
+        Button.Position = (i == 1)
+            and UDim2.new(0.05, 0, 1, -55)
+            or  UDim2.new(0.50, 10, 1, -55)
+        Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Button.BackgroundTransparency = 0.935
         Button.Text = buttonConfig.Name or "Button"
         Button.Font = Enum.Font.GothamBold
         Button.TextSize = 15
@@ -640,148 +519,99 @@ function Chloex:Dialog(DialogConfig)
         Button.ZIndex = 52
         Button.Name = "DialogButton_" .. i
         Button.Parent = Dialog
-        
-        local ButtonCorner = Instance.new("UICorner")
-        ButtonCorner.CornerRadius = UDim.new(0, 6)
-        ButtonCorner.Parent = Button
-        
-        -- Hover effect
-        Button.MouseEnter:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.7,
-                TextTransparency = 0
-            }):Play()
-        end)
-        
-        Button.MouseLeave:Connect(function()
-            TweenService:Create(Button, TweenInfo.new(0.2), {
-                BackgroundTransparency = 0.85,
-                TextTransparency = 0.3
-            }):Play()
-        end)
-        
-        -- Click handler
+        Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+
         Button.MouseButton1Click:Connect(function()
-            pcall(function()
-                CircleClick(Button, Mouse.X, Mouse.Y)
-            end)
-            
-            -- Jalankan callback jika ada
-            if buttonConfig.Callback and type(buttonConfig.Callback) == "function" then
-                pcall(function()
-                    buttonConfig.Callback()
-                end)
+            pcall(function() CircleClick(Button, Mouse.X, Mouse.Y) end)
+            if type(buttonConfig.Callback) == "function" then
+                pcall(buttonConfig.Callback)
             end
-            
-            -- Close dialog
             pcall(function()
                 DialogGui:Destroy()
-                if ActiveDialog == DialogGui then
-                    ActiveDialog = nil
-                end
+                if ActiveDialog == DialogGui then ActiveDialog = nil end
             end)
         end)
     end
-    
-    -- Simpan dialog aktif
+
     ActiveDialog = DialogGui
-    
-    -- Animasi masuk
+
     Dialog.Size = UDim2.new(0, 0, 0, 0)
     Dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
     DialogGlow.Size = UDim2.new(0, 0, 0, 0)
     DialogGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    
+
     TweenService:Create(Dialog, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = UDim2.new(0, 300, 0, 150),
-        Position = UDim2.new(0.5, -150, 0.5, -75)
+        Position = UDim2.new(0.5, -150, 0.5, -75),
     }):Play()
-    
     TweenService:Create(DialogGlow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
         Size = UDim2.new(0, 310, 0, 160),
-        Position = UDim2.new(0.5, -155, 0.5, -80)
+        Position = UDim2.new(0.5, -155, 0.5, -80),
     }):Play()
-    
+
     return DialogGui
 end
 
 function Chloex:Window(GuiConfig)
-    GuiConfig              = GuiConfig or {}
-    GuiConfig.Title        = GuiConfig.Title or "Chloe X"
-    GuiConfig.Footer       = GuiConfig.Footer or "Chloee :3"
-    GuiConfig.ShowUser     = GuiConfig.ShowUser or false
-    GuiConfig.Color        = getColor(GuiConfig.Color or "Default")
-    GuiConfig["Tab Width"] = GuiConfig["Tab Width"] or 120
-    GuiConfig.Version      = GuiConfig.Version or 1
-    GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0
-    GuiConfig.Image        = GuiConfig.Image or "70884221600423"
-    GuiConfig.Configname = GuiConfig.Configname or "Velaris UI"
-    
-    GuiConfig.Config = GuiConfig.Config or {}
+    GuiConfig                = GuiConfig or {}
+    GuiConfig.Title          = GuiConfig.Title          or "Chloe X"
+    GuiConfig.Footer         = GuiConfig.Footer         or "Chloee :3"
+    GuiConfig.Content        = GuiConfig.Content        or ""
+    GuiConfig.ShowUser       = GuiConfig.ShowUser       or false
+    GuiConfig.Color          = getColor(GuiConfig.Color or "Default")
+    GuiConfig["Tab Width"]   = GuiConfig["Tab Width"]   or 120
+    GuiConfig.Version        = GuiConfig.Version        or 1
+    GuiConfig.Uitransparent  = GuiConfig.Uitransparent  or 0
+    GuiConfig.Image          = GuiConfig.Image          or "70884221600423"
+    GuiConfig.Configname     = GuiConfig.Configname     or "Velaris UI"
+    GuiConfig.Config         = GuiConfig.Config         or {}
     GuiConfig.Config.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
     GuiConfig.Config.AutoLoad = GuiConfig.Config.AutoLoad ~= nil and GuiConfig.Config.AutoLoad or true
 
-    CURRENT_VERSION        = GuiConfig.Version
-    AUTO_SAVE              = GuiConfig.Config.AutoSave
-    AUTO_LOAD              = GuiConfig.Config.AutoLoad
-    
-    ConfigFolder = GuiConfig.Configname
-    
-    if not isfolder(ConfigFolder) then
-        makefolder(ConfigFolder)
-    end
-    if not isfolder(ConfigFolder .. "/Config") then
-        makefolder(ConfigFolder .. "/Config")
-    end
+    CURRENT_VERSION = GuiConfig.Version
+    AUTO_SAVE       = GuiConfig.Config.AutoSave
+    AUTO_LOAD       = GuiConfig.Config.AutoLoad
+    ConfigFolder    = GuiConfig.Configname
+
+    if not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
+    if not isfolder(ConfigFolder .. "/Config") then makefolder(ConfigFolder .. "/Config") end
 
     local gameName = tostring(game:GetService("MarketplaceService"):GetProductInfo(game.PlaceId).Name)
-    gameName = gameName:gsub("[^%w_ ]", "")
-    gameName = gameName:gsub("%s+", "_")
-
+    gameName = gameName:gsub("[^%w_ ]", ""):gsub("%s+", "_")
     ConfigFile = ConfigFolder .. "/Config/CHX_" .. gameName .. ".json"
-    
-    if AUTO_LOAD then
-        LoadConfigFromFile()
-    end
 
+    if AUTO_LOAD then LoadConfigFromFile() end
+
+    -- FIX: Pass ConfigData dan Elements sebagai referensi yang sama.
+    --      Elements.lua akan mengisi table Elements dengan key configKey → func.
     ElementsModule:Initialize(GuiConfig, SaveConfig, ConfigData, Icons)
 
     local GuiFunc = {}
 
-    local Chloeex = Instance.new("ScreenGui");
-    local DropShadowHolder = Instance.new("Frame");
-    local DropShadow = Instance.new("ImageLabel");
-    local Main = Instance.new("Frame");
-    local UICorner = Instance.new("UICorner");
-    local Top = Instance.new("Frame");
-    local TextLabel = Instance.new("TextLabel");
-    local UICorner1 = Instance.new("UICorner");
-    local TextLabel1 = Instance.new("TextLabel");
-    local Close = Instance.new("TextButton");
-    local ImageLabel1 = Instance.new("ImageLabel");
-    local Min = Instance.new("TextButton");
-    local ImageLabel2 = Instance.new("ImageLabel");
-
+    -- GUI building (tidak ada perubahan struktur, hanya cleanup kecil)
+    local Chloeex = Instance.new("ScreenGui")
     Chloeex.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     Chloeex.Name = "Chloeex"
     Chloeex.ResetOnSpawn = false
-    Chloeex.Parent = game:GetService("CoreGui")
+    Chloeex.Parent = CoreGui
 
+    local DropShadowHolder = Instance.new("Frame")
     DropShadowHolder.BackgroundTransparency = 1
     DropShadowHolder.BorderSizePixel = 0
     DropShadowHolder.AnchorPoint = Vector2.new(0.5, 0.5)
     DropShadowHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
-    if isMobile then
-        DropShadowHolder.Size = safeSize(470, 270)
-    else
-        DropShadowHolder.Size = safeSize(640, 400)
-    end
+    DropShadowHolder.Size = isMobile and safeSize(470, 270) or safeSize(640, 400)
     DropShadowHolder.ZIndex = 0
     DropShadowHolder.Name = "DropShadowHolder"
     DropShadowHolder.Parent = Chloeex
 
-    DropShadowHolder.Position = UDim2.new(0, (Chloeex.AbsoluteSize.X // 2 - DropShadowHolder.Size.X.Offset // 2), 0,
-        (Chloeex.AbsoluteSize.Y // 2 - DropShadowHolder.Size.Y.Offset // 2))
+    DropShadowHolder.Position = UDim2.new(0,
+        Chloeex.AbsoluteSize.X // 2 - DropShadowHolder.Size.X.Offset // 2,
+        0,
+        Chloeex.AbsoluteSize.Y // 2 - DropShadowHolder.Size.Y.Offset // 2
+    )
+
+    local DropShadow = Instance.new("ImageLabel")
     DropShadow.Image = "rbxassetid://6015897843"
     DropShadow.ImageColor3 = Color3.fromRGB(15, 15, 15)
     DropShadow.ImageTransparency = 1
@@ -796,160 +626,153 @@ function Chloex:Window(GuiConfig)
     DropShadow.Name = "DropShadow"
     DropShadow.Parent = DropShadowHolder
 
+    local Main
     if GuiConfig.Theme then
-        Main:Destroy()
         Main = Instance.new("ImageLabel")
         Main.Image = "rbxassetid://" .. GuiConfig.Theme
         Main.ScaleType = Enum.ScaleType.Crop
         Main.BackgroundTransparency = 1
         Main.ImageTransparency = GuiConfig.ThemeTransparency or GuiConfig.Uitransparent or 0.15
     else
+        Main = Instance.new("Frame")
         Main.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
         Main.BackgroundTransparency = GuiConfig.Uitransparent or 0
     end
-
     Main.AnchorPoint = Vector2.new(0.5, 0.5)
-    Main.BorderColor3 = Color3.fromRGB(0, 0, 0)
     Main.BorderSizePixel = 0
     Main.Position = UDim2.new(0.5, 0, 0.5, 0)
     Main.Size = UDim2.new(1, -47, 1, -47)
     Main.Name = "Main"
     Main.Parent = DropShadow
+    Instance.new("UICorner", Main)
 
-    UICorner.Parent = Main
-
-    Top.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-    Top.BackgroundTransparency = 0.9990000128746033
-    Top.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    local Top = Instance.new("Frame")
+    Top.BackgroundTransparency = 0.999
     Top.BorderSizePixel = 0
     Top.Size = UDim2.new(1, 0, 0, 38)
     Top.Name = "Top"
     Top.Parent = Main
 
+    local TextLabel = Instance.new("TextLabel")
     TextLabel.Font = Enum.Font.GothamBold
     TextLabel.Text = GuiConfig.Title
     TextLabel.TextColor3 = GuiConfig.Color
     TextLabel.TextSize = 14
     TextLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    TextLabel.BackgroundTransparency = 0.9990000128746033
-    TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextLabel.BackgroundTransparency = 1
     TextLabel.BorderSizePixel = 0
     TextLabel.Size = UDim2.new(1, -100, 1, 0)
     TextLabel.Position = UDim2.new(0, 10, 0, 0)
     TextLabel.Parent = Top
+    Instance.new("UICorner", Top)
 
-    UICorner1.Parent = Top
-
+    local TextLabel1 = Instance.new("TextLabel")
     TextLabel1.Font = Enum.Font.GothamBold
     TextLabel1.Text = GuiConfig.Footer
     TextLabel1.TextColor3 = GuiConfig.Color
     TextLabel1.TextSize = 14
     TextLabel1.TextXAlignment = Enum.TextXAlignment.Left
-    TextLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    TextLabel1.BackgroundTransparency = 0.9990000128746033
-    TextLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    TextLabel1.BackgroundTransparency = 1
     TextLabel1.BorderSizePixel = 0
     TextLabel1.Size = UDim2.new(1, -(TextLabel.TextBounds.X + 104), 1, 0)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
 
+    local Close = Instance.new("TextButton")
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
-    Close.TextColor3 = Color3.fromRGB(0, 0, 0)
-    Close.TextSize = 14
     Close.AnchorPoint = Vector2.new(1, 0.5)
-    Close.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Close.BackgroundTransparency = 0.9990000128746033
-    Close.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Close.BackgroundTransparency = 0.999
     Close.BorderSizePixel = 0
     Close.Position = UDim2.new(1, -8, 0.5, 0)
     Close.Size = UDim2.new(0, 25, 0, 25)
     Close.Name = "Close"
     Close.Parent = Top
 
+    local ImageLabel1 = Instance.new("ImageLabel")
     ImageLabel1.Image = "rbxassetid://9886659671"
     ImageLabel1.AnchorPoint = Vector2.new(0.5, 0.5)
-    ImageLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ImageLabel1.BackgroundTransparency = 0.9990000128746033
-    ImageLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ImageLabel1.BackgroundTransparency = 1
     ImageLabel1.BorderSizePixel = 0
     ImageLabel1.Position = UDim2.new(0.49, 0, 0.5, 0)
     ImageLabel1.Size = UDim2.new(1, -8, 1, -8)
     ImageLabel1.Parent = Close
 
+    local Min = Instance.new("TextButton")
     Min.Font = Enum.Font.SourceSans
     Min.Text = ""
-    Min.TextColor3 = Color3.fromRGB(0, 0, 0)
-    Min.TextSize = 14
     Min.AnchorPoint = Vector2.new(1, 0.5)
-    Min.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Min.BackgroundTransparency = 0.9990000128746033
-    Min.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    Min.BackgroundTransparency = 0.999
     Min.BorderSizePixel = 0
     Min.Position = UDim2.new(1, -38, 0.5, 0)
     Min.Size = UDim2.new(0, 25, 0, 25)
     Min.Name = "Min"
     Min.Parent = Top
 
+    local ImageLabel2 = Instance.new("ImageLabel")
     ImageLabel2.Image = "rbxassetid://9886659276"
     ImageLabel2.AnchorPoint = Vector2.new(0.5, 0.5)
-    ImageLabel2.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ImageLabel2.BackgroundTransparency = 0.9990000128746033
+    ImageLabel2.BackgroundTransparency = 1
     ImageLabel2.ImageTransparency = 0.2
-    ImageLabel2.BorderColor3 = Color3.fromRGB(0, 0, 0)
     ImageLabel2.BorderSizePixel = 0
     ImageLabel2.Position = UDim2.new(0.5, 0, 0.5, 0)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
-    local LayersTab = Instance.new("Frame");
-    local UICorner2 = Instance.new("UICorner");
-    local DecideFrame = Instance.new("Frame");
-    local Layers = Instance.new("Frame");
-    local UICorner6 = Instance.new("UICorner");
-    local NameTab = Instance.new("TextLabel");
-    local LayersReal = Instance.new("Frame");
-    local LayersFolder = Instance.new("Folder");
-    local LayersPageLayout = Instance.new("UIPageLayout");
+    -- Content bar di bawah title
+    if GuiConfig.Content and GuiConfig.Content ~= "" then
+        local ContentFrame = Instance.new("Frame")
+        ContentFrame.BackgroundTransparency = 1
+        ContentFrame.BorderSizePixel = 0
+        ContentFrame.Size = UDim2.new(1, 0, 0, 35)
+        ContentFrame.Position = UDim2.new(0, 0, 0, 38)
+        ContentFrame.Name = "ContentFrame"
+        ContentFrame.Parent = Main
 
-    local topOffset = 50
-    
-    LayersTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    LayersTab.BackgroundTransparency = 0.9990000128746033
-    LayersTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        local ContentLabel = Instance.new("TextLabel")
+        ContentLabel.Font = Enum.Font.GothamBold
+        ContentLabel.Text = GuiConfig.Content
+        ContentLabel.TextColor3 = GuiConfig.Color
+        ContentLabel.TextSize = 14
+        ContentLabel.TextXAlignment = Enum.TextXAlignment.Center
+        ContentLabel.TextYAlignment = Enum.TextYAlignment.Center
+        ContentLabel.BackgroundTransparency = 1
+        ContentLabel.Size = UDim2.new(1, -20, 1, 0)
+        ContentLabel.Position = UDim2.new(0, 10, 0, 0)
+        ContentLabel.Parent = ContentFrame
+
+        local Divider = Instance.new("Frame")
+        Divider.BackgroundColor3 = GuiConfig.Color
+        Divider.BackgroundTransparency = 0.8
+        Divider.BorderSizePixel = 0
+        Divider.Size = UDim2.new(1, -20, 0, 1)
+        Divider.Position = UDim2.new(0, 10, 1, -1)
+        Divider.Parent = ContentFrame
+    end
+
+    local topOffset = (GuiConfig.Content and GuiConfig.Content ~= "") and (38 + 35 + 10) or 50
+
+    local LayersTab = Instance.new("Frame")
+    LayersTab.BackgroundTransparency = 0.999
     LayersTab.BorderSizePixel = 0
     LayersTab.Position = UDim2.new(0, 9, 0, topOffset)
     LayersTab.Size = UDim2.new(0, GuiConfig["Tab Width"], 1, -(topOffset + 9))
     LayersTab.Name = "LayersTab"
     LayersTab.Parent = Main
+    Instance.new("UICorner", LayersTab).CornerRadius = UDim.new(0, 2)
 
-    UICorner2.CornerRadius = UDim.new(0, 2)
-    UICorner2.Parent = LayersTab
-
-    local ScrollTab = Instance.new("ScrollingFrame");
-    local UIListLayout = Instance.new("UIListLayout");
-
-    ScrollTab.CanvasSize = UDim2.new(0, 0, 1.10000002, 0)
-    ScrollTab.ScrollBarImageColor3 = Color3.fromRGB(0, 0, 0)
+    local ScrollTab = Instance.new("ScrollingFrame")
+    ScrollTab.CanvasSize = UDim2.new(0, 0, 1.1, 0)
     ScrollTab.ScrollBarThickness = 0
     ScrollTab.Active = true
-    ScrollTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    ScrollTab.BackgroundTransparency = 0.9990000128746033
-    ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    ScrollTab.BackgroundTransparency = 0.999
     ScrollTab.BorderSizePixel = 0
-    
-    if GuiConfig.ShowUser then
-        ScrollTab.Position = UDim2.new(0, 0, 0, 0)
-        ScrollTab.Size = UDim2.new(1, 0, 1, -40)
-    else
-        ScrollTab.Position = UDim2.new(0, 0, 0, 0)
-        ScrollTab.Size = UDim2.new(1, 0, 1, 0)
-    end
-    
+    ScrollTab.Position = UDim2.new(0, 0, 0, 0)
+    ScrollTab.Size = GuiConfig.ShowUser and UDim2.new(1, 0, 1, -40) or UDim2.new(1, 0, 1, 0)
     ScrollTab.Name = "ScrollTab"
     ScrollTab.Parent = LayersTab
 
+    local UIListLayout = Instance.new("UIListLayout")
     UIListLayout.Padding = UDim.new(0, 3)
     UIListLayout.SortOrder = Enum.SortOrder.LayoutOrder
     UIListLayout.Parent = ScrollTab
@@ -970,116 +793,86 @@ function Chloex:Window(GuiConfig)
         local UserInfoFrame = Instance.new("Frame")
         UserInfoFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
         UserInfoFrame.BackgroundTransparency = 0.3
-        UserInfoFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         UserInfoFrame.BorderSizePixel = 0
         UserInfoFrame.Position = UDim2.new(0, 5, 1, -45)
         UserInfoFrame.Size = UDim2.new(1, -10, 0, 40)
         UserInfoFrame.Name = "UserInfoFrame"
         UserInfoFrame.Parent = LayersTab
-        
-        local UserInfoCorner = Instance.new("UICorner")
-        UserInfoCorner.CornerRadius = UDim.new(0, 6)
-        UserInfoCorner.Parent = UserInfoFrame
-        
+        Instance.new("UICorner", UserInfoFrame).CornerRadius = UDim.new(0, 6)
+
         local Avatar = Instance.new("ImageLabel")
-        Avatar.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Avatar.BackgroundTransparency = 0.5
-        Avatar.BorderColor3 = Color3.fromRGB(0, 0, 0)
         Avatar.BorderSizePixel = 0
         Avatar.Position = UDim2.new(0, 5, 0.5, -15)
         Avatar.Size = UDim2.new(0, 30, 0, 30)
-        Avatar.Name = "Avatar"
         Avatar.Parent = UserInfoFrame
-        
-        local AvatarCorner = Instance.new("UICorner")
-        AvatarCorner.CornerRadius = UDim.new(1, 0)
-        AvatarCorner.Parent = Avatar
-        
-        local userId = LocalPlayer.UserId
-        local thumbType = Enum.ThumbnailType.HeadShot
-        local thumbSize = Enum.ThumbnailSize.Size48x48
+        Instance.new("UICorner", Avatar).CornerRadius = UDim.new(1, 0)
+
         local success, content = pcall(function()
-            return Players:GetUserThumbnailAsync(userId, thumbType, thumbSize)
+            return Players:GetUserThumbnailAsync(LocalPlayer.UserId, Enum.ThumbnailType.HeadShot, Enum.ThumbnailSize.Size48x48)
         end)
-        if success and content then
-            Avatar.Image = content
-        else
-            Avatar.Image = "rbxasset://textures/ui/GuiImagePlaceholder.png"
-        end
-        
+        Avatar.Image = success and content or "rbxasset://textures/ui/GuiImagePlaceholder.png"
+
         local DisplayName = Instance.new("TextLabel")
         DisplayName.Font = Enum.Font.GothamBold
         DisplayName.Text = LocalPlayer.DisplayName
         DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
         DisplayName.TextSize = 13
         DisplayName.TextXAlignment = Enum.TextXAlignment.Left
-        DisplayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         DisplayName.BackgroundTransparency = 1
-        DisplayName.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        DisplayName.BorderSizePixel = 0
         DisplayName.Position = UDim2.new(0, 40, 0, 6)
         DisplayName.Size = UDim2.new(1, -45, 0, 16)
-        DisplayName.Name = "DisplayName"
         DisplayName.Parent = UserInfoFrame
-        
+
         local Username = Instance.new("TextLabel")
         Username.Font = Enum.Font.Gotham
         Username.Text = "@" .. LocalPlayer.Name
         Username.TextColor3 = Color3.fromRGB(150, 150, 150)
         Username.TextSize = 11
         Username.TextXAlignment = Enum.TextXAlignment.Left
-        Username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Username.BackgroundTransparency = 1
-        Username.BorderColor3 = Color3.fromRGB(0, 0, 0)
-        Username.BorderSizePixel = 0
         Username.Position = UDim2.new(0, 40, 0, 22)
         Username.Size = UDim2.new(1, -45, 0, 14)
-        Username.Name = "Username"
         Username.Parent = UserInfoFrame
     end
 
     _G.ScrollTab = ScrollTab
 
+    local DecideFrame = Instance.new("Frame")
     DecideFrame.AnchorPoint = Vector2.new(0.5, 0)
     DecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DecideFrame.BackgroundTransparency = 0.85
-    DecideFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
     DecideFrame.BorderSizePixel = 0
     DecideFrame.Position = UDim2.new(0.5, 0, 0, 38)
     DecideFrame.Size = UDim2.new(1, 0, 0, 1)
     DecideFrame.Name = "DecideFrame"
     DecideFrame.Parent = Main
 
-    Layers.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Layers.BackgroundTransparency = 0.9990000128746033
-    Layers.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    local Layers = Instance.new("Frame")
+    Layers.BackgroundTransparency = 0.999
     Layers.BorderSizePixel = 0
     Layers.Position = UDim2.new(0, GuiConfig["Tab Width"] + 18, 0, topOffset)
     Layers.Size = UDim2.new(1, -(GuiConfig["Tab Width"] + 9 + 18), 1, -(topOffset + 9))
     Layers.Name = "Layers"
     Layers.Parent = Main
+    Instance.new("UICorner", Layers).CornerRadius = UDim.new(0, 2)
 
-    UICorner6.CornerRadius = UDim.new(0, 2)
-    UICorner6.Parent = Layers
-
+    local NameTab = Instance.new("TextLabel")
     NameTab.Font = Enum.Font.GothamBold
     NameTab.Text = ""
     NameTab.TextColor3 = Color3.fromRGB(255, 255, 255)
     NameTab.TextSize = 24
     NameTab.TextWrapped = true
     NameTab.TextXAlignment = Enum.TextXAlignment.Left
-    NameTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    NameTab.BackgroundTransparency = 0.9990000128746033
-    NameTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    NameTab.BackgroundTransparency = 0.999
     NameTab.BorderSizePixel = 0
     NameTab.Size = UDim2.new(1, 0, 0, 30)
     NameTab.Name = "NameTab"
     NameTab.Parent = Layers
 
+    local LayersReal = Instance.new("Frame")
     LayersReal.AnchorPoint = Vector2.new(0, 1)
-    LayersReal.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    LayersReal.BackgroundTransparency = 0.9990000128746033
-    LayersReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
+    LayersReal.BackgroundTransparency = 0.999
     LayersReal.BorderSizePixel = 0
     LayersReal.ClipsDescendants = true
     LayersReal.Position = UDim2.new(0, 0, 1, 0)
@@ -1087,58 +880,50 @@ function Chloex:Window(GuiConfig)
     LayersReal.Name = "LayersReal"
     LayersReal.Parent = Layers
 
+    local LayersFolder = Instance.new("Folder")
     LayersFolder.Name = "LayersFolder"
     LayersFolder.Parent = LayersReal
 
+    local LayersPageLayout = Instance.new("UIPageLayout")
     LayersPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    LayersPageLayout.Name = "LayersPageLayout"
-    LayersPageLayout.Parent = LayersFolder
     LayersPageLayout.TweenTime = 0.5
     LayersPageLayout.EasingDirection = Enum.EasingDirection.InOut
     LayersPageLayout.EasingStyle = Enum.EasingStyle.Quad
+    LayersPageLayout.Name = "LayersPageLayout"
+    LayersPageLayout.Parent = LayersFolder
 
     function GuiFunc:DestroyGui()
-        if CoreGui:FindFirstChild("Chloeex") then
-            Chloeex:Destroy()
-        end
+        if CoreGui:FindFirstChild("Chloeex") then Chloeex:Destroy() end
     end
 
     Min.Activated:Connect(function()
         CircleClick(Min, Mouse.X, Mouse.Y)
         DropShadowHolder.Visible = false
     end)
-    
+
     Close.Activated:Connect(function()
         CircleClick(Close, Mouse.X, Mouse.Y)
-        
         Chloex:Dialog({
             Title = GuiConfig.Configname .. " Window",
             Content = "Do you want to close this window?\nYou will not be able to open it again",
-            Color = GuiConfig.Color,
-            Icon = "lucide:alert-circle",
             Buttons = {
                 {
                     Name = "Yes",
                     Callback = function()
                         if Chloeex then Chloeex:Destroy() end
-                        if game.CoreGui:FindFirstChild("ToggleUIButton") then
-                            game.CoreGui.ToggleUIButton:Destroy()
+                        if CoreGui:FindFirstChild("ToggleUIButton") then
+                            CoreGui.ToggleUIButton:Destroy()
                         end
-                    end
+                    end,
                 },
-                {
-                    Name = "Cancel",
-                    Callback = function()
-                        -- Dialog akan otomatis tertutup
-                    end
-                }
-            }
+                { Name = "Cancel", Callback = function() end },
+            },
         })
     end)
 
     function GuiFunc:ToggleUI()
         local ScreenGui = Instance.new("ScreenGui")
-        ScreenGui.Parent = game:GetService("CoreGui")
+        ScreenGui.Parent = CoreGui
         ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         ScreenGui.Name = "ToggleUIButton"
 
@@ -1149,10 +934,7 @@ function Chloex:Window(GuiConfig)
         MainButton.BackgroundTransparency = 1
         MainButton.Image = "rbxassetid://" .. GuiConfig.Image
         MainButton.ScaleType = Enum.ScaleType.Fit
-
-        local UICorner = Instance.new("UICorner")
-        UICorner.CornerRadius = UDim.new(0, 6)
-        UICorner.Parent = MainButton
+        Instance.new("UICorner", MainButton).CornerRadius = UDim.new(0, 6)
 
         local Button = Instance.new("TextButton")
         Button.Parent = MainButton
@@ -1166,54 +948,34 @@ function Chloex:Window(GuiConfig)
             end
         end)
 
-        local dragging = false
-        local dragStart, startPos
-
-        local function update(input)
-            local delta = input.Position - dragStart
-            MainButton.Position = UDim2.new(
-                startPos.X.Scale,
-                startPos.X.Offset + delta.X,
-                startPos.Y.Scale,
-                startPos.Y.Offset + delta.Y
-            )
-        end
-
+        local dragging, dragStart, startPos = false, nil, nil
         Button.InputBegan:Connect(function(input)
             if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
                 dragging = true
                 dragStart = input.Position
                 startPos = MainButton.Position
                 input.Changed:Connect(function()
-                    if input.UserInputState == Enum.UserInputState.End then
-                        dragging = false
-                    end
+                    if input.UserInputState == Enum.UserInputState.End then dragging = false end
                 end)
             end
         end)
-
-        game:GetService("UserInputService").InputChanged:Connect(function(input)
+        UserInputService.InputChanged:Connect(function(input)
             if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-                update(input)
+                local delta = input.Position - dragStart
+                MainButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
             end
         end)
     end
 
     GuiFunc:ToggleUI()
-
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
     MakeDraggable(Top, DropShadowHolder)
 
-    local MoreBlur = Instance.new("Frame");
-    local DropShadowHolder1 = Instance.new("Frame");
-    local DropShadow1 = Instance.new("ImageLabel");
-    local UICorner28 = Instance.new("UICorner");
-    local ConnectButton = Instance.new("TextButton");
-
+    -- Dropdown overlay
+    local MoreBlur = Instance.new("Frame")
     MoreBlur.AnchorPoint = Vector2.new(1, 1)
     MoreBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
     MoreBlur.BackgroundTransparency = 0.999
-    MoreBlur.BorderColor3 = Color3.fromRGB(0, 0, 0)
     MoreBlur.BorderSizePixel = 0
     MoreBlur.ClipsDescendants = true
     MoreBlur.Position = UDim2.new(1, 8, 1, 8)
@@ -1221,14 +983,16 @@ function Chloex:Window(GuiConfig)
     MoreBlur.Visible = false
     MoreBlur.Name = "MoreBlur"
     MoreBlur.Parent = Layers
+    Instance.new("UICorner", MoreBlur)
 
+    local DropShadowHolder1 = Instance.new("Frame")
     DropShadowHolder1.BackgroundTransparency = 1
     DropShadowHolder1.BorderSizePixel = 0
     DropShadowHolder1.Size = UDim2.new(1, 0, 1, 0)
     DropShadowHolder1.ZIndex = 0
-    DropShadowHolder1.Name = "DropShadowHolder"
     DropShadowHolder1.Parent = MoreBlur
 
+    local DropShadow1 = Instance.new("ImageLabel")
     DropShadow1.Image = "rbxassetid://6015897843"
     DropShadow1.ImageColor3 = Color3.fromRGB(0, 0, 0)
     DropShadow1.ImageTransparency = 1
@@ -1240,33 +1004,20 @@ function Chloex:Window(GuiConfig)
     DropShadow1.Position = UDim2.new(0.5, 0, 0.5, 0)
     DropShadow1.Size = UDim2.new(1, 35, 1, 35)
     DropShadow1.ZIndex = 0
-    DropShadow1.Name = "DropShadow"
     DropShadow1.Parent = DropShadowHolder1
 
-    UICorner28.Parent = MoreBlur
-
+    local ConnectButton = Instance.new("TextButton")
     ConnectButton.Font = Enum.Font.SourceSans
     ConnectButton.Text = ""
-    ConnectButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    ConnectButton.TextSize = 14
-    ConnectButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     ConnectButton.BackgroundTransparency = 0.999
-    ConnectButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
     ConnectButton.BorderSizePixel = 0
     ConnectButton.Size = UDim2.new(1, 0, 1, 0)
     ConnectButton.Name = "ConnectButton"
     ConnectButton.Parent = MoreBlur
 
-    local DropdownSelect = Instance.new("Frame");
-    local UICorner36 = Instance.new("UICorner");
-    local UIStroke14 = Instance.new("UIStroke");
-    local DropdownSelectReal = Instance.new("Frame");
-    local DropdownFolder = Instance.new("Folder");
-    local DropPageLayout = Instance.new("UIPageLayout");
-
+    local DropdownSelect = Instance.new("Frame")
     DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
     DropdownSelect.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-    DropdownSelect.BorderColor3 = Color3.fromRGB(0, 0, 0)
     DropdownSelect.BorderSizePixel = 0
     DropdownSelect.LayoutOrder = 1
     DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
@@ -1274,6 +1025,36 @@ function Chloex:Window(GuiConfig)
     DropdownSelect.Name = "DropdownSelect"
     DropdownSelect.ClipsDescendants = true
     DropdownSelect.Parent = MoreBlur
+    Instance.new("UICorner", DropdownSelect).CornerRadius = UDim.new(0, 3)
+
+    local UIStroke14 = Instance.new("UIStroke")
+    UIStroke14.Color = Color3.fromRGB(12, 159, 255)
+    UIStroke14.Thickness = 2.5
+    UIStroke14.Transparency = 0.8
+    UIStroke14.Parent = DropdownSelect
+
+    local DropdownSelectReal = Instance.new("Frame")
+    DropdownSelectReal.AnchorPoint = Vector2.new(0.5, 0.5)
+    DropdownSelectReal.BackgroundColor3 = Color3.fromRGB(0, 27, 98)
+    DropdownSelectReal.BackgroundTransparency = 0.7
+    DropdownSelectReal.BorderSizePixel = 0
+    DropdownSelectReal.Position = UDim2.new(0.5, 0, 0.5, 0)
+    DropdownSelectReal.Size = UDim2.new(1, 1, 1, 1)
+    DropdownSelectReal.Parent = DropdownSelect
+
+    local DropdownFolder = Instance.new("Folder")
+    DropdownFolder.Name = "DropdownFolder"
+    DropdownFolder.Parent = DropdownSelectReal
+
+    local DropPageLayout = Instance.new("UIPageLayout")
+    DropPageLayout.EasingDirection = Enum.EasingDirection.InOut
+    DropPageLayout.EasingStyle = Enum.EasingStyle.Quad
+    DropPageLayout.TweenTime = 0.01
+    DropPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
+    DropPageLayout.FillDirection = Enum.FillDirection.Vertical
+    DropPageLayout.Archivable = false
+    DropPageLayout.Name = "DropPageLayout"
+    DropPageLayout.Parent = DropdownFolder
 
     ConnectButton.Activated:Connect(function()
         if MoreBlur.Visible then
@@ -1283,297 +1064,194 @@ function Chloex:Window(GuiConfig)
             MoreBlur.Visible = false
         end
     end)
-    UICorner36.CornerRadius = UDim.new(0, 3)
-    UICorner36.Parent = DropdownSelect
 
-    UIStroke14.Color = Color3.fromRGB(12, 159, 255)
-    UIStroke14.Thickness = 2.5
-    UIStroke14.Transparency = 0.8
-    UIStroke14.Parent = DropdownSelect
+    -- FIX: CountDropdown sekarang ada di level Window agar tidak collision
+    --      antar section yang berbeda dalam window yang sama.
+    local CountDropdown = 0
 
-    DropdownSelectReal.AnchorPoint = Vector2.new(0.5, 0.5)
-    DropdownSelectReal.BackgroundColor3 = Color3.fromRGB(0, 27, 98)
-    DropdownSelectReal.BackgroundTransparency = 0.7
-    DropdownSelectReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
-    DropdownSelectReal.BorderSizePixel = 0
-    DropdownSelectReal.LayoutOrder = 1
-    DropdownSelectReal.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DropdownSelectReal.Size = UDim2.new(1, 1, 1, 1)
-    DropdownSelectReal.Name = "DropdownSelectReal"
-    DropdownSelectReal.Parent = DropdownSelect
-
-    DropdownFolder.Name = "DropdownFolder"
-    DropdownFolder.Parent = DropdownSelectReal
-
-    DropPageLayout.EasingDirection = Enum.EasingDirection.InOut
-    DropPageLayout.EasingStyle = Enum.EasingStyle.Quad
-    DropPageLayout.TweenTime = 0.009999999776482582
-    DropPageLayout.SortOrder = Enum.SortOrder.LayoutOrder
-    DropPageLayout.FillDirection = Enum.FillDirection.Vertical
-    DropPageLayout.Archivable = false
-    DropPageLayout.Name = "DropPageLayout"
-    DropPageLayout.Parent = DropdownFolder
-    
-    -- Tabs
     local Tabs = {}
     local CountTab = 0
-    local CountDropdown = 0
+
     function Tabs:AddTab(TabConfig)
-        local TabConfig = TabConfig or {}
+        TabConfig = TabConfig or {}
         TabConfig.Name = TabConfig.Name or "Tab"
         TabConfig.Icon = TabConfig.Icon or ""
 
-        local ScrolLayers = Instance.new("ScrollingFrame");
-        local UIListLayout1 = Instance.new("UIListLayout");
-
-        ScrolLayers.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+        local ScrolLayers = Instance.new("ScrollingFrame")
         ScrolLayers.ScrollBarThickness = 0
         ScrolLayers.Active = true
         ScrolLayers.LayoutOrder = CountTab
-        ScrolLayers.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ScrolLayers.BackgroundTransparency = 0.9990000128746033
-        ScrolLayers.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        ScrolLayers.BackgroundTransparency = 0.999
         ScrolLayers.BorderSizePixel = 0
         ScrolLayers.Size = UDim2.new(1, 0, 1, 0)
         ScrolLayers.Name = "ScrolLayers"
         ScrolLayers.Parent = LayersFolder
 
+        local UIListLayout1 = Instance.new("UIListLayout")
         UIListLayout1.Padding = UDim.new(0, 3)
         UIListLayout1.SortOrder = Enum.SortOrder.LayoutOrder
         UIListLayout1.Parent = ScrolLayers
 
-        local Tab = Instance.new("Frame");
-        local UICorner3 = Instance.new("UICorner");
-        local TabButton = Instance.new("TextButton");
-        local TabName = Instance.new("TextLabel")
-        local FeatureImg = Instance.new("ImageLabel");
-        local UIStroke2 = Instance.new("UIStroke");
-        local UICorner4 = Instance.new("UICorner");
-
+        local Tab = Instance.new("Frame")
         Tab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        if CountTab == 0 then
-            Tab.BackgroundTransparency = 0.9200000166893005
-        else
-            Tab.BackgroundTransparency = 0.9990000128746033
-        end
-        Tab.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        Tab.BackgroundTransparency = CountTab == 0 and 0.92 or 0.999
         Tab.BorderSizePixel = 0
         Tab.LayoutOrder = CountTab
         Tab.Size = UDim2.new(1, 0, 0, 30)
         Tab.Name = "Tab"
         Tab.Parent = _G.ScrollTab
+        Instance.new("UICorner", Tab).CornerRadius = UDim.new(0, 4)
 
-        UICorner3.CornerRadius = UDim.new(0, 4)
-        UICorner3.Parent = Tab
-
+        local TabButton = Instance.new("TextButton")
         TabButton.Font = Enum.Font.GothamBold
         TabButton.Text = ""
-        TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabButton.TextSize = 13
-        TabButton.TextXAlignment = Enum.TextXAlignment.Left
-        TabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabButton.BackgroundTransparency = 0.9990000128746033
-        TabButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        TabButton.BackgroundTransparency = 0.999
         TabButton.BorderSizePixel = 0
         TabButton.Size = UDim2.new(1, 0, 1, 0)
         TabButton.Name = "TabButton"
         TabButton.Parent = Tab
 
+        local TabName = Instance.new("TextLabel")
         TabName.Font = Enum.Font.GothamBold
         TabName.Text = "| " .. tostring(TabConfig.Name)
         TabName.TextColor3 = Color3.fromRGB(255, 255, 255)
         TabName.TextSize = 13
         TabName.TextXAlignment = Enum.TextXAlignment.Left
-        TabName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        TabName.BackgroundTransparency = 0.9990000128746033
-        TabName.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        TabName.BackgroundTransparency = 0.999
         TabName.BorderSizePixel = 0
         TabName.Size = UDim2.new(1, 0, 1, 0)
         TabName.Position = UDim2.new(0, 30, 0, 0)
-        TabName.Name = "TabName"
         TabName.Parent = Tab
 
-        FeatureImg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        FeatureImg.BackgroundTransparency = 0.9990000128746033
-        FeatureImg.BorderColor3 = Color3.fromRGB(0, 0, 0)
+        local FeatureImg = Instance.new("ImageLabel")
+        FeatureImg.BackgroundTransparency = 0.999
         FeatureImg.BorderSizePixel = 0
         FeatureImg.Position = UDim2.new(0, 9, 0, 7)
         FeatureImg.Size = UDim2.new(0, 16, 0, 16)
         FeatureImg.Name = "FeatureImg"
         FeatureImg.Parent = Tab
-        
+
         if TabConfig.Icon and TabConfig.Icon ~= "" then
             local iconId = getIconId(TabConfig.Icon)
-            if iconId and iconId ~= "" then
-                FeatureImg.Image = iconId
-            end
+            if iconId and iconId ~= "" then FeatureImg.Image = iconId end
         end
 
         if CountTab == 0 then
             LayersPageLayout:JumpToIndex(0)
             NameTab.Text = TabConfig.Name
-            local ChooseFrame = Instance.new("Frame");
+            local ChooseFrame = Instance.new("Frame")
             ChooseFrame.BackgroundColor3 = GuiConfig.Color
-            ChooseFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
             ChooseFrame.BorderSizePixel = 0
             ChooseFrame.Position = UDim2.new(0, 2, 0, 9)
             ChooseFrame.Size = UDim2.new(0, 1, 0, 12)
             ChooseFrame.Name = "ChooseFrame"
             ChooseFrame.Parent = Tab
-
+            Instance.new("UICorner", ChooseFrame)
+            local UIStroke2 = Instance.new("UIStroke")
             UIStroke2.Color = GuiConfig.Color
             UIStroke2.Thickness = 1.6
             UIStroke2.Parent = ChooseFrame
-
-            UICorner4.Parent = ChooseFrame
         end
 
         TabButton.Activated:Connect(function()
             CircleClick(TabButton, Mouse.X, Mouse.Y)
             local FrameChoose
-            for a, s in _G.ScrollTab:GetChildren() do
-                for i, v in s:GetChildren() do
-                    if v.Name == "ChooseFrame" then
-                        FrameChoose = v
-                        break
-                    end
+            for _, s in _G.ScrollTab:GetChildren() do
+                for _, v in s:GetChildren() do
+                    if v.Name == "ChooseFrame" then FrameChoose = v break end
                 end
+                if FrameChoose then break end
             end
-            if FrameChoose ~= nil and Tab.LayoutOrder ~= LayersPageLayout.CurrentPage.LayoutOrder then
+
+            if FrameChoose and Tab.LayoutOrder ~= LayersPageLayout.CurrentPage.LayoutOrder then
                 for _, TabFrame in _G.ScrollTab:GetChildren() do
                     if TabFrame.Name == "Tab" then
-                        TweenService:Create(
-                            TabFrame,
-                            TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
-                            { BackgroundTransparency = 0.9990000128746033 }
-                        ):Play()
+                        TweenService:Create(TabFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
+                            { BackgroundTransparency = 0.999 }):Play()
                     end
                 end
-                TweenService:Create(
-                    Tab,
-                    TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
-                    { BackgroundTransparency = 0.9200000166893005 }
-                ):Play()
-                TweenService:Create(
-                    FrameChoose,
-                    TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                    { Position = UDim2.new(0, 2, 0, 9 + (33 * Tab.LayoutOrder)) }
-                ):Play()
+                TweenService:Create(Tab, TweenInfo.new(0.6, Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
+                    { BackgroundTransparency = 0.92 }):Play()
+                TweenService:Create(FrameChoose, TweenInfo.new(0.5, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
+                    { Position = UDim2.new(0, 2, 0, 9 + (33 * Tab.LayoutOrder)) }):Play()
                 LayersPageLayout:JumpToIndex(Tab.LayoutOrder)
                 task.wait(0.05)
                 NameTab.Text = TabConfig.Name
-                TweenService:Create(
-                    FrameChoose,
-                    TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                    { Size = UDim2.new(0, 1, 0, 20) }
-                ):Play()
+                TweenService:Create(FrameChoose, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
+                    { Size = UDim2.new(0, 1, 0, 20) }):Play()
                 task.wait(0.2)
-                TweenService:Create(
-                    FrameChoose,
-                    TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                    { Size = UDim2.new(0, 1, 0, 12) }
-                ):Play()
+                TweenService:Create(FrameChoose, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
+                    { Size = UDim2.new(0, 1, 0, 12) }):Play()
             end
         end)
-        
-        -- Section
+
         local Sections = {}
         local CountSection = 0
+
         function Sections:AddSection(SectionConfig)
-            local Title = "Section"
-            local Icon = ""
-            local Open = false
-            
+            local Title, Icon, Open = "Section", "", false
             if type(SectionConfig) == "string" then
                 Title = SectionConfig
             elseif type(SectionConfig) == "table" then
                 Title = SectionConfig.Title or "Section"
-                Icon = SectionConfig.Icon or ""
-                Open = SectionConfig.Open or false
+                Icon  = SectionConfig.Icon  or ""
+                Open  = SectionConfig.Open  or false
             end
-            
-            local Section = Instance.new("Frame");
-            local SectionDecideFrame = Instance.new("Frame");
-            local UICorner1 = Instance.new("UICorner");
-            local UIGradient = Instance.new("UIGradient");
 
-            Section.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Section.BackgroundTransparency = 0.9990000128746033
-            Section.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            local Section = Instance.new("Frame")
+            Section.BackgroundTransparency = 0.999
             Section.BorderSizePixel = 0
             Section.LayoutOrder = CountSection
             Section.ClipsDescendants = true
-            Section.LayoutOrder = 1
             Section.Size = UDim2.new(1, 0, 0, 30)
             Section.Name = "Section"
             Section.Parent = ScrolLayers
 
-            local SectionReal = Instance.new("Frame");
-            local UICorner = Instance.new("UICorner");
-            local UIStroke = Instance.new("UIStroke");
-            local SectionButton = Instance.new("TextButton");
-            local FeatureFrame = Instance.new("Frame");
-            local FeatureImg = Instance.new("ImageLabel");
-            local SectionTitle = Instance.new("TextLabel");
-            local SectionIcon = Instance.new("ImageLabel");
-
+            local SectionReal = Instance.new("Frame")
             SectionReal.AnchorPoint = Vector2.new(0.5, 0)
             SectionReal.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             SectionReal.BackgroundTransparency = 0.935
-            SectionReal.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionReal.BorderSizePixel = 0
-            SectionReal.LayoutOrder = 1
             SectionReal.Position = UDim2.new(0.5, 0, 0, 0)
             SectionReal.Size = UDim2.new(1, 1, 0, 30)
             SectionReal.Name = "SectionReal"
             SectionReal.Parent = Section
-
-            UICorner.CornerRadius = UDim.new(0, 4)
-            UICorner.Parent = SectionReal
+            Instance.new("UICorner", SectionReal).CornerRadius = UDim.new(0, 4)
 
             if Icon and Icon ~= "" then
-                SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                SectionIcon.BackgroundTransparency = 0.9990000128746033
-                SectionIcon.BorderColor3 = Color3.fromRGB(0, 0, 0)
+                local SectionIcon = Instance.new("ImageLabel")
+                SectionIcon.BackgroundTransparency = 0.999
                 SectionIcon.BorderSizePixel = 0
                 SectionIcon.Position = UDim2.new(0, 10, 0.5, -8)
                 SectionIcon.Size = UDim2.new(0, 16, 0, 16)
                 SectionIcon.Name = "SectionIcon"
                 SectionIcon.Parent = SectionReal
-                
                 local iconId = getIconId(Icon)
-                if iconId and iconId ~= "" then
-                    SectionIcon.Image = iconId
-                end
+                if iconId and iconId ~= "" then SectionIcon.Image = iconId end
             end
 
+            local SectionButton = Instance.new("TextButton")
             SectionButton.Font = Enum.Font.SourceSans
             SectionButton.Text = ""
-            SectionButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-            SectionButton.TextSize = 14
-            SectionButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionButton.BackgroundTransparency = 0.9990000128746033
-            SectionButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            SectionButton.BackgroundTransparency = 0.999
             SectionButton.BorderSizePixel = 0
             SectionButton.Size = UDim2.new(1, 0, 1, 0)
             SectionButton.Name = "SectionButton"
             SectionButton.Parent = SectionReal
 
+            local FeatureFrame = Instance.new("Frame")
             FeatureFrame.AnchorPoint = Vector2.new(1, 0.5)
-            FeatureFrame.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-            FeatureFrame.BackgroundTransparency = 0.9990000128746033
-            FeatureFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            FeatureFrame.BackgroundTransparency = 0.999
             FeatureFrame.BorderSizePixel = 0
             FeatureFrame.Position = UDim2.new(1, -5, 0.5, 0)
             FeatureFrame.Size = UDim2.new(0, 20, 0, 20)
             FeatureFrame.Name = "FeatureFrame"
             FeatureFrame.Parent = SectionReal
 
+            local FeatureImg = Instance.new("ImageLabel")
             FeatureImg.Image = "rbxassetid://16851841101"
             FeatureImg.AnchorPoint = Vector2.new(0.5, 0.5)
-            FeatureImg.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            FeatureImg.BackgroundTransparency = 0.9990000128746033
-            FeatureImg.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            FeatureImg.BackgroundTransparency = 0.999
             FeatureImg.BorderSizePixel = 0
             FeatureImg.Position = UDim2.new(0.5, 0, 0.5, 0)
             FeatureImg.Rotation = -90
@@ -1581,63 +1259,50 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
+            local SectionTitle = Instance.new("TextLabel")
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = Title
             SectionTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
             SectionTitle.TextSize = 13
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
-            SectionTitle.TextYAlignment = Enum.TextYAlignment.Top
             SectionTitle.AnchorPoint = Vector2.new(0, 0.5)
-            SectionTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionTitle.BackgroundTransparency = 0.9990000128746033
-            SectionTitle.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            SectionTitle.BackgroundTransparency = 0.999
             SectionTitle.BorderSizePixel = 0
-            if Icon and Icon ~= "" then
-                SectionTitle.Position = UDim2.new(0, 32, 0.5, 0)
-            else
-                SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
-            end
+            SectionTitle.Position = (Icon and Icon ~= "") and UDim2.new(0, 32, 0.5, 0) or UDim2.new(0, 10, 0.5, 0)
             SectionTitle.Size = UDim2.new(1, -50, 0, 13)
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionReal
 
+            local SectionDecideFrame = Instance.new("Frame")
             SectionDecideFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionDecideFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
             SectionDecideFrame.AnchorPoint = Vector2.new(0.5, 0)
             SectionDecideFrame.BorderSizePixel = 0
             SectionDecideFrame.Position = UDim2.new(0.5, 0, 0, 33)
             SectionDecideFrame.Size = UDim2.new(0, 0, 0, 2)
             SectionDecideFrame.Name = "SectionDecideFrame"
             SectionDecideFrame.Parent = Section
+            Instance.new("UICorner", SectionDecideFrame)
 
-            UICorner1.Parent = SectionDecideFrame
-
+            local UIGradient = Instance.new("UIGradient")
             UIGradient.Color = ColorSequence.new {
-                ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
+                ColorSequenceKeypoint.new(0,   Color3.fromRGB(20, 20, 20)),
                 ColorSequenceKeypoint.new(0.5, GuiConfig.Color),
-                ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20))
+                ColorSequenceKeypoint.new(1,   Color3.fromRGB(20, 20, 20)),
             }
             UIGradient.Parent = SectionDecideFrame
 
-            local SectionAdd = Instance.new("Frame");
-            local UICorner8 = Instance.new("UICorner");
-            local UIListLayout2 = Instance.new("UIListLayout");
-
+            local SectionAdd = Instance.new("Frame")
             SectionAdd.AnchorPoint = Vector2.new(0.5, 0)
-            SectionAdd.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            SectionAdd.BackgroundTransparency = 0.9990000128746033
-            SectionAdd.BorderColor3 = Color3.fromRGB(0, 0, 0)
+            SectionAdd.BackgroundTransparency = 0.999
             SectionAdd.BorderSizePixel = 0
             SectionAdd.ClipsDescendants = true
-            SectionAdd.LayoutOrder = 1
             SectionAdd.Position = UDim2.new(0.5, 0, 0, 38)
             SectionAdd.Size = UDim2.new(1, 0, 0, 100)
             SectionAdd.Name = "SectionAdd"
             SectionAdd.Parent = Section
+            Instance.new("UICorner", SectionAdd).CornerRadius = UDim.new(0, 2)
 
-            UICorner8.CornerRadius = UDim.new(0, 2)
-            UICorner8.Parent = SectionAdd
-
+            local UIListLayout2 = Instance.new("UIListLayout")
             UIListLayout2.Padding = UDim.new(0, 3)
             UIListLayout2.SortOrder = Enum.SortOrder.LayoutOrder
             UIListLayout2.Parent = SectionAdd
@@ -1656,34 +1321,29 @@ function Chloex:Window(GuiConfig)
 
             local function UpdateSizeSection()
                 if OpenSection then
-                    local SectionSizeYWitdh = 38
+                    local h = 38
                     for _, v in SectionAdd:GetChildren() do
                         if v.Name ~= "UIListLayout" and v.Name ~= "UICorner" then
-                            SectionSizeYWitdh = SectionSizeYWitdh + v.Size.Y.Offset + 3
+                            h = h + v.Size.Y.Offset + 3
                         end
                     end
                     TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 90 }):Play()
-                    TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, SectionSizeYWitdh) })
-                        :Play()
-                    TweenService:Create(SectionAdd, TweenInfo.new(0.5),
-                        { Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38) }):Play()
+                    TweenService:Create(Section,     TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, h) }):Play()
+                    TweenService:Create(SectionAdd,  TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, h - 38) }):Play()
                     TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, 2) }):Play()
                     task.wait(0.5)
                     UpdateSizeScroll()
                 end
             end
 
-            if OpenSection then
-                UpdateSizeSection()
-            end
+            if OpenSection then UpdateSizeSection() end
 
             SectionButton.Activated:Connect(function()
                 CircleClick(SectionButton, Mouse.X, Mouse.Y)
                 if OpenSection then
-                    TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 0 }):Play()
-                    TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, 30) }):Play()
-                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(0, 0, 0, 2) })
-                        :Play()
+                    TweenService:Create(FeatureFrame,       TweenInfo.new(0.5), { Rotation = 0 }):Play()
+                    TweenService:Create(Section,            TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, 30) }):Play()
+                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(0, 0, 0, 2) }):Play()
                     OpenSection = false
                     task.wait(0.5)
                     UpdateSizeScroll()
@@ -1712,15 +1372,24 @@ function Chloex:Window(GuiConfig)
                 return func
             end
 
+            -- FIX: AddEditableParagraph sekarang tersedia (sebelumnya tidak di-expose)
+            function Items:AddEditableParagraph(ParagraphConfig)
+                local func = ElementsModule:CreateEditableParagraph(SectionAdd, ParagraphConfig, CountItem)
+                CountItem = CountItem + 1
+                return func
+            end
+
             function Items:AddPanel(PanelConfig)
                 local func = ElementsModule:CreatePanel(SectionAdd, PanelConfig, CountItem)
                 CountItem = CountItem + 1
                 return func
             end
 
+            -- FIX: AddButton sekarang return ButtonFunc agar caller bisa pakai Fire(), SetTitle(), dll.
             function Items:AddButton(ButtonConfig)
-                ElementsModule:CreateButton(SectionAdd, ButtonConfig, CountItem)
+                local func = ElementsModule:CreateButton(SectionAdd, ButtonConfig, CountItem)
                 CountItem = CountItem + 1
+                return func  -- sebelumnya tidak return apapun
             end
 
             function Items:AddToggle(ToggleConfig)
@@ -1741,8 +1410,13 @@ function Chloex:Window(GuiConfig)
                 return func
             end
 
+            -- FIX: CountDropdown di-share dari level Window, bukan lokal per section
             function Items:AddDropdown(DropdownConfig)
-                local func = ElementsModule:CreateDropdown(SectionAdd, DropdownConfig, CountItem, CountDropdown, DropdownFolder, MoreBlur, DropdownSelect, DropPageLayout, Elements)
+                local func = ElementsModule:CreateDropdown(
+                    SectionAdd, DropdownConfig, CountItem,
+                    CountDropdown, DropdownFolder, MoreBlur,
+                    DropdownSelect, DropPageLayout, Elements
+                )
                 CountItem = CountItem + 1
                 CountDropdown = CountDropdown + 1
                 return func
@@ -1770,7 +1444,17 @@ function Chloex:Window(GuiConfig)
         return Sections
     end
 
-    return Tabs
+    -- FIX: LoadConfigElements dipanggil setelah Tabs siap dibuat,
+    --      tapi sebelum return — sehingga semua elemen yang dibuat user
+    --      lewat AddToggle/AddSlider/dll bisa di-restore.
+    --      Namun karena elemen dibuat SETELAH Window return,
+    --      kita expose fungsi ini agar dipanggil manual oleh user
+    --      setelah semua elemen selesai dibuat.
+    function GuiFunc:LoadConfig()
+        LoadConfigElements()
+    end
+
+    return Tabs, GuiFunc
 end
 
 return Chloex
