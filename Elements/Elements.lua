@@ -1,4 +1,6 @@
--- Update 17/02/2026 waktu 01.50
+-- Elements.lua V0.0.6
+-- UI Elements Module for NexaHub
+-- Added: Button Click Highlight Animations & New Badge Feature
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -38,14 +40,51 @@ local function AnimateButtonClick(button, color)
     }):Play()
 end
 
+-- Helper function to create New Badge
+local function CreateNewBadge(parent, isNew)
+    if isNew then
+        local BadgeFrame = Instance.new("Frame")
+        BadgeFrame.Size = UDim2.new(0, 30, 0, 16)
+        BadgeFrame.Position = UDim2.new(1, -35, 0, 8)
+        BadgeFrame.BackgroundColor3 = GuiConfig.Color
+        BadgeFrame.BackgroundTransparency = 0
+        BadgeFrame.BorderSizePixel = 0
+        BadgeFrame.Name = "NewBadge"
+        BadgeFrame.Parent = parent
+
+        local BadgeCorner = Instance.new("UICorner")
+        BadgeCorner.CornerRadius = UDim.new(0, 8)
+        BadgeCorner.Parent = BadgeFrame
+
+        local BadgeText = Instance.new("TextLabel")
+        BadgeText.Size = UDim2.new(1, 0, 1, 0)
+        BadgeText.BackgroundTransparency = 1
+        BadgeText.Font = Enum.Font.GothamBold
+        BadgeText.Text = "NEW"
+        BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
+        BadgeText.TextSize = 10
+        BadgeText.TextScaled = true
+        BadgeText.Parent = BadgeFrame
+
+        -- Optional animation
+        TweenService:Create(BadgeFrame, TweenInfo.new(0.5, Enum.EasingStyle.Elastic, Enum.EasingDirection.Out), {
+            Size = UDim2.new(0, 32, 0, 18)
+        }):Play()
+
+        return BadgeFrame
+    end
+    return nil
+end
+
 --[[
     PERBAIKAN: CreateParagraph - Button sekarang dinamis dan paragraph menyesuaikan height
-    TAMBAHAN: Animasi highlight saat button diklik
+    TAMBAHAN: Animasi highlight saat button diklik & New Badge
 ]]
 function Elements:CreateParagraph(parent, config, countItem)
     local ParagraphConfig = config or {}
     ParagraphConfig.Title = ParagraphConfig.Title or "Title"
     ParagraphConfig.Content = ParagraphConfig.Content or "Content"
+    ParagraphConfig.New = ParagraphConfig.New or false -- New badge flag
     local ParagraphFunc = {}
 
     local Paragraph = Instance.new("Frame")
@@ -109,6 +148,11 @@ function Elements:CreateParagraph(parent, config, countItem)
 
     -- Set proper width for content to wrap correctly
     ParagraphContent.Size = UDim2.new(1, -(iconOffset + 6), 1, 0)
+
+    -- Create New Badge if enabled
+    if ParagraphConfig.New then
+        CreateNewBadge(Paragraph, true)
+    end
 
     local ParagraphButton
     if ParagraphConfig.ButtonText then
@@ -178,6 +222,7 @@ end
 --[[
     CreateEditableParagraph - Paragraph dengan TextBox yang bisa diedit
     Teks otomatis menyesuaikan tinggi dan support teks panjang
+    TAMBAHAN: New Badge
 ]]
 function Elements:CreateEditableParagraph(parent, config, countItem)
     local ParagraphConfig = config or {}
@@ -186,6 +231,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphConfig.Placeholder = ParagraphConfig.Placeholder or "Type something..."
     ParagraphConfig.Callback = ParagraphConfig.Callback or function() end
     ParagraphConfig.Default = ParagraphConfig.Default or ""
+    ParagraphConfig.New = ParagraphConfig.New or false -- New badge flag
     
     local configKey = "EditableParagraph_" .. ParagraphConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -241,6 +287,11 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphTitle.Size = UDim2.new(1, -iconOffset - 10, 0, 13)
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Parent = Paragraph
+
+    -- Create New Badge if enabled
+    if ParagraphConfig.New then
+        CreateNewBadge(Paragraph, true)
+    end
 
     TextBoxFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TextBoxFrame.BackgroundTransparency = 0.95
@@ -324,6 +375,17 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         
         if ParagraphConfig.Callback then
             ParagraphConfig.Callback(ParagraphTextBox.Text)
+        end
+    end)
+
+    return ParagraphFunc
+end
+
+--[[
+    CreatePanel - Panel dengan dua tombol (Confirm & Cancel/Other)
+    TAMBAHAN: New Badge
+]]
+function Elements:CreatePanel(parent, config, countItem)
     config = config or {}
     config.Title = config.Title or "Title"
     config.Content = config.Content or ""
@@ -333,6 +395,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     config.ButtonCallback = config.Callback or config.ButtonCallback or function() end
     config.SubButtonText = config.SubButton or config.SubButtonText or nil
     config.SubButtonCallback = config.SubCallback or config.SubButtonCallback or function() end
+    config.New = config.New or false -- New badge flag
 
     local configKey = "Panel_" .. config.Title
     if ConfigData[configKey] ~= nil then
@@ -372,6 +435,11 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     Title.Position = UDim2.new(0, 10, 0, 10)
     Title.Size = UDim2.new(1, -20, 0, 13)
     Title.Parent = Panel
+
+    -- Create New Badge if enabled
+    if config.New then
+        CreateNewBadge(Panel, true)
+    end
 
     local Content = Instance.new("TextLabel")
     Content.Font = Enum.Font.Gotham
@@ -477,12 +545,17 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     return PanelFunc
 end
 
+--[[
+    CreateButton - Membuat button sederhana dengan opsi sub button
+    TAMBAHAN: New Badge
+]]
 function Elements:CreateButton(parent, config, countItem)
     config = config or {}
     config.Title = config.Title or "Confirm"
     config.Callback = config.Callback or function() end
     config.SubTitle = config.SubTitle or nil
     config.SubCallback = config.SubCallback or function() end
+    config.New = config.New or false -- New badge flag
 
     local Button = Instance.new("Frame")
     Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -494,6 +567,11 @@ function Elements:CreateButton(parent, config, countItem)
     local UICorner = Instance.new("UICorner")
     UICorner.CornerRadius = UDim.new(0, 4)
     UICorner.Parent = Button
+
+    -- Create New Badge if enabled
+    if config.New then
+        CreateNewBadge(Button, true)
+    end
 
     local MainButton = Instance.new("TextButton")
     MainButton.Font = Enum.Font.GothamBold
@@ -542,6 +620,10 @@ function Elements:CreateButton(parent, config, countItem)
     end
 end
 
+--[[
+    CreateToggle - Membuat toggle switch
+    TAMBAHAN: New Badge
+]]
 function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Elements_Table)
     local ToggleConfig = config or {}
     ToggleConfig.Title = ToggleConfig.Title or "Title"
@@ -549,6 +631,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleConfig.Content = ToggleConfig.Content or ""
     ToggleConfig.Default = ToggleConfig.Default or false
     ToggleConfig.Callback = ToggleConfig.Callback or function() end
+    ToggleConfig.New = ToggleConfig.New or false -- New badge flag
 
     local configKey = "Toggle_" .. ToggleConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -577,6 +660,11 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 
     UICorner20.CornerRadius = UDim.new(0, 4)
     UICorner20.Parent = Toggle
+
+    -- Create New Badge if enabled
+    if ToggleConfig.New then
+        CreateNewBadge(Toggle, true)
+    end
 
     ToggleTitle.Font = Enum.Font.GothamBold
     ToggleTitle.Text = ToggleConfig.Title
@@ -707,6 +795,10 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     return ToggleFunc
 end
 
+--[[
+    CreateSlider - Membuat slider dengan nilai yang bisa diatur
+    TAMBAHAN: New Badge
+]]
 function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Elements_Table)
     local SliderConfig = config or {}
     SliderConfig.Title = SliderConfig.Title or "Slider"
@@ -716,6 +808,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderConfig.Max = SliderConfig.Max or 100
     SliderConfig.Default = SliderConfig.Default or 50
     SliderConfig.Callback = SliderConfig.Callback or function() end
+    SliderConfig.New = SliderConfig.New or false -- New badge flag
 
     local configKey = "Slider_" .. SliderConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -749,6 +842,11 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
 
     UICorner15.CornerRadius = UDim.new(0, 4)
     UICorner15.Parent = Slider
+
+    -- Create New Badge if enabled
+    if SliderConfig.New then
+        CreateNewBadge(Slider, true)
+    end
 
     SliderTitle.Font = Enum.Font.GothamBold
     SliderTitle.Text = SliderConfig.Title
@@ -923,12 +1021,17 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     return SliderFunc
 end
 
+--[[
+    CreateInput - Membuat input text box
+    TAMBAHAN: New Badge
+]]
 function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elements_Table)
     local InputConfig = config or {}
     InputConfig.Title = InputConfig.Title or "Title"
     InputConfig.Content = InputConfig.Content or ""
     InputConfig.Callback = InputConfig.Callback or function() end
     InputConfig.Default = InputConfig.Default or ""
+    InputConfig.New = InputConfig.New or false -- New badge flag
 
     local configKey = "Input_" .. InputConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -955,6 +1058,11 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
 
     UICorner12.CornerRadius = UDim.new(0, 4)
     UICorner12.Parent = Input
+
+    -- Create New Badge if enabled
+    if InputConfig.New then
+        CreateNewBadge(Input, true)
+    end
 
     InputTitle.Font = Enum.Font.GothamBold
     InputTitle.Text = InputConfig.Title
@@ -1041,6 +1149,10 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     return InputFunc
 end
 
+--[[
+    CreateDropdown - Membuat dropdown untuk memilih opsi
+    TAMBAHAN: New Badge
+]]
 function Elements:CreateDropdown(parent, config, countItem, countDropdown, DropdownFolder, MoreBlur, DropdownSelect, DropPageLayout, Elements_Table)
     local DropdownConfig = config or {}
     DropdownConfig.Title = DropdownConfig.Title or "Title"
@@ -1049,6 +1161,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     DropdownConfig.Options = DropdownConfig.Options or {}
     DropdownConfig.Default = DropdownConfig.Default or (DropdownConfig.Multi and {} or nil)
     DropdownConfig.Callback = DropdownConfig.Callback or function() end
+    DropdownConfig.New = DropdownConfig.New or false -- New badge flag
 
     local configKey = "Dropdown_" .. DropdownConfig.Title
     if ConfigData[configKey] ~= nil then
@@ -1074,6 +1187,11 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     Dropdown.Size = UDim2.new(1, 0, 0, 46)
     Dropdown.Name = "Dropdown"
     Dropdown.Parent = parent
+
+    -- Create New Badge if enabled
+    if DropdownConfig.New then
+        CreateNewBadge(Dropdown, true)
+    end
 
     DropdownButton.Text = ""
     DropdownButton.BackgroundTransparency = 1
@@ -1356,7 +1474,12 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     return DropdownFunc
 end
 
-function Elements:CreateDivider(parent, countItem)
+--[[
+    CreateDivider - Membuat garis pemisah
+    TAMBAHAN: New Badge (opsional)
+]]
+function Elements:CreateDivider(parent, countItem, config)
+    config = config or {}
     local Divider = Instance.new("Frame")
     Divider.Name = "Divider"
     Divider.Parent = parent
@@ -1367,6 +1490,14 @@ function Elements:CreateDivider(parent, countItem)
     Divider.BackgroundTransparency = 0
     Divider.BorderSizePixel = 0
     Divider.LayoutOrder = countItem
+
+    -- Create New Badge if enabled (position adjusted for divider)
+    if config.New then
+        local Badge = CreateNewBadge(Divider, true)
+        if Badge then
+            Badge.Position = UDim2.new(0.5, -15, 0, 0)
+        end
+    end
 
     local UIGradient = Instance.new("UIGradient")
     UIGradient.Color = ColorSequence.new {
@@ -1383,7 +1514,12 @@ function Elements:CreateDivider(parent, countItem)
     return Divider
 end
 
-function Elements:CreateSubSection(parent, title, countItem)
+--[[
+    CreateSubSection - Membuat sub section
+    TAMBAHAN: New Badge
+]]
+function Elements:CreateSubSection(parent, title, countItem, config)
+    config = config or {}
     title = title or "Sub Section"
 
     local SubSection = Instance.new("Frame")
@@ -1412,6 +1548,11 @@ function Elements:CreateSubSection(parent, title, countItem)
     Label.TextColor3 = Color3.fromRGB(230, 230, 230)
     Label.TextSize = 12
     Label.TextXAlignment = Enum.TextXAlignment.Left
+
+    -- Create New Badge if enabled
+    if config.New then
+        CreateNewBadge(SubSection, true)
+    end
 
     return SubSection
 end
