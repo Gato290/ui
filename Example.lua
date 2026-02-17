@@ -1,8 +1,9 @@
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V3"))()
+local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 
 local Window = Chloex:Window({
     Title = "Title", -- Main title displayed at the top of the window
     Footer = "Footer", -- Footer text shown at the bottom
+    Content = "Content",
     Color = "Default", -- UI theme color (Default or custom theme)
     Version = 1.0,
     ["Tab Width"] = 120, -- Width size of the tab section
@@ -333,4 +334,34 @@ Sec.Paragraph:AddParagraph({
     ButtonCallback = function()
         print("Support action triggered")
     end
+})
+
+-- Kartu biru (1 tombol)
+Sec.Paragraph:CreateParagraph({
+    Title = "Velaris Official Discord",
+    Content = "Velaris UI Library best",
+    Icon = "rbxassetid://ICON_ID",  -- ganti ICON_ID dengan ID asset sebenarnya
+    Color = Color3.fromRGB(70, 130, 220),
+    ButtonText = "Copy Discord",
+    ButtonCallback = function()
+        setclipboard("discord.gg/xxx")
+        print("Discord copied to clipboard!")
+    end,
+})
+
+-- Kartu merah (2 tombol)
+Sec.Paragraph:CreateParagraph({
+    Title = "Velaris Android CloudPhone",
+    Content = "Stable, Smooth - Powered by Velaris UI Library",
+    Icon = "rbxassetid://ICON_ID",  -- ganti ICON_ID dengan ID asset sebenarnya
+    Color = Color3.fromRGB(220, 100, 90),
+    ButtonText = "Discord Velaris",
+    ButtonCallback = function()
+        setclipboard("discord.gg/velaris")
+        print("Discord Velaris copied!")
+    end,
+    SubButtonText = "Link Velaris",
+    SubButtonCallback = function()
+        print("SubButton clicked! Add your logic here.")
+    end,
 })
