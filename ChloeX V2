@@ -495,10 +495,11 @@ function Nt(msg, delay, color, title, desc)
     })
 end
 
+-- ==================== DIALOG TANPA ANIMASI ====================
 -- Variable untuk menyimpan dialog aktif
 local ActiveDialog = nil
 
--- Fungsi untuk membuat dialog (DESAIN LAMA dengan overlay transparan)
+-- Fungsi untuk membuat dialog (TANPA ANIMASI)
 function Chloex:Dialog(DialogConfig)
     DialogConfig = DialogConfig or {}
     DialogConfig.Title = DialogConfig.Title or "Dialog"
@@ -528,8 +529,8 @@ function Chloex:Dialog(DialogConfig)
     
     -- Dialog container (menggunakan ImageLabel seperti desain lama)
     local Dialog = Instance.new("ImageLabel")
-    Dialog.Size = UDim2.new(0, 300, 0, 150)
-    Dialog.Position = UDim2.new(0.5, -150, 0.5, -75)
+    Dialog.Size = UDim2.new(0, 300, 0, 150) -- Langsung ukuran penuh
+    Dialog.Position = UDim2.new(0.5, -150, 0.5, -75) -- Langsung posisi tengah
     Dialog.Image = "rbxassetid://9542022979"
     Dialog.ImageTransparency = 0
     Dialog.BorderSizePixel = 0
@@ -542,8 +543,8 @@ function Chloex:Dialog(DialogConfig)
     
     -- Glow effect (tetap ada)
     local DialogGlow = Instance.new("Frame")
-    DialogGlow.Size = UDim2.new(0, 310, 0, 160)
-    DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80)
+    DialogGlow.Size = UDim2.new(0, 310, 0, 160) -- Langsung ukuran penuh
+    DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80) -- Langsung posisi tengah
     DialogGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     DialogGlow.BackgroundTransparency = 0.75
     DialogGlow.BorderSizePixel = 0
@@ -642,24 +643,12 @@ function Chloex:Dialog(DialogConfig)
     -- Simpan dialog aktif
     ActiveDialog = DialogGui
     
-    -- Animasi masuk (optional)
-    Dialog.Size = UDim2.new(0, 0, 0, 0)
-    Dialog.Position = UDim2.new(0.5, 0, 0.5, 0)
-    DialogGlow.Size = UDim2.new(0, 0, 0, 0)
-    DialogGlow.Position = UDim2.new(0.5, 0, 0.5, 0)
-    
-    TweenService:Create(Dialog, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 300, 0, 150),
-        Position = UDim2.new(0.5, -150, 0.5, -75)
-    }):Play()
-    
-    TweenService:Create(DialogGlow, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-        Size = UDim2.new(0, 310, 0, 160),
-        Position = UDim2.new(0.5, -155, 0.5, -80)
-    }):Play()
+    -- TIDAK ADA ANIMASI - langsung tampil dengan ukuran penuh
+    -- Semua tween untuk animasi masuk telah dihapus
     
     return DialogGui
 end
+-- ==================== AKHIR DIALOG TANPA ANIMASI ====================
 
 function Chloex:Window(GuiConfig)
     GuiConfig              = GuiConfig or {}
@@ -880,7 +869,7 @@ function Chloex:Window(GuiConfig)
         ContentFrame.BackgroundTransparency = 1
         ContentFrame.BorderColor3 = Color3.fromRGB(0, 0, 0)
         ContentFrame.BorderSizePixel = 0
-        ContentFrame.Size = UDim2.new(1, 0, 0, 35) -- Tinggi frame 35px
+        ContentFrame.Size = UDim2.new(1, 0, 0, 25) -- Tinggi frame 35px
         ContentFrame.Position = UDim2.new(0, 0, 0, 38) -- Posisi di bawah Top bar (38px)
         ContentFrame.Name = "ContentFrame"
         ContentFrame.Parent = Main
@@ -926,7 +915,7 @@ function Chloex:Window(GuiConfig)
     -- Adjust LayersTab position based on Content
     local topOffset
     if GuiConfig.Content and GuiConfig.Content ~= "" then
-        topOffset = 38 + 35 + 10 -- Top bar (38) + Content (35) + spacing (10)
+        topOffset = 38 + 25 + 10 -- Top bar (38) + Content (35) + spacing (10)
     else
         topOffset = 50 -- Default tanpa Content
     end
