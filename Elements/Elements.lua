@@ -1,5 +1,6 @@
--- Elements.lua V0.0.6
+-- Elements.lua V0.0.7
 -- UI Elements Module for NexaHub
+-- UPDATED: CreateParagraph - Sekarang support Icon kiri, Title+Subtitle bold, background color, dan dual button
 -- Added: Button Click Highlight Animations
 -- Added: New Badge Feature for All Elements
 local TweenService = game:GetService("TweenService")
@@ -23,11 +24,9 @@ end
 local function AnimateButtonClick(button, color)
     color = color or GuiConfig.Color
     
-    -- Create highlight effect
     local originalTransparency = button.BackgroundTransparency
     local originalColor = button.BackgroundColor3
     
-    -- Flash effect on click
     TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
         BackgroundTransparency = 0.7,
         BackgroundColor3 = color
@@ -66,7 +65,6 @@ local function CreateNewBadge(parent)
     BadgeText.TextSize = 10
     BadgeText.Parent = NewBadge
     
-    -- Pulse animation
     local pulseIn = TweenService:Create(
         NewBadge,
         TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -78,155 +76,264 @@ local function CreateNewBadge(parent)
         {Size = UDim2.new(0, 35, 0, 16)}
     )
     
-    pulseIn.Completed:Connect(function()
-        pulseOut:Play()
-    end)
-    pulseOut.Completed:Connect(function()
-        pulseIn:Play()
-    end)
+    pulseIn.Completed:Connect(function() pulseOut:Play() end)
+    pulseOut.Completed:Connect(function() pulseIn:Play() end)
     pulseIn:Play()
     
     return NewBadge
 end
 
 --[[
-    PERBAIKAN: CreateParagraph - Button sekarang full-width dan paragraph menyesuaikan height
-    TAMBAHAN: Animasi highlight saat button diklik
-    TAMBAHAN: New Badge Support
+    UPDATED: CreateParagraph
+    Sekarang support layout baru:
+    - Icon di kiri (opsional)
+    - Title (bold besar) + Subtitle/Content (bold kecil) di kanan icon
+    - Background color solid (ParagraphConfig.Color) atau default transparan
+    - ButtonText  = 1 tombol full-width
+    - ButtonText + SubButtonText = 2 tombol side-by-side
+    - ButtonColor / SubButtonColor untuk warna tombol
+    
+    Contoh pemakaian:
+    Section:CreateParagraph({
+        Title = "Chloe Official Discord",
+        Content = "Chloe best Utility for AFK 24/7",
+        Icon = "rbxassetid://XXXXXXX",   -- opsional
+        Color = Color3.fromRGB(70, 130, 220),  -- background color
+        ButtonText = "Copy Discord",
+        ButtonCallback = function() ... end,
+    })
+    
+    Section:CreateParagraph({
+        Title = "UgPhone Android CloudPhone",
+        Content = "24/7 AFK, Stable, Smooth For Roblox Farming",
+        Icon = "rbxassetid://XXXXXXX",
+        Color = Color3.fromRGB(220, 100, 90),
+        ButtonText = "Discord Ugphone",
+        ButtonCallback = function() ... end,
+        SubButtonText = "Link Ugphone",
+        SubButtonCallback = function() ... end,
+    })
 ]]
 function Elements:CreateParagraph(parent, config, countItem)
     local ParagraphConfig = config or {}
-    ParagraphConfig.Title = ParagraphConfig.Title or "Title"
-    ParagraphConfig.Content = ParagraphConfig.Content or "Content"
-    ParagraphConfig.New = ParagraphConfig.New or false
+    ParagraphConfig.Title    = ParagraphConfig.Title    or "Title"
+    ParagraphConfig.Content  = ParagraphConfig.Content  or "Content"
+    ParagraphConfig.New      = ParagraphConfig.New      or false
+    ParagraphConfig.Color    = ParagraphConfig.Color    or nil  -- nil = transparan default
+
     local ParagraphFunc = {}
 
+    -- ── Container utama ──────────────────────────────────────────────
     local Paragraph = Instance.new("Frame")
-    local UICorner14 = Instance.new("UICorner")
-    local ParagraphTitle = Instance.new("TextLabel")
-    local ParagraphContent = Instance.new("TextLabel")
-
-    Paragraph.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Paragraph.BackgroundTransparency = 0.935
+    Paragraph.Name = "Paragraph"
     Paragraph.BorderSizePixel = 0
     Paragraph.LayoutOrder = countItem
-    Paragraph.Size = UDim2.new(1, 0, 0, 46)
-    Paragraph.Name = "Paragraph"
+    Paragraph.Size = UDim2.new(1, 0, 0, 56)
+    Paragraph.ClipsDescendants = true
     Paragraph.Parent = parent
 
-    UICorner14.CornerRadius = UDim.new(0, 4)
-    UICorner14.Parent = Paragraph
+    if ParagraphConfig.Color then
+        Paragraph.BackgroundColor3 = ParagraphConfig.Color
+        Paragraph.BackgroundTransparency = 0
+    else
+        Paragraph.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Paragraph.BackgroundTransparency = 0.935
+    end
 
-    -- Add New Badge if enabled
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 8)
+    UICorner.Parent = Paragraph
+
+    -- Badge NEW opsional
     if ParagraphConfig.New then
         CreateNewBadge(Paragraph)
     end
 
-    local iconOffset = 10
+    -- ── Icon (opsional) ──────────────────────────────────────────────
+    local iconSize   = 0
+    local iconPadL   = 0
+
     if ParagraphConfig.Icon then
+        iconSize = 36
+        iconPadL = 10
+
+        local IconContainer = Instance.new("Frame")
+        IconContainer.Name = "IconContainer"
+        IconContainer.AnchorPoint = Vector2.new(0, 0.5)
+        -- Posisi Y dikunci ke tengah bagian header (bukan tengah keseluruhan)
+        IconContainer.Position = UDim2.new(0, iconPadL, 0, 0)
+        IconContainer.Size = UDim2.new(0, iconSize, 0, iconSize)
+        IconContainer.BackgroundTransparency = 1
+        IconContainer.Parent = Paragraph
+
+        -- Ikon diposisikan 10px dari atas
+        IconContainer.Position = UDim2.new(0, iconPadL, 0, 10)
+
         local IconImg = Instance.new("ImageLabel")
-        IconImg.Size = UDim2.new(0, 20, 0, 20)
-        IconImg.Position = UDim2.new(0, 8, 0, 12)
-        IconImg.BackgroundTransparency = 1
         IconImg.Name = "ParagraphIcon"
-        IconImg.Parent = Paragraph
+        IconImg.Size = UDim2.new(1, 0, 1, 0)
+        IconImg.BackgroundTransparency = 1
+        IconImg.ScaleType = Enum.ScaleType.Fit
+        IconImg.Parent = IconContainer
 
         if Icons and Icons[ParagraphConfig.Icon] then
             IconImg.Image = Icons[ParagraphConfig.Icon]
         else
-            IconImg.Image = ParagraphConfig.Icon
+            IconImg.Image = tostring(ParagraphConfig.Icon)
         end
-
-        iconOffset = 30
     end
 
+    -- ── Offset teks setelah icon ─────────────────────────────────────
+    local textLeft = iconPadL + iconSize + (iconSize > 0 and 10 or 10)
+
+    -- ── Title ────────────────────────────────────────────────────────
+    local ParagraphTitle = Instance.new("TextLabel")
+    ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Font = Enum.Font.GothamBold
     ParagraphTitle.Text = ParagraphConfig.Title
-    ParagraphTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
+    ParagraphTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
     ParagraphTitle.TextSize = 13
     ParagraphTitle.TextXAlignment = Enum.TextXAlignment.Left
     ParagraphTitle.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphTitle.BackgroundTransparency = 1
-    ParagraphTitle.Position = UDim2.new(0, iconOffset, 0, 10)
-    ParagraphTitle.Size = UDim2.new(1, -(iconOffset + 6), 0, 13)
-    ParagraphTitle.Name = "ParagraphTitle"
+    ParagraphTitle.Position = UDim2.new(0, textLeft, 0, 10)
+    ParagraphTitle.Size = UDim2.new(1, -(textLeft + 10), 0, 15)
+    ParagraphTitle.TextWrapped = false
     ParagraphTitle.Parent = Paragraph
 
-    ParagraphContent.Font = Enum.Font.Gotham
+    -- ── Content / Subtitle ───────────────────────────────────────────
+    local ParagraphContent = Instance.new("TextLabel")
+    ParagraphContent.Name = "ParagraphContent"
+    ParagraphContent.Font = Enum.Font.GothamBold
     ParagraphContent.Text = ParagraphConfig.Content
     ParagraphContent.TextColor3 = Color3.fromRGB(255, 255, 255)
-    ParagraphContent.TextSize = 12
+    ParagraphContent.TextSize = 11
     ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
     ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphContent.BackgroundTransparency = 1
-    ParagraphContent.Position = UDim2.new(0, iconOffset, 0, 26)
-    ParagraphContent.Name = "ParagraphContent"
+    ParagraphContent.Position = UDim2.new(0, textLeft, 0, 27)
+    ParagraphContent.Size = UDim2.new(1, -(textLeft + 10), 0, 12)
     ParagraphContent.TextWrapped = true
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
-    ParagraphContent.Size = UDim2.new(1, -(iconOffset + 6), 1, 0)
+    -- ── Tombol ───────────────────────────────────────────────────────
+    -- Warna tombol: ButtonColor opsional, default putih transparan
+    local btnBgColor  = ParagraphConfig.ButtonColor    or Color3.fromRGB(255, 255, 255)
+    local subBgColor  = ParagraphConfig.SubButtonColor or Color3.fromRGB(255, 255, 255)
+    local btnBgTrans  = ParagraphConfig.ButtonColor    and 0.15 or 0.85
+    local subBgTrans  = ParagraphConfig.SubButtonColor and 0.15 or 0.85
 
-    local ParagraphButton
+    local ParagraphButton    = nil
+    local ParagraphSubButton = nil
+
     if ParagraphConfig.ButtonText then
+        local hasSubBtn = ParagraphConfig.SubButtonText ~= nil
+
+        -- Tombol utama
         ParagraphButton = Instance.new("TextButton")
-        ParagraphButton.Size = UDim2.new(1, -20, 0, 28)
-        ParagraphButton.Position = UDim2.new(0, 10, 0, 0)
-        ParagraphButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        ParagraphButton.BackgroundTransparency = 0.935
+        ParagraphButton.Name = "ParagraphButton"
+        ParagraphButton.BackgroundColor3 = btnBgColor
+        ParagraphButton.BackgroundTransparency = btnBgTrans
         ParagraphButton.Font = Enum.Font.GothamBold
         ParagraphButton.TextSize = 12
-        ParagraphButton.TextTransparency = 0.3
         ParagraphButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+        ParagraphButton.TextTransparency = 0
         ParagraphButton.Text = ParagraphConfig.ButtonText
+        ParagraphButton.Size = hasSubBtn
+            and UDim2.new(0.5, -13, 0, 28)
+            or  UDim2.new(1, -16, 0, 28)
+        ParagraphButton.Position = UDim2.new(0, 8, 0, 0)  -- Y di-set oleh UpdateSize
         ParagraphButton.Parent = Paragraph
 
-        local btnCorner = Instance.new("UICorner")
-        btnCorner.CornerRadius = UDim.new(0, 6)
-        btnCorner.Parent = ParagraphButton
+        local btnC = Instance.new("UICorner")
+        btnC.CornerRadius = UDim.new(0, 6)
+        btnC.Parent = ParagraphButton
 
         ParagraphButton.MouseButton1Click:Connect(function()
-            AnimateButtonClick(ParagraphButton)
+            AnimateButtonClick(ParagraphButton, btnBgColor)
             if ParagraphConfig.ButtonCallback then
                 ParagraphConfig.ButtonCallback()
             end
         end)
+
+        -- Tombol kedua (opsional)
+        if hasSubBtn then
+            ParagraphSubButton = Instance.new("TextButton")
+            ParagraphSubButton.Name = "ParagraphSubButton"
+            ParagraphSubButton.BackgroundColor3 = subBgColor
+            ParagraphSubButton.BackgroundTransparency = subBgTrans
+            ParagraphSubButton.Font = Enum.Font.GothamBold
+            ParagraphSubButton.TextSize = 12
+            ParagraphSubButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ParagraphSubButton.TextTransparency = 0
+            ParagraphSubButton.Text = ParagraphConfig.SubButtonText
+            ParagraphSubButton.Size = UDim2.new(0.5, -13, 0, 28)
+            ParagraphSubButton.Position = UDim2.new(0.5, 5, 0, 0)  -- Y di-set oleh UpdateSize
+            ParagraphSubButton.Parent = Paragraph
+
+            local subC = Instance.new("UICorner")
+            subC.CornerRadius = UDim.new(0, 6)
+            subC.Parent = ParagraphSubButton
+
+            ParagraphSubButton.MouseButton1Click:Connect(function()
+                AnimateButtonClick(ParagraphSubButton, subBgColor)
+                if ParagraphConfig.SubButtonCallback then
+                    ParagraphConfig.SubButtonCallback()
+                end
+            end)
+        end
     end
 
+    -- ── UpdateSize ───────────────────────────────────────────────────
     local function UpdateSize()
         task.wait()
-        
-        local contentHeight = math.max(12, ParagraphContent.TextBounds.Y)
-        ParagraphContent.Size = UDim2.new(1, -(iconOffset + 6), 0, contentHeight)
-        
-        local totalHeight = 10 + 13 + 3 + contentHeight + 10
-        
-        if ParagraphButton then
-            local buttonY = 10 + 13 + 3 + contentHeight + 8
-            ParagraphButton.Position = UDim2.new(0, 10, 0, buttonY)
-            totalHeight = buttonY + ParagraphButton.Size.Y.Offset + 10
+
+        -- Hitung tinggi konten
+        local contentH = math.max(12, ParagraphContent.TextBounds.Y)
+        ParagraphContent.Size = UDim2.new(1, -(textLeft + 10), 0, contentH)
+
+        -- Header = 10 (atas) + 15 (title) + 2 (gap) + contentH + 10 (bawah)
+        local headerBottom = 10 + 15 + 2 + contentH + 8
+
+        -- Pastikan icon tidak meluber
+        if iconSize > 0 then
+            headerBottom = math.max(headerBottom, iconSize + 20)
         end
-        
-        Paragraph.Size = UDim2.new(1, 0, 0, totalHeight)
+
+        local totalH = headerBottom
+
+        if ParagraphButton then
+            ParagraphButton.Position = UDim2.new(0, 8, 0, headerBottom)
+            if ParagraphSubButton then
+                ParagraphSubButton.Position = UDim2.new(0.5, 5, 0, headerBottom)
+            end
+            totalH = headerBottom + 28 + 8
+        end
+
+        Paragraph.Size = UDim2.new(1, 0, 0, totalH)
     end
 
     UpdateSize()
-    
+
     ParagraphContent:GetPropertyChangedSignal("Text"):Connect(UpdateSize)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
+    -- ── API publik ────────────────────────────────────────────────────
     function ParagraphFunc:SetContent(content)
-        content = content or "Content"
-        ParagraphContent.Text = content
+        ParagraphContent.Text = content or "Content"
+    end
+
+    function ParagraphFunc:SetTitle(title)
+        ParagraphTitle.Text = title or "Title"
     end
 
     return ParagraphFunc
 end
 
 --[[
-    CreateEditableParagraph - Paragraph dengan TextBox yang bisa diedit
-    TAMBAHAN: New Badge Support
+    CreateEditableParagraph - tidak berubah dari versi sebelumnya
 ]]
 function Elements:CreateEditableParagraph(parent, config, countItem)
     local ParagraphConfig = config or {}
@@ -262,10 +369,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     UICorner.CornerRadius = UDim.new(0, 4)
     UICorner.Parent = Paragraph
 
-    -- Add New Badge if enabled
-    if ParagraphConfig.New then
-        CreateNewBadge(Paragraph)
-    end
+    if ParagraphConfig.New then CreateNewBadge(Paragraph) end
 
     local iconOffset = 10
     if ParagraphConfig.Icon then
@@ -275,13 +379,11 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         IconImg.BackgroundTransparency = 1
         IconImg.Name = "ParagraphIcon"
         IconImg.Parent = Paragraph
-
         if Icons and Icons[ParagraphConfig.Icon] then
             IconImg.Image = Icons[ParagraphConfig.Icon]
         else
             IconImg.Image = ParagraphConfig.Icon
         end
-
         iconOffset = 35
     end
 
@@ -355,25 +457,21 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     local function UpdateSize()
         local textHeight = math.max(40, ParagraphTextBox.TextBounds.Y + 12)
         TextBoxFrame.Size = UDim2.new(1, -20, 0, textHeight)
-        
         local totalHeight = 30 + textHeight + 10
-        
         if ParagraphButton then
             ParagraphButton.Position = UDim2.new(0, 10, 0, 30 + textHeight + 5)
             totalHeight = totalHeight + ParagraphButton.Size.Y.Offset + 10
         end
-        
         Paragraph.Size = UDim2.new(1, 0, 0, totalHeight)
     end
 
     UpdateSize()
-    
+
     ParagraphTextBox:GetPropertyChangedSignal("Text"):Connect(function()
         UpdateSize()
         ParagraphFunc.Value = ParagraphTextBox.Text
         ConfigData[configKey] = ParagraphTextBox.Text
         SaveConfig()
-        
         if ParagraphConfig.Callback then
             ParagraphConfig.Callback(ParagraphTextBox.Text)
         end
@@ -383,8 +481,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
     function ParagraphFunc:SetContent(content)
-        content = content or ""
-        ParagraphTextBox.Text = content
+        ParagraphTextBox.Text = content or ""
     end
 
     function ParagraphFunc:GetContent()
@@ -414,14 +511,8 @@ function Elements:CreatePanel(parent, config, countItem)
     local PanelFunc = { Value = config.Default }
 
     local baseHeight = 50
-    if config.Placeholder then
-        baseHeight = baseHeight + 40
-    end
-    if config.SubButtonText then
-        baseHeight = baseHeight + 40
-    else
-        baseHeight = baseHeight + 36
-    end
+    if config.Placeholder then baseHeight = baseHeight + 40 end
+    if config.SubButtonText then baseHeight = baseHeight + 40 else baseHeight = baseHeight + 36 end
 
     local Panel = Instance.new("Frame")
     Panel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -434,10 +525,7 @@ function Elements:CreatePanel(parent, config, countItem)
     UICorner.CornerRadius = UDim.new(0, 4)
     UICorner.Parent = Panel
 
-    -- Add New Badge if enabled
-    if config.New then
-        CreateNewBadge(Panel)
-    end
+    if config.New then CreateNewBadge(Panel) end
 
     local Title = Instance.new("TextLabel")
     Title.Font = Enum.Font.GothamBold
@@ -571,10 +659,7 @@ function Elements:CreateButton(parent, config, countItem)
     UICorner.CornerRadius = UDim.new(0, 4)
     UICorner.Parent = Button
 
-    -- Add New Badge if enabled
-    if config.New then
-        CreateNewBadge(Button)
-    end
+    if config.New then CreateNewBadge(Button) end
 
     local MainButton = Instance.new("TextButton")
     MainButton.Font = Enum.Font.GothamBold
@@ -658,10 +743,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     UICorner20.CornerRadius = UDim.new(0, 4)
     UICorner20.Parent = Toggle
 
-    -- Add New Badge if enabled
-    if ToggleConfig.New then
-        CreateNewBadge(Toggle)
-    end
+    if ToggleConfig.New then CreateNewBadge(Toggle) end
 
     ToggleTitle.Font = Enum.Font.GothamBold
     ToggleTitle.Text = ToggleConfig.Title
@@ -767,9 +849,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 
     function ToggleFunc:Set(Value)
         if typeof(ToggleConfig.Callback) == "function" then
-            local ok, err = pcall(function()
-                ToggleConfig.Callback(Value)
-            end)
+            local ok, err = pcall(function() ToggleConfig.Callback(Value) end)
             if not ok then warn("Toggle Callback error:", err) end
         end
         ConfigData[configKey] = Value
@@ -836,10 +916,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     UICorner15.CornerRadius = UDim.new(0, 4)
     UICorner15.Parent = Slider
 
-    -- Add New Badge if enabled
-    if SliderConfig.New then
-        CreateNewBadge(Slider)
-    end
+    if SliderConfig.New then CreateNewBadge(Slider) end
 
     SliderTitle.Font = Enum.Font.GothamBold
     SliderTitle.Text = SliderConfig.Title
@@ -938,9 +1015,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     local Dragging = false
     local function Round(Number, Factor)
         local Result = math.floor(Number / Factor + (math.sign(Number) * 0.5)) * Factor
-        if Result < 0 then
-            Result = Result + Factor
-        end
+        if Result < 0 then Result = Result + Factor end
         return Result
     end
 
@@ -953,7 +1028,6 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
             TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
             { Size = UDim2.fromScale((Value - SliderConfig.Min) / (SliderConfig.Max - SliderConfig.Min), 1) }
         ):Play()
-
         SliderConfig.Callback(Value)
         ConfigData[configKey] = Value
         SaveConfig()
@@ -962,16 +1036,8 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderFrame.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
-            TweenService:Create(
-                SliderCircle,
-                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Size = UDim2.new(0, 14, 0, 14) }
-            ):Play()
-            local SizeScale = math.clamp(
-                (Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X,
-                0,
-                1
-            )
+            TweenService:Create(SliderCircle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 14, 0, 14) }):Play()
+            local SizeScale = math.clamp((Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
             SliderFunc:Set(SliderConfig.Min + ((SliderConfig.Max - SliderConfig.Min) * SizeScale))
         end
     end)
@@ -980,21 +1046,13 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = false
             SliderConfig.Callback(SliderFunc.Value)
-            TweenService:Create(
-                SliderCircle,
-                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
-                { Size = UDim2.new(0, 8, 0, 8) }
-            ):Play()
+            TweenService:Create(SliderCircle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 8, 0, 8) }):Play()
         end
     end)
 
     UserInputService.InputChanged:Connect(function(Input)
         if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
-            local SizeScale = math.clamp(
-                (Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X,
-                0,
-                1
-            )
+            local SizeScale = math.clamp((Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
             SliderFunc:Set(SliderConfig.Min + ((SliderConfig.Max - SliderConfig.Min) * SizeScale))
         end
     end)
@@ -1002,8 +1060,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     TextBox:GetPropertyChangedSignal("Text"):Connect(function()
         local Valid = TextBox.Text:gsub("[^%d]", "")
         if Valid ~= "" then
-            local ValidNumber = math.clamp(tonumber(Valid), SliderConfig.Min, SliderConfig.Max)
-            SliderFunc:Set(ValidNumber)
+            SliderFunc:Set(math.clamp(tonumber(Valid), SliderConfig.Min, SliderConfig.Max))
         else
             SliderFunc:Set(SliderConfig.Min)
         end
@@ -1048,10 +1105,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     UICorner12.CornerRadius = UDim.new(0, 4)
     UICorner12.Parent = Input
 
-    -- Add New Badge if enabled
-    if InputConfig.New then
-        CreateNewBadge(Input)
-    end
+    if InputConfig.New then CreateNewBadge(Input) end
 
     InputTitle.Font = Enum.Font.GothamBold
     InputTitle.Text = InputConfig.Title
@@ -1182,10 +1236,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     UICorner10.CornerRadius = UDim.new(0, 4)
     UICorner10.Parent = Dropdown
 
-    -- Add New Badge if enabled
-    if DropdownConfig.New then
-        CreateNewBadge(Dropdown)
-    end
+    if DropdownConfig.New then CreateNewBadge(Dropdown) end
 
     DropdownTitle.Font = Enum.Font.GothamBold
     DropdownTitle.Text = DropdownConfig.Title
@@ -1306,9 +1357,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
     function DropdownFunc:Clear()
         for _, DropFrame in ScrollSelect:GetChildren() do
-            if DropFrame.Name == "Option" then
-                DropFrame:Destroy()
-            end
+            if DropFrame.Name == "Option" then DropFrame:Destroy() end
         end
         DropdownFunc.Value = DropdownConfig.Multi and {} or nil
         DropdownFunc.Options = {}
@@ -1379,10 +1428,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
                     table.insert(DropdownFunc.Value, value)
                 else
                     for i, v in pairs(DropdownFunc.Value) do
-                        if v == value then
-                            table.remove(DropdownFunc.Value, i)
-                            break
-                        end
+                        if v == value then table.remove(DropdownFunc.Value, i) break end
                     end
                 end
             else
@@ -1435,21 +1481,14 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         end
     end
 
-    function DropdownFunc:SetValue(val)
-        self:Set(val)
-    end
-
-    function DropdownFunc:GetValue()
-        return self.Value
-    end
+    function DropdownFunc:SetValue(val) self:Set(val) end
+    function DropdownFunc:GetValue() return self.Value end
 
     function DropdownFunc:SetValues(newList, selecting)
         newList = newList or {}
         selecting = selecting or (DropdownConfig.Multi and {} or nil)
         DropdownFunc:Clear()
-        for _, v in ipairs(newList) do
-            DropdownFunc:AddOption(v)
-        end
+        for _, v in ipairs(newList) do DropdownFunc:AddOption(v) end
         DropdownFunc.Options = newList
         DropdownFunc:Set(selecting)
     end
