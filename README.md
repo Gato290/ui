@@ -20,7 +20,7 @@ Added Keybind
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V1"))()
 ```
 
-# loadstring2 (Recomned)
+# loadstring2 (Recomend)
 ```lua
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 ```
