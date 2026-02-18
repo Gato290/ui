@@ -337,7 +337,7 @@ Sec.Paragraph:AddParagraph({
 })
 
 -- Kartu biru (1 tombol)
-Sec.Paragraph:CreateParagraph({
+Sec.Paragraph:AddParagraph({
     Title = "Velaris Official Discord",
     Content = "Velaris UI Library best",
     Icon = "rbxassetid://ICON_ID",  -- ganti ICON_ID dengan ID asset sebenarnya
@@ -350,8 +350,8 @@ Sec.Paragraph:CreateParagraph({
 })
 
 -- Kartu merah (2 tombol)
-Sec.Paragraph:CreateParagraph({
-    Title = "Velaris Android CloudPhone",
+Sec.Paragraph:AddParagraph({
+    Title = "Velaris UI",
     Content = "Stable, Smooth - Powered by Velaris UI Library",
     Icon = "rbxassetid://ICON_ID",  -- ganti ICON_ID dengan ID asset sebenarnya
     Color = Color3.fromRGB(220, 100, 90),
