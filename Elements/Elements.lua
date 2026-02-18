@@ -1,4 +1,4 @@
--- Elements.lua V0.2.0
+-- Elements.lua V0.2.1
 -- UI Elements Module for NexaHub
 
 local TweenService = game:GetService("TweenService")
@@ -97,6 +97,7 @@ local function CreateBadge(parent, badgeType)
         pulseIn.Completed:Connect(function() pulseOut:Play() end)
         pulseOut.Completed:Connect(function() pulseIn:Play() end)
         pulseIn:Play()
+
     elseif preset.Pulse == "transparency" then
         local pulseIn = TweenService:Create(Badge,
             TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -637,18 +638,167 @@ function Elements:CreatePanel(parent, config, countItem)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateButton
+--  CreateButton  (V1 = default, V2 = Title+Content kiri, icon circle kanan)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateButton(parent, config, countItem)
     local cfg = config or {}
     cfg.Title       = cfg.Title       or "Confirm"
+    cfg.Content     = cfg.Content     or ""
     cfg.Callback    = cfg.Callback    or function() end
     cfg.SubTitle    = cfg.SubTitle    or nil
     cfg.SubCallback = cfg.SubCallback or function() end
     cfg.Badge       = cfg.Badge       or nil
+    cfg.Version     = cfg.Version     or "V1"
 
     local ButtonFunc = {}
 
+    -- ── V2 Layout ────────────────────────────────────────────────────────────
+    if cfg.Version == "V2" then
+        local hasContent = cfg.Content ~= ""
+        local frameH = hasContent and 56 or 40
+
+        local Button = Instance.new("Frame")
+        Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        Button.BackgroundTransparency = 0.935
+        Button.BorderSizePixel = 0
+        Button.LayoutOrder = countItem
+        Button.Size = UDim2.new(1, 0, 0, frameH)
+        Button.Name = "ButtonV2"
+        Button.Parent = parent
+        Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 6)
+
+        if cfg.Badge then CreateBadge(Button, cfg.Badge) end
+
+        -- Title
+        local TitleLabel = Instance.new("TextLabel")
+        TitleLabel.Font = Enum.Font.GothamBold
+        TitleLabel.Text = cfg.Title
+        TitleLabel.TextSize = 13
+        TitleLabel.TextColor3 = Color3.fromRGB(231, 231, 231)
+        TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        TitleLabel.TextYAlignment = Enum.TextYAlignment.Top
+        TitleLabel.BackgroundTransparency = 1
+        TitleLabel.Name = "ButtonTitle"
+        TitleLabel.Parent = Button
+
+        if hasContent then
+            TitleLabel.Position = UDim2.new(0, 12, 0, 10)
+            TitleLabel.Size = UDim2.new(1, -60, 0, 15)
+        else
+            TitleLabel.Position = UDim2.new(0, 12, 0.5, -7)
+            TitleLabel.Size = UDim2.new(1, -60, 0, 15)
+        end
+
+        -- Content label
+        local ContentLabel
+        if hasContent then
+            ContentLabel = Instance.new("TextLabel")
+            ContentLabel.Font = Enum.Font.GothamBold
+            ContentLabel.Text = cfg.Content
+            ContentLabel.TextSize = 11
+            ContentLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+            ContentLabel.TextTransparency = 0.45
+            ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
+            ContentLabel.TextYAlignment = Enum.TextYAlignment.Top
+            ContentLabel.BackgroundTransparency = 1
+            ContentLabel.Position = UDim2.new(0, 12, 0, 28)
+            ContentLabel.Size = UDim2.new(1, -60, 0, 14)
+            ContentLabel.TextWrapped = true
+            ContentLabel.RichText = true
+            ContentLabel.Name = "ButtonContent"
+            ContentLabel.Parent = Button
+        end
+
+        -- Icon circle kanan
+        local IconFrame = Instance.new("Frame")
+        IconFrame.AnchorPoint = Vector2.new(1, 0.5)
+        IconFrame.Position = UDim2.new(1, -12, 0.5, 0)
+        IconFrame.Size = UDim2.new(0, 26, 0, 26)
+        IconFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        IconFrame.BackgroundTransparency = 0.85
+        IconFrame.BorderSizePixel = 0
+        IconFrame.Name = "IconFrame"
+        IconFrame.Parent = Button
+        Instance.new("UICorner", IconFrame).CornerRadius = UDim.new(1, 0)
+
+        local UIStrokeIcon = Instance.new("UIStroke")
+        UIStrokeIcon.Color = Color3.fromRGB(255, 255, 255)
+        UIStrokeIcon.Thickness = 1.2
+        UIStrokeIcon.Transparency = 0.7
+        UIStrokeIcon.Parent = IconFrame
+
+        local IconImg = Instance.new("ImageLabel")
+        IconImg.AnchorPoint = Vector2.new(0.5, 0.5)
+        IconImg.Position = UDim2.new(0.5, 1, 0.5, 0)
+        IconImg.Size = UDim2.new(0, 14, 0, 14)
+        IconImg.BackgroundTransparency = 1
+        IconImg.Image = "rbxassetid://7072725342"
+        IconImg.ImageColor3 = Color3.fromRGB(220, 220, 220)
+        IconImg.ImageTransparency = 0.2
+        IconImg.ScaleType = Enum.ScaleType.Fit
+        IconImg.Name = "IconImg"
+        IconImg.Parent = IconFrame
+
+        -- Invisible click button
+        local ClickButton = Instance.new("TextButton")
+        ClickButton.Text = ""
+        ClickButton.BackgroundTransparency = 1
+        ClickButton.Size = UDim2.new(1, 0, 1, 0)
+        ClickButton.Name = "ClickButton"
+        ClickButton.Parent = Button
+
+        ClickButton.MouseButton1Click:Connect(function()
+            TweenService:Create(IconFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                BackgroundTransparency = 0.5,
+                BackgroundColor3 = GuiConfig.Color,
+            }):Play()
+            TweenService:Create(UIStrokeIcon, TweenInfo.new(0.1), {
+                Color = GuiConfig.Color,
+                Transparency = 0,
+            }):Play()
+            task.wait(0.12)
+            TweenService:Create(IconFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+                BackgroundTransparency = 0.85,
+                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
+            }):Play()
+            TweenService:Create(UIStrokeIcon, TweenInfo.new(0.25), {
+                Color = Color3.fromRGB(255, 255, 255),
+                Transparency = 0.7,
+            }):Play()
+            SafeCall(cfg.Callback)
+        end)
+
+        ClickButton.MouseEnter:Connect(function()
+            TweenService:Create(TitleLabel, TweenInfo.new(0.15), { TextColor3 = GuiConfig.Color }):Play()
+        end)
+        ClickButton.MouseLeave:Connect(function()
+            TweenService:Create(TitleLabel, TweenInfo.new(0.15), { TextColor3 = Color3.fromRGB(231, 231, 231) }):Play()
+        end)
+
+        function ButtonFunc:Fire()
+            SafeCall(cfg.Callback)
+        end
+
+        function ButtonFunc:SetTitle(text)
+            TitleLabel.Text = tostring(text or "")
+            cfg.Title = TitleLabel.Text
+        end
+
+        function ButtonFunc:SetContent(text)
+            if ContentLabel then
+                ContentLabel.Text = tostring(text or "")
+            end
+            cfg.Content = tostring(text or "")
+        end
+
+        function ButtonFunc:SetCallback(fn)
+            cfg.Callback = typeof(fn) == "function" and fn or function() end
+        end
+
+        return ButtonFunc
+    end
+
+    -- ── V1 Layout (original/default) ─────────────────────────────────────────
     local Button = Instance.new("Frame")
     Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Button.BackgroundTransparency = 0.935
@@ -731,228 +881,6 @@ function Elements:CreateButton(parent, config, countItem)
     end
 
     return ButtonFunc
-end
-
--- ─────────────────────────────────────────────────────────────────────────────
---  CreateButtonV2  ★ NEW
---  Style: wide row dengan Title + SubTitle di kiri, icon bulat di kanan
---  Mirip "Save Config / Save current settings to config" di foto
---
---  Config:
---    Title       (string)   -- Teks utama, bold
---    SubTitle    (string)   -- Teks kecil di bawah Title (opsional)
---    Icon        (string)   -- rbxassetid atau key di Icons table
---    Callback    (function) -- Dipanggil saat diklik
---    Badge       (string)   -- Tipe badge opsional
--- ─────────────────────────────────────────────────────────────────────────────
-function Elements:CreateButtonV2(parent, config, countItem)
-    local cfg = config or {}
-    cfg.Title    = cfg.Title    or "Button"
-    cfg.SubTitle = cfg.SubTitle or nil
-    cfg.Icon     = cfg.Icon     or nil
-    cfg.Callback = cfg.Callback or function() end
-    cfg.Badge    = cfg.Badge    or nil
-
-    local BtnV2Func = {}
-
-    -- ── Outer frame ───────────────────────────────────────────────────────────
-    local height = cfg.SubTitle and 52 or 40
-
-    local Frame = Instance.new("Frame")
-    Frame.Name = "ButtonV2"
-    Frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    Frame.BackgroundTransparency = 0.935
-    Frame.BorderSizePixel = 0
-    Frame.LayoutOrder = countItem
-    Frame.Size = UDim2.new(1, 0, 0, height)
-    Frame.ClipsDescendants = true
-    Frame.Parent = parent
-    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
-
-    if cfg.Badge then CreateBadge(Frame, cfg.Badge) end
-
-    -- ── Invisible click button (full size) ────────────────────────────────────
-    local ClickBtn = Instance.new("TextButton")
-    ClickBtn.Name = "ClickBtn"
-    ClickBtn.Text = ""
-    ClickBtn.BackgroundTransparency = 1
-    ClickBtn.Size = UDim2.new(1, 0, 1, 0)
-    ClickBtn.ZIndex = 3
-    ClickBtn.Parent = Frame
-
-    -- ── Hover ripple overlay ──────────────────────────────────────────────────
-    local HoverOverlay = Instance.new("Frame")
-    HoverOverlay.Name = "HoverOverlay"
-    HoverOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    HoverOverlay.BackgroundTransparency = 1
-    HoverOverlay.BorderSizePixel = 0
-    HoverOverlay.Size = UDim2.new(1, 0, 1, 0)
-    HoverOverlay.ZIndex = 2
-    HoverOverlay.Parent = Frame
-    Instance.new("UICorner", HoverOverlay).CornerRadius = UDim.new(0, 6)
-
-    -- ── Left accent bar (GuiConfig.Color) ─────────────────────────────────────
-    local AccentBar = Instance.new("Frame")
-    AccentBar.Name = "AccentBar"
-    AccentBar.BackgroundColor3 = GuiConfig.Color
-    AccentBar.BackgroundTransparency = 0.5
-    AccentBar.BorderSizePixel = 0
-    AccentBar.Position = UDim2.new(0, 0, 0, 0)
-    AccentBar.Size = UDim2.new(0, 2, 1, 0)
-    AccentBar.ZIndex = 2
-    AccentBar.Parent = Frame
-
-    -- ── Title label ───────────────────────────────────────────────────────────
-    local titleYOffset = cfg.SubTitle and 10 or 0
-    local TitleLabel = Instance.new("TextLabel")
-    TitleLabel.Name = "TitleLabel"
-    TitleLabel.Font = Enum.Font.GothamBold
-    TitleLabel.Text = cfg.Title
-    TitleLabel.TextSize = 13
-    TitleLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
-    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
-    TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
-    TitleLabel.BackgroundTransparency = 1
-    TitleLabel.Position = UDim2.new(0, 14, 0, titleYOffset)
-    TitleLabel.Size = UDim2.new(1, cfg.Icon and -56 or -20, 0, 18)
-    TitleLabel.ZIndex = 2
-    TitleLabel.Parent = Frame
-
-    -- ── SubTitle label ────────────────────────────────────────────────────────
-    local SubLabel
-    if cfg.SubTitle then
-        SubLabel = Instance.new("TextLabel")
-        SubLabel.Name = "SubLabel"
-        SubLabel.Font = Enum.Font.Gotham
-        SubLabel.Text = cfg.SubTitle
-        SubLabel.TextSize = 11
-        SubLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        SubLabel.TextTransparency = 0.5
-        SubLabel.TextXAlignment = Enum.TextXAlignment.Left
-        SubLabel.TextYAlignment = Enum.TextYAlignment.Center
-        SubLabel.BackgroundTransparency = 1
-        SubLabel.Position = UDim2.new(0, 14, 0, 28)
-        SubLabel.Size = UDim2.new(1, cfg.Icon and -56 or -20, 0, 14)
-        SubLabel.ZIndex = 2
-        SubLabel.Parent = Frame
-    end
-
-    -- ── Icon circle di kanan ──────────────────────────────────────────────────
-    local IconCircle, IconImg
-    if cfg.Icon then
-        IconCircle = Instance.new("Frame")
-        IconCircle.Name = "IconCircle"
-        IconCircle.AnchorPoint = Vector2.new(1, 0.5)
-        IconCircle.Position = UDim2.new(1, -12, 0.5, 0)
-        IconCircle.Size = UDim2.new(0, 28, 0, 28)
-        IconCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        IconCircle.BackgroundTransparency = 0.9
-        IconCircle.BorderSizePixel = 0
-        IconCircle.ZIndex = 2
-        IconCircle.Parent = Frame
-        Instance.new("UICorner", IconCircle).CornerRadius = UDim.new(1, 0)
-
-        local UIStroke = Instance.new("UIStroke")
-        UIStroke.Color = Color3.fromRGB(255, 255, 255)
-        UIStroke.Thickness = 1
-        UIStroke.Transparency = 0.85
-        UIStroke.Parent = IconCircle
-
-        IconImg = Instance.new("ImageLabel")
-        IconImg.Name = "IconImg"
-        IconImg.AnchorPoint = Vector2.new(0.5, 0.5)
-        IconImg.Position = UDim2.new(0.5, 0, 0.5, 0)
-        IconImg.Size = UDim2.new(0, 16, 0, 16)
-        IconImg.BackgroundTransparency = 1
-        IconImg.ScaleType = Enum.ScaleType.Fit
-        IconImg.Image = (Icons and Icons[cfg.Icon]) and Icons[cfg.Icon] or tostring(cfg.Icon)
-        IconImg.ImageColor3 = Color3.fromRGB(230, 230, 230)
-        IconImg.ZIndex = 3
-        IconImg.Parent = IconCircle
-    end
-
-    -- ── Hover & Click animasi ─────────────────────────────────────────────────
-    ClickBtn.MouseEnter:Connect(function()
-        TweenService:Create(HoverOverlay, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
-            BackgroundTransparency = 0.94
-        }):Play()
-        TweenService:Create(AccentBar, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
-            BackgroundTransparency = 0
-        }):Play()
-        if IconCircle then
-            TweenService:Create(IconCircle, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
-                BackgroundTransparency = 0.75
-            }):Play()
-        end
-    end)
-
-    ClickBtn.MouseLeave:Connect(function()
-        TweenService:Create(HoverOverlay, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundTransparency = 1
-        }):Play()
-        TweenService:Create(AccentBar, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-            BackgroundTransparency = 0.5
-        }):Play()
-        if IconCircle then
-            TweenService:Create(IconCircle, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
-                BackgroundTransparency = 0.9
-            }):Play()
-        end
-    end)
-
-    ClickBtn.MouseButton1Down:Connect(function()
-        TweenService:Create(Frame, TweenInfo.new(0.08, Enum.EasingStyle.Quad), {
-            BackgroundTransparency = 0.88
-        }):Play()
-        if IconCircle then
-            TweenService:Create(IconCircle, TweenInfo.new(0.08), {
-                Size = UDim2.new(0, 24, 0, 24)
-            }):Play()
-        end
-    end)
-
-    ClickBtn.MouseButton1Up:Connect(function()
-        TweenService:Create(Frame, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-            BackgroundTransparency = 0.935
-        }):Play()
-        if IconCircle then
-            TweenService:Create(IconCircle, TweenInfo.new(0.15), {
-                Size = UDim2.new(0, 28, 0, 28)
-            }):Play()
-        end
-    end)
-
-    ClickBtn.MouseButton1Click:Connect(function()
-        SafeCall(cfg.Callback)
-    end)
-
-    -- ── API ───────────────────────────────────────────────────────────────────
-    function BtnV2Func:Fire()
-        SafeCall(cfg.Callback)
-    end
-
-    function BtnV2Func:SetTitle(text)
-        TitleLabel.Text = tostring(text or "Button")
-        cfg.Title = TitleLabel.Text
-    end
-
-    function BtnV2Func:SetSubTitle(text)
-        if SubLabel then
-            SubLabel.Text = tostring(text or "")
-        end
-    end
-
-    function BtnV2Func:SetIcon(iconId)
-        if IconImg then
-            IconImg.Image = (Icons and Icons[iconId]) and Icons[iconId] or tostring(iconId)
-        end
-    end
-
-    function BtnV2Func:SetCallback(fn)
-        cfg.Callback = typeof(fn) == "function" and fn or function() end
-    end
-
-    return BtnV2Func
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
