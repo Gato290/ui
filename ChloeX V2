@@ -1729,4 +1729,3 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
-70884221600423
