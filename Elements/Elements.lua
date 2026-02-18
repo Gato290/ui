@@ -27,7 +27,7 @@ local BADGE_CONFIG = {
     Warning = {
         Text   = "WARNING",
         Color  = Color3.fromRGB(255, 180, 0),
-        Width  = 30,
+        Width  = 50,
         Height = 15,
         Pulse  = "transparency",
     },
