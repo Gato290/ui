@@ -1,10 +1,11 @@
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
+local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/main.lua"))()
 
-local Window = Chloex:Window({
+local Window = VelarisUI:Window({
     Title = "Velaris UI", -- Main title displayed at the top of the window
     Footer = "By Nexa", -- Footer text shown at the bottom
     Content = "Content",
     Color = "Default", -- UI theme color (Default or custom theme)
+    Dpi = 30,
     Version = 1.0,
     ["Tab Width"] = 120, -- Width size of the tab section
     Image = "101833678008843", -- Window icon asset ID (replace with your own)
