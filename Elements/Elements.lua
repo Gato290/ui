@@ -1,5 +1,6 @@
--- Elements.lua V0.2.1
+-- Elements.lua V0.3.0
 -- UI Elements Module for NexaHub
+-- Changelog V0.3.0: Added Locked = true support for all elements
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -46,6 +47,77 @@ local BADGE_CONFIG = {
         Pulse  = "transparency",
     },
 }
+
+-- ─────────────────────────────────────────────────────────────────────────────
+--  ApplyLock  ← NEW: pasang overlay gembok di atas frame
+--  Dipanggil setelah semua child element dibuat.
+--  Mengembalikan tabel { IsLocked, SetLocked(bool) }
+-- ─────────────────────────────────────────────────────────────────────────────
+local function ApplyLock(frame, isLocked)
+    local LockFunc = { IsLocked = isLocked == true }
+
+    -- Overlay transparan yang menangkap semua input
+    local LockOverlay = Instance.new("TextButton")
+    LockOverlay.Name = "LockOverlay"
+    LockOverlay.Text = ""
+    LockOverlay.Size = UDim2.new(1, 0, 1, 0)
+    LockOverlay.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+    LockOverlay.BackgroundTransparency = 0.5
+    LockOverlay.BorderSizePixel = 0
+    LockOverlay.ZIndex = 10
+    LockOverlay.AutoButtonColor = false
+    LockOverlay.Parent = frame
+    Instance.new("UICorner", LockOverlay).CornerRadius = UDim.new(0, 6)
+
+    -- Icon gembok (teks emoji fallback)
+    local LockIcon = Instance.new("TextLabel")
+    LockIcon.Name = "LockIcon"
+    LockIcon.Size = UDim2.new(0, 28, 0, 28)
+    LockIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+    LockIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    LockIcon.BackgroundTransparency = 1
+    LockIcon.Font = Enum.Font.GothamBold
+    LockIcon.Text = "🔒"
+    LockIcon.TextSize = 18
+    LockIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LockIcon.ZIndex = 11
+    LockIcon.Parent = LockOverlay
+
+    -- Teks "Locked" kecil di bawah ikon
+    local LockLabel = Instance.new("TextLabel")
+    LockLabel.Name = "LockLabel"
+    LockLabel.Size = UDim2.new(1, 0, 0, 14)
+    LockLabel.AnchorPoint = Vector2.new(0.5, 0)
+    LockLabel.Position = UDim2.new(0.5, 0, 0.5, 14)
+    LockLabel.BackgroundTransparency = 1
+    LockLabel.Font = Enum.Font.GothamBold
+    LockLabel.Text = "LOCKED"
+    LockLabel.TextSize = 10
+    LockLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LockLabel.TextTransparency = 0.3
+    LockLabel.ZIndex = 11
+    LockLabel.Parent = LockOverlay
+
+    -- Blok semua klik (silent absorb)
+    LockOverlay.MouseButton1Click:Connect(function() end)
+
+    local function SetVisible(state)
+        LockOverlay.Visible = state
+        LockFunc.IsLocked = state
+    end
+
+    SetVisible(LockFunc.IsLocked)
+
+    function LockFunc:SetLocked(state)
+        SetVisible(state == true)
+    end
+
+    function LockFunc:GetLocked()
+        return LockFunc.IsLocked
+    end
+
+    return LockFunc
+end
 
 local function CreateBadge(parent, badgeType)
     local preset = BADGE_CONFIG[badgeType]
@@ -153,6 +225,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     cfg.Content = cfg.Content or "Content"
     cfg.Badge   = cfg.Badge   or nil
     cfg.Color   = cfg.Color   or nil
+    cfg.Locked  = cfg.Locked  or false  -- NEW
 
     local ParagraphFunc = {}
 
@@ -304,6 +377,9 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
+    -- Lock
+    local LockFunc = ApplyLock(Paragraph, cfg.Locked)
+
     function ParagraphFunc:SetContent(content)
         ParagraphContent.Text = tostring(content or "Content")
         UpdateSize()
@@ -321,6 +397,14 @@ function Elements:CreateParagraph(parent, config, countItem)
         return ParagraphTitle.Text
     end
 
+    function ParagraphFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function ParagraphFunc:GetLocked()
+        return LockFunc:GetLocked()
+    end
+
     return ParagraphFunc
 end
 
@@ -335,6 +419,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     cfg.Callback    = cfg.Callback    or function() end
     cfg.Default     = cfg.Default     or ""
     cfg.Badge       = cfg.Badge       or nil
+    cfg.Locked      = cfg.Locked      or false  -- NEW
 
     local configKey = "EditableParagraph_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -461,6 +546,9 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphTextBox:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
+    -- Lock
+    local LockFunc = ApplyLock(Paragraph, cfg.Locked)
+
     function ParagraphFunc:SetContent(content)
         ParagraphTextBox.Text = tostring(content or "")
         ParagraphFunc.Value = ParagraphTextBox.Text
@@ -477,6 +565,14 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
 
     function ParagraphFunc:GetTitle()
         return ParagraphTitle.Text
+    end
+
+    function ParagraphFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function ParagraphFunc:GetLocked()
+        return LockFunc:GetLocked()
     end
 
     return ParagraphFunc
@@ -496,6 +592,7 @@ function Elements:CreatePanel(parent, config, countItem)
     cfg.SubButtonText     = cfg.SubButton      or cfg.SubButtonText   or nil
     cfg.SubButtonCallback = cfg.SubCallback    or cfg.SubButtonCallback or function() end
     cfg.Badge             = cfg.Badge          or nil
+    cfg.Locked            = cfg.Locked         or false  -- NEW
 
     local configKey = "Panel_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -618,6 +715,9 @@ function Elements:CreatePanel(parent, config, countItem)
         end)
     end
 
+    -- Lock
+    local LockFunc = ApplyLock(Panel, cfg.Locked)
+
     function PanelFunc:GetInput()
         return InputBox and InputBox.Text or ""
     end
@@ -632,6 +732,14 @@ function Elements:CreatePanel(parent, config, countItem)
 
     function PanelFunc:SetTitle(text)
         Title.Text = tostring(text or "Title")
+    end
+
+    function PanelFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function PanelFunc:GetLocked()
+        return LockFunc:GetLocked()
     end
 
     return PanelFunc
@@ -649,6 +757,7 @@ function Elements:CreateButton(parent, config, countItem)
     cfg.SubCallback = cfg.SubCallback or function() end
     cfg.Badge       = cfg.Badge       or nil
     cfg.Version     = cfg.Version     or "V1"
+    cfg.Locked      = cfg.Locked      or false  -- NEW
 
     local ButtonFunc = {}
 
@@ -669,7 +778,6 @@ function Elements:CreateButton(parent, config, countItem)
 
         if cfg.Badge then CreateBadge(Button, cfg.Badge) end
 
-        -- Title
         local TitleLabel = Instance.new("TextLabel")
         TitleLabel.Font = Enum.Font.GothamBold
         TitleLabel.Text = cfg.Title
@@ -689,7 +797,6 @@ function Elements:CreateButton(parent, config, countItem)
             TitleLabel.Size = UDim2.new(1, -60, 0, 15)
         end
 
-        -- Content label
         local ContentLabel
         if hasContent then
             ContentLabel = Instance.new("TextLabel")
@@ -709,9 +816,6 @@ function Elements:CreateButton(parent, config, countItem)
             ContentLabel.Parent = Button
         end
 
-
-
-        -- Icon kanan (ImageLabel jika ada Icon, TextLabel ">" jika tidak)
         local IconImg
         if cfg.Icon then
             IconImg = Instance.new("ImageLabel")
@@ -740,7 +844,6 @@ function Elements:CreateButton(parent, config, countItem)
             IconImg.Parent = Button
         end
 
-        -- Invisible click button
         local ClickButton = Instance.new("TextButton")
         ClickButton.Text = ""
         ClickButton.BackgroundTransparency = 1
@@ -759,6 +862,9 @@ function Elements:CreateButton(parent, config, countItem)
         ClickButton.MouseLeave:Connect(function()
             TweenService:Create(TitleLabel, TweenInfo.new(0.15), { TextColor3 = Color3.fromRGB(231, 231, 231) }):Play()
         end)
+
+        -- Lock
+        local LockFunc = ApplyLock(Button, cfg.Locked)
 
         function ButtonFunc:Fire()
             SafeCall(cfg.Callback)
@@ -780,10 +886,18 @@ function Elements:CreateButton(parent, config, countItem)
             cfg.Callback = typeof(fn) == "function" and fn or function() end
         end
 
+        function ButtonFunc:SetLocked(state)
+            LockFunc:SetLocked(state)
+        end
+
+        function ButtonFunc:GetLocked()
+            return LockFunc:GetLocked()
+        end
+
         return ButtonFunc
     end
 
-    -- ── V1 Layout (original/default) ─────────────────────────────────────────
+    -- ── V1 Layout ─────────────────────────────────────────────────────────────
     local Button = Instance.new("Frame")
     Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Button.BackgroundTransparency = 0.935
@@ -833,6 +947,9 @@ function Elements:CreateButton(parent, config, countItem)
         end)
     end
 
+    -- Lock
+    local LockFunc = ApplyLock(Button, cfg.Locked)
+
     function ButtonFunc:Fire()
         AnimateButtonClick(MainButton)
         SafeCall(cfg.Callback)
@@ -865,6 +982,14 @@ function Elements:CreateButton(parent, config, countItem)
         cfg.SubCallback = typeof(fn) == "function" and fn or function() end
     end
 
+    function ButtonFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function ButtonFunc:GetLocked()
+        return LockFunc:GetLocked()
+    end
+
     return ButtonFunc
 end
 
@@ -879,6 +1004,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     cfg.Default  = cfg.Default  or false
     cfg.Callback = cfg.Callback or function() end
     cfg.Badge    = cfg.Badge    or nil
+    cfg.Locked   = cfg.Locked   or false  -- NEW
 
     local configKey = "Toggle_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1040,6 +1166,17 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         return ToggleFunc.Value
     end
 
+    -- Lock
+    local LockFunc = ApplyLock(Toggle, cfg.Locked)
+
+    function ToggleFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function ToggleFunc:GetLocked()
+        return LockFunc:GetLocked()
+    end
+
     ToggleFunc:Set(ToggleFunc.Value)
     Elements_Table[configKey] = ToggleFunc
     return ToggleFunc
@@ -1058,6 +1195,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     cfg.Default   = cfg.Default   or 50
     cfg.Callback  = cfg.Callback  or function() end
     cfg.Badge     = cfg.Badge     or nil
+    cfg.Locked    = cfg.Locked    or false  -- NEW
 
     if cfg.Min >= cfg.Max then cfg.Max = cfg.Min + 1 end
     if cfg.Increment <= 0 then cfg.Increment = 1 end
@@ -1267,6 +1405,17 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         end
     end)
 
+    -- Lock
+    local LockFunc = ApplyLock(Slider, cfg.Locked)
+
+    function SliderFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function SliderFunc:GetLocked()
+        return LockFunc:GetLocked()
+    end
+
     SliderFunc:Set(cfg.Default)
     Elements_Table[configKey] = SliderFunc
     return SliderFunc
@@ -1282,6 +1431,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     cfg.Callback = cfg.Callback or function() end
     cfg.Default  = cfg.Default  or ""
     cfg.Badge    = cfg.Badge    or nil
+    cfg.Locked   = cfg.Locked   or false  -- NEW
 
     local configKey = "Input_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1400,6 +1550,17 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
         InputFunc:Set(InputTextBox.Text)
     end)
 
+    -- Lock
+    local LockFunc = ApplyLock(Input, cfg.Locked)
+
+    function InputFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function InputFunc:GetLocked()
+        return LockFunc:GetLocked()
+    end
+
     InputFunc:Set(InputFunc.Value)
     Elements_Table[configKey] = InputFunc
     return InputFunc
@@ -1417,6 +1578,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     cfg.Default  = cfg.Default  or (cfg.Multi and {} or nil)
     cfg.Callback = cfg.Callback or function() end
     cfg.Badge    = cfg.Badge    or nil
+    cfg.Locked   = cfg.Locked   or false  -- NEW
 
     local configKey = "Dropdown_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1720,6 +1882,17 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
             DropdownFunc:AddOption(v)
         end
         DropdownFunc:Set(selecting)
+    end
+
+    -- Lock
+    local LockFunc = ApplyLock(Dropdown, cfg.Locked)
+
+    function DropdownFunc:SetLocked(state)
+        LockFunc:SetLocked(state)
+    end
+
+    function DropdownFunc:GetLocked()
+        return LockFunc:GetLocked()
     end
 
     DropdownFunc:SetValues(cfg.Options, cfg.Default)
