@@ -727,15 +727,16 @@ function Elements:CreateButton(parent, config, countItem)
         UIStrokeIcon.Transparency = 0.7
         UIStrokeIcon.Parent = IconFrame
 
-        local IconImg = Instance.new("ImageLabel")
+        local IconImg = Instance.new("TextLabel")
         IconImg.AnchorPoint = Vector2.new(0.5, 0.5)
         IconImg.Position = UDim2.new(0.5, 1, 0.5, 0)
-        IconImg.Size = UDim2.new(0, 14, 0, 14)
+        IconImg.Size = UDim2.new(1, 0, 1, 0)
         IconImg.BackgroundTransparency = 1
-        IconImg.Image = "rbxassetid://7072725342"
-        IconImg.ImageColor3 = Color3.fromRGB(220, 220, 220)
-        IconImg.ImageTransparency = 0.2
-        IconImg.ScaleType = Enum.ScaleType.Fit
+        IconImg.Font = Enum.Font.GothamBold
+        IconImg.Text = ">"
+        IconImg.TextColor3 = Color3.fromRGB(220, 220, 220)
+        IconImg.TextTransparency = 0.2
+        IconImg.TextSize = 14
         IconImg.Name = "IconImg"
         IconImg.Parent = IconFrame
 
