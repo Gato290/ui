@@ -69,17 +69,16 @@ local function ApplyLock(frame, isLocked)
     LockOverlay.Parent = frame
     Instance.new("UICorner", LockOverlay).CornerRadius = UDim.new(0, 6)
 
-    -- Icon gembok (teks emoji fallback)
-    local LockIcon = Instance.new("TextLabel")
+    -- Icon gembok (ImageLabel)
+    local LockIcon = Instance.new("ImageLabel")
     LockIcon.Name = "LockIcon"
-    LockIcon.Size = UDim2.new(0, 28, 0, 28)
+    LockIcon.Size = UDim2.new(0, 24, 0, 24)
     LockIcon.AnchorPoint = Vector2.new(0.5, 0.5)
-    LockIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+    LockIcon.Position = UDim2.new(0.5, 0, 0.5, -8)
     LockIcon.BackgroundTransparency = 1
-    LockIcon.Font = Enum.Font.GothamBold
-    LockIcon.Text = "🔒"
-    LockIcon.TextSize = 18
-    LockIcon.TextColor3 = Color3.fromRGB(255, 255, 255)
+    LockIcon.ScaleType = Enum.ScaleType.Fit
+    LockIcon.Image = "rbxassetid://134724289526879"
+    LockIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
     LockIcon.ZIndex = 11
     LockIcon.Parent = LockOverlay
 
