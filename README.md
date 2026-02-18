@@ -9,10 +9,6 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 > **Catatan:** Dokumentasi ini hanya menjelaskan cara pakai.
 > **Tidak ada satu pun kode yang dihapus atau diubah** dari source contoh.
 
-# New Update v1
-```
-Added Keybind
-```
 # 📥 Load UI
 
 # loadstring1
@@ -43,7 +39,6 @@ local Window = Chloex:Window({
     Configname = "MyCustomConfig", -- Configuration file name for saving settings
     Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
    -- Size = UDim2.fromOffset(580, 460),
-   -- Dpi = 1.2, -- 1 = normal, >1 = lebih besar, <1 = lebih kecil
    --[[ Config = {
         AutoSave = true, -- Automatically save settings
         AutoLoad = true -- Automatically load saved settings 
