@@ -500,15 +500,20 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
-function Nt(msg, delay, color, title, desc)
+-- Nt(msg, delay, color, title, desc, icon)
+function Nt(msg, delay, color, title, desc, icon)
     return Chloex:MakeNotify({
         Title = title or "Velaris UI",
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = getColor(color or "Default"),
-        Delay = delay or 4
+        Delay = delay or 4,
+        Icon = icon or ""
     })
 end
+
+-- Notify = alias dari Nt, bisa dipakai keduanya
+Notify = Nt
 
 -- ==================== DIALOG ====================
 local ActiveDialog = nil
