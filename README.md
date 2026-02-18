@@ -1,8 +1,8 @@
-![ChloeXUi](https://i.imgur.com/8KqTL0X.jpeg)
+![VelarisUI](https://i.imgur.com/8KqTL0X.jpeg)
 
-# Chloe X UI — Documentation (GitHub README)
+# VelarisUI — Documentation (GitHub README)
 
-UI library Roblox **Chloe X**
+UI library Roblox **VelarisUI**
 Support: VikaiHub & NexaHub version
 Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dropdown, dll.
 
