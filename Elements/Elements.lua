@@ -1,6 +1,6 @@
--- Elements.lua V0.3.0
+-- Elements.lua V0.3.1
 -- UI Elements Module for NexaHub
--- Changelog V0.3.0: Added Locked = true support for all elements
+-- Changelog V0.3.1: Fixed button highlight bug (AnimateButtonClick race condition + AutoButtonColor)
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -49,14 +49,11 @@ local BADGE_CONFIG = {
 }
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  ApplyLock  ← NEW: pasang overlay gembok di atas frame
---  Dipanggil setelah semua child element dibuat.
---  Mengembalikan tabel { IsLocked, SetLocked(bool) }
+--  ApplyLock
 -- ─────────────────────────────────────────────────────────────────────────────
 local function ApplyLock(frame, isLocked)
     local LockFunc = { IsLocked = isLocked == true }
 
-    -- Overlay transparan yang menangkap semua input
     local LockOverlay = Instance.new("TextButton")
     LockOverlay.Name = "LockOverlay"
     LockOverlay.Text = ""
@@ -69,7 +66,6 @@ local function ApplyLock(frame, isLocked)
     LockOverlay.Parent = frame
     Instance.new("UICorner", LockOverlay).CornerRadius = UDim.new(0, 6)
 
-    -- Icon gembok (ImageLabel)
     local LockIcon = Instance.new("ImageLabel")
     LockIcon.Name = "LockIcon"
     LockIcon.Size = UDim2.new(0, 24, 0, 24)
@@ -82,7 +78,6 @@ local function ApplyLock(frame, isLocked)
     LockIcon.ZIndex = 11
     LockIcon.Parent = LockOverlay
 
-    -- Teks "Locked" kecil di bawah ikon
     local LockLabel = Instance.new("TextLabel")
     LockLabel.Name = "LockLabel"
     LockLabel.Size = UDim2.new(1, 0, 0, 14)
@@ -97,7 +92,6 @@ local function ApplyLock(frame, isLocked)
     LockLabel.ZIndex = 11
     LockLabel.Parent = LockOverlay
 
-    -- Blok semua klik (silent absorb)
     LockOverlay.MouseButton1Click:Connect(function() end)
 
     local function SetVisible(state)
@@ -188,20 +182,29 @@ function Elements:CreateBadge(parent, badgeType)
     return CreateBadge(parent, badgeType)
 end
 
+-- ─────────────────────────────────────────────────────────────────────────────
+--  FIX V0.3.1: AnimateButtonClick — hapus task.wait(), pakai Completed chain
+--  + simpan origTrans/origColor SEBELUM tween berjalan
+-- ─────────────────────────────────────────────────────────────────────────────
 local function AnimateButtonClick(button, color)
     color = color or GuiConfig.Color
+    -- Ambil nilai asli SEBELUM tween apapun dijalankan
     local origTrans = button.BackgroundTransparency
     local origColor = button.BackgroundColor3
 
-    TweenService:Create(button, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = 0.7,
-        BackgroundColor3 = color,
-    }):Play()
-    task.wait(0.1)
-    TweenService:Create(button, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-        BackgroundTransparency = origTrans,
-        BackgroundColor3 = origColor,
-    }):Play()
+    local tweenIn = TweenService:Create(button,
+        TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        { BackgroundTransparency = 0.7, BackgroundColor3 = color }
+    )
+    local tweenOut = TweenService:Create(button,
+        TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+        { BackgroundTransparency = origTrans, BackgroundColor3 = origColor }
+    )
+
+    tweenIn.Completed:Connect(function()
+        tweenOut:Play()
+    end)
+    tweenIn:Play()
 end
 
 local function SafeCall(fn, ...)
@@ -224,7 +227,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     cfg.Content = cfg.Content or "Content"
     cfg.Badge   = cfg.Badge   or nil
     cfg.Color   = cfg.Color   or nil
-    cfg.Locked  = cfg.Locked  or false  -- NEW
+    cfg.Locked  = cfg.Locked  or false
 
     local ParagraphFunc = {}
 
@@ -322,6 +325,7 @@ function Elements:CreateParagraph(parent, config, countItem)
         ParagraphButton.Text = cfg.ButtonText
         ParagraphButton.Size = hasSubBtn and UDim2.new(0.5, -13, 0, 28) or UDim2.new(1, -16, 0, 28)
         ParagraphButton.Position = UDim2.new(0, 8, 0, 0)
+        ParagraphButton.AutoButtonColor = false  -- FIX
         ParagraphButton.Parent = Paragraph
         Instance.new("UICorner", ParagraphButton).CornerRadius = UDim.new(0, 6)
 
@@ -342,6 +346,7 @@ function Elements:CreateParagraph(parent, config, countItem)
             ParagraphSubButton.Text = cfg.SubButtonText
             ParagraphSubButton.Size = UDim2.new(0.5, -13, 0, 28)
             ParagraphSubButton.Position = UDim2.new(0.5, 5, 0, 0)
+            ParagraphSubButton.AutoButtonColor = false  -- FIX
             ParagraphSubButton.Parent = Paragraph
             Instance.new("UICorner", ParagraphSubButton).CornerRadius = UDim.new(0, 6)
 
@@ -376,7 +381,6 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
-    -- Lock
     local LockFunc = ApplyLock(Paragraph, cfg.Locked)
 
     function ParagraphFunc:SetContent(content)
@@ -418,7 +422,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     cfg.Callback    = cfg.Callback    or function() end
     cfg.Default     = cfg.Default     or ""
     cfg.Badge       = cfg.Badge       or nil
-    cfg.Locked      = cfg.Locked      or false  -- NEW
+    cfg.Locked      = cfg.Locked      or false
 
     local configKey = "EditableParagraph_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -512,6 +516,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         ParagraphButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         ParagraphButton.Text = cfg.ButtonText
         ParagraphButton.Position = UDim2.new(0, 10, 0, 75)
+        ParagraphButton.AutoButtonColor = false  -- FIX
         ParagraphButton.Parent = Paragraph
         Instance.new("UICorner", ParagraphButton).CornerRadius = UDim.new(0, 6)
 
@@ -545,7 +550,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphTextBox:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
-    -- Lock
     local LockFunc = ApplyLock(Paragraph, cfg.Locked)
 
     function ParagraphFunc:SetContent(content)
@@ -591,7 +595,7 @@ function Elements:CreatePanel(parent, config, countItem)
     cfg.SubButtonText     = cfg.SubButton      or cfg.SubButtonText   or nil
     cfg.SubButtonCallback = cfg.SubCallback    or cfg.SubButtonCallback or function() end
     cfg.Badge             = cfg.Badge          or nil
-    cfg.Locked            = cfg.Locked         or false  -- NEW
+    cfg.Locked            = cfg.Locked         or false
 
     local configKey = "Panel_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -675,6 +679,7 @@ function Elements:CreatePanel(parent, config, countItem)
     ButtonMain.BackgroundTransparency = 0.935
     ButtonMain.Size = cfg.SubButtonText and UDim2.new(0.5, -12, 0, 30) or UDim2.new(1, -20, 0, 30)
     ButtonMain.Position = UDim2.new(0, 10, 0, yBtn)
+    ButtonMain.AutoButtonColor = false  -- FIX
     ButtonMain.Parent = Panel
     Instance.new("UICorner", ButtonMain).CornerRadius = UDim.new(0, 6)
 
@@ -696,6 +701,7 @@ function Elements:CreatePanel(parent, config, countItem)
         SubButton.BackgroundTransparency = 0.935
         SubButton.Size = UDim2.new(0.5, -12, 0, 30)
         SubButton.Position = UDim2.new(0.5, 2, 0, yBtn)
+        SubButton.AutoButtonColor = false  -- FIX
         SubButton.Parent = Panel
         Instance.new("UICorner", SubButton).CornerRadius = UDim.new(0, 6)
 
@@ -714,7 +720,6 @@ function Elements:CreatePanel(parent, config, countItem)
         end)
     end
 
-    -- Lock
     local LockFunc = ApplyLock(Panel, cfg.Locked)
 
     function PanelFunc:GetInput()
@@ -756,7 +761,7 @@ function Elements:CreateButton(parent, config, countItem)
     cfg.SubCallback = cfg.SubCallback or function() end
     cfg.Badge       = cfg.Badge       or nil
     cfg.Version     = cfg.Version     or "V1"
-    cfg.Locked      = cfg.Locked      or false  -- NEW
+    cfg.Locked      = cfg.Locked      or false
 
     local ButtonFunc = {}
 
@@ -848,6 +853,7 @@ function Elements:CreateButton(parent, config, countItem)
         ClickButton.BackgroundTransparency = 1
         ClickButton.Size = UDim2.new(1, 0, 1, 0)
         ClickButton.Name = "ClickButton"
+        ClickButton.AutoButtonColor = false  -- FIX
         ClickButton.Parent = Button
 
         ClickButton.MouseButton1Click:Connect(function()
@@ -862,7 +868,6 @@ function Elements:CreateButton(parent, config, countItem)
             TweenService:Create(TitleLabel, TweenInfo.new(0.15), { TextColor3 = Color3.fromRGB(231, 231, 231) }):Play()
         end)
 
-        -- Lock
         local LockFunc = ApplyLock(Button, cfg.Locked)
 
         function ButtonFunc:Fire()
@@ -917,6 +922,7 @@ function Elements:CreateButton(parent, config, countItem)
     MainButton.BackgroundTransparency = 0.935
     MainButton.Size = cfg.SubTitle and UDim2.new(0.5, -8, 1, -10) or UDim2.new(1, -12, 1, -10)
     MainButton.Position = UDim2.new(0, 6, 0, 5)
+    MainButton.AutoButtonColor = false  -- FIX
     MainButton.Parent = Button
     Instance.new("UICorner", MainButton).CornerRadius = UDim.new(0, 4)
 
@@ -937,6 +943,7 @@ function Elements:CreateButton(parent, config, countItem)
         SubButtonRef.BackgroundTransparency = 0.935
         SubButtonRef.Size = UDim2.new(0.5, -8, 1, -10)
         SubButtonRef.Position = UDim2.new(0.5, 2, 0, 5)
+        SubButtonRef.AutoButtonColor = false  -- FIX
         SubButtonRef.Parent = Button
         Instance.new("UICorner", SubButtonRef).CornerRadius = UDim.new(0, 4)
 
@@ -946,7 +953,6 @@ function Elements:CreateButton(parent, config, countItem)
         end)
     end
 
-    -- Lock
     local LockFunc = ApplyLock(Button, cfg.Locked)
 
     function ButtonFunc:Fire()
@@ -1003,7 +1009,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     cfg.Default  = cfg.Default  or false
     cfg.Callback = cfg.Callback or function() end
     cfg.Badge    = cfg.Badge    or nil
-    cfg.Locked   = cfg.Locked   or false  -- NEW
+    cfg.Locked   = cfg.Locked   or false
 
     local configKey = "Toggle_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1109,6 +1115,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleButton.Font = Enum.Font.SourceSans
     ToggleButton.Text = ""
     ToggleButton.BackgroundTransparency = 1
+    ToggleButton.AutoButtonColor = false  -- FIX
     ToggleButton.Size = UDim2.new(1, 0, 1, 0)
     ToggleButton.Name = "ToggleButton"
     ToggleButton.Parent = Toggle
@@ -1165,7 +1172,6 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         return ToggleFunc.Value
     end
 
-    -- Lock
     local LockFunc = ApplyLock(Toggle, cfg.Locked)
 
     function ToggleFunc:SetLocked(state)
@@ -1194,7 +1200,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     cfg.Default   = cfg.Default   or 50
     cfg.Callback  = cfg.Callback  or function() end
     cfg.Badge     = cfg.Badge     or nil
-    cfg.Locked    = cfg.Locked    or false  -- NEW
+    cfg.Locked    = cfg.Locked    or false
 
     if cfg.Min >= cfg.Max then cfg.Max = cfg.Min + 1 end
     if cfg.Increment <= 0 then cfg.Increment = 1 end
@@ -1404,7 +1410,6 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         end
     end)
 
-    -- Lock
     local LockFunc = ApplyLock(Slider, cfg.Locked)
 
     function SliderFunc:SetLocked(state)
@@ -1430,7 +1435,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     cfg.Callback = cfg.Callback or function() end
     cfg.Default  = cfg.Default  or ""
     cfg.Badge    = cfg.Badge    or nil
-    cfg.Locked   = cfg.Locked   or false  -- NEW
+    cfg.Locked   = cfg.Locked   or false
 
     local configKey = "Input_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1549,7 +1554,6 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
         InputFunc:Set(InputTextBox.Text)
     end)
 
-    -- Lock
     local LockFunc = ApplyLock(Input, cfg.Locked)
 
     function InputFunc:SetLocked(state)
@@ -1577,7 +1581,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     cfg.Default  = cfg.Default  or (cfg.Multi and {} or nil)
     cfg.Callback = cfg.Callback or function() end
     cfg.Badge    = cfg.Badge    or nil
-    cfg.Locked   = cfg.Locked   or false  -- NEW
+    cfg.Locked   = cfg.Locked   or false
 
     local configKey = "Dropdown_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1606,6 +1610,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
     DropdownButton.Text = ""
     DropdownButton.BackgroundTransparency = 1
+    DropdownButton.AutoButtonColor = false  -- FIX
     DropdownButton.Size = UDim2.new(1, 0, 1, 0)
     DropdownButton.Name = "ToggleButton"
     DropdownButton.Parent = Dropdown
@@ -1761,6 +1766,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
         local OptionButton = Instance.new("TextButton")
         OptionButton.BackgroundTransparency = 1
+        OptionButton.AutoButtonColor = false  -- FIX
         OptionButton.Size = UDim2.new(1, 0, 1, 0)
         OptionButton.Text = ""
         OptionButton.Name = "OptionButton"
@@ -1883,7 +1889,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         DropdownFunc:Set(selecting)
     end
 
-    -- Lock
     local LockFunc = ApplyLock(Dropdown, cfg.Locked)
 
     function DropdownFunc:SetLocked(state)
