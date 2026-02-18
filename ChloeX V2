@@ -642,18 +642,16 @@ end
 
 function Chloex:Window(GuiConfig)
     GuiConfig               = GuiConfig or {}
-    GuiConfig.Title         = GuiConfig.Title or "Chloe X"
-    GuiConfig.Footer        = GuiConfig.Footer or "Chloee :3"
+    GuiConfig.Title         = GuiConfig.Title or "Velaris UI"
+    GuiConfig.Footer        = GuiConfig.Footer or "By Nexa Modified"
     GuiConfig.Content       = GuiConfig.Content or ""
     GuiConfig.ShowUser      = GuiConfig.ShowUser or false
     GuiConfig.Color         = getColor(GuiConfig.Color or "Default")
     GuiConfig["Tab Width"]  = GuiConfig["Tab Width"] or 120
     GuiConfig.Version       = GuiConfig.Version or 1
     GuiConfig.Uitransparent = GuiConfig.Uitransparent or 0
-    GuiConfig.Image         = GuiConfig.Image or "70884221600423"
+    GuiConfig.Image         = GuiConfig.Image or "101833678008843"
     GuiConfig.Configname    = GuiConfig.Configname or "Velaris UI"
-
-    -- ✅ Size default: 640x400 | Dpi default: 1
     GuiConfig.Size          = GuiConfig.Size or UDim2.fromOffset(640, 400)
     GuiConfig.Dpi           = GuiConfig.Dpi or 1
 
@@ -1731,3 +1729,4 @@ function Chloex:Window(GuiConfig)
 end
 
 return Chloex
+70884221600423
