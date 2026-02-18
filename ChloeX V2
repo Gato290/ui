@@ -1716,4 +1716,7 @@ function Chloex:Window(GuiConfig)
     return Tabs
 end
 
+-- ✅ Alias: bisa pakai Chloex atau VelarisUI
+VelarisUI = Chloex
+
 return Chloex
