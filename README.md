@@ -13,23 +13,23 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 
 # loadstring1
 ```lua
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V1"))()
+local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V1"))()
 ```
 
 # loadstring2 (Recomend)
 ```lua
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
+local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 ```
 
 # loadstring3
 ```lua
-local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V3"))()
+local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V3"))()
 ```
 # Support Icon
 ```Lucide, Solar```
 # Window
 ```lua
-local Window = Chloex:Window({
+local Window = VelarisUI:Window({
     Title = "Title", -- Main title displayed at the top of the window
     Footer = "Footer", -- Footer text shown at the bottom
     Color = "Default", -- UI theme color (Default or custom theme)
@@ -553,7 +553,7 @@ Notify(
 )
 
 -- Custom notification basic
-Chloex:MakeNotify({
+VelarisUI:MakeNotify({
     Title = "Example Success",                 -- Title
     Description = "Example System",             -- Description / category
     Content = "Example action completed!",     -- Main content
@@ -563,7 +563,7 @@ Chloex:MakeNotify({
 })
 
 -- Warning notification
-Chloex:MakeNotify({
+VelarisUI:MakeNotify({
     Title = "Example Warning",                 -- Title
     Description = "⚠️ Example Alert",           -- Additional description
     Content = "This is an example warning!",   -- Message content
@@ -572,7 +572,7 @@ Chloex:MakeNotify({
 })
 
 -- Error notification
-Chloex:MakeNotify({
+VelarisUI:MakeNotify({
     Title = "Example Error",                   -- Title
     Description = "❌ Example Failed",          -- Error description
     Content = "Example error occurred.",       -- Message
@@ -581,7 +581,7 @@ Chloex:MakeNotify({
 })
 
 -- Create custom notification and save reference
-local exampleCustomNotify = Chloex:MakeNotify({
+local exampleCustomNotify = VelarisUI:MakeNotify({
     Title = "Example Title",              -- Title
     Description = "Example Info",         -- Description
     Content = "Click or close manually",  -- Content message
@@ -644,3 +644,5 @@ Sec.Ui:AddInput({
 ```lua
 loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Example.lua"))()
 ```
+
+VelarisUI
