@@ -1,14 +1,5 @@
--- Elements.lua V0.1.0
+-- Elements.lua V0.2.0
 -- UI Elements Module for NexaHub
--- FIXED: All public API methods repaired and hardened
--- FIXED: CreateParagraph - SetContent/SetTitle now triggers UpdateSize
--- FIXED: CreateToggle - Value sync sebelum callback, pcall pada Set
--- FIXED: CreateSlider - Round edge-case, TextBox infinite-loop guard, clamp input
--- FIXED: CreateInput - Set() update Value sebelum callback
--- FIXED: CreateDropdown - nil-safe Set(), AddOption() update Options table, Clear() reset benar
--- FIXED: CreateEditableParagraph - SetContent triggers UpdateSize, GetContent added
--- FIXED: CreatePanel - tambah GetValue(), GetInput(), error-safe callbacks
--- FIXED: CreateButton - return ButtonFunc dengan Fire() API
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -23,6 +14,113 @@ function Elements:Initialize(config, saveFunc, configData, icons)
     SaveConfig = saveFunc
     ConfigData = configData
     Icons = icons
+end
+
+-- ─────────────────────────────────────────────────────────────────────────────
+--  Badge Config (gabungan New + Status)
+-- ─────────────────────────────────────────────────────────────────────────────
+local BADGE_CONFIG = {
+    New = {
+        Text   = "NEW",
+        Color  = nil,       -- nil = pakai GuiConfig.Color
+        Width  = 35,
+        Height = 16,
+        Pulse  = "size",
+    },
+    Warning = {
+        Text   = "⚠ WARNING",
+        Color  = Color3.fromRGB(255, 180, 0),
+        Width  = 72,
+        Height = 16,
+        Pulse  = "transparency",
+    },
+    Bug = {
+        Text   = "🐛 BUG",
+        Color  = Color3.fromRGB(220, 50, 50),
+        Width  = 50,
+        Height = 16,
+        Pulse  = "transparency",
+    },
+    Fixed = {
+        Text   = "✔ FIXED",
+        Color  = Color3.fromRGB(50, 200, 80),
+        Width  = 58,
+        Height = 16,
+        Pulse  = "transparency",
+    },
+}
+
+local function CreateBadge(parent, badgeType)
+    local preset = BADGE_CONFIG[badgeType]
+    if not preset then
+        warn("[Elements] CreateBadge: unknown type '" .. tostring(badgeType) .. "'")
+        return nil
+    end
+
+    local color = preset.Color or GuiConfig.Color
+
+    local Badge = Instance.new("Frame")
+    Badge.Name = badgeType .. "Badge"
+    Badge.AnchorPoint = Vector2.new(1, 0)
+    Badge.Position = UDim2.new(1, -8, 0, 8)
+    Badge.Size = UDim2.new(0, preset.Width, 0, preset.Height)
+    Badge.BackgroundColor3 = color
+    Badge.BackgroundTransparency = badgeType == "New" and 0 or 0.15
+    Badge.BorderSizePixel = 0
+    Badge.Parent = parent
+
+    Instance.new("UICorner", Badge).CornerRadius = UDim.new(0, 4)
+
+    -- UIStroke hanya untuk status badge (bukan New)
+    if badgeType ~= "New" then
+        local UIStroke = Instance.new("UIStroke")
+        UIStroke.Color = color
+        UIStroke.Thickness = 1
+        UIStroke.Transparency = 0.4
+        UIStroke.Parent = Badge
+    end
+
+    local BadgeText = Instance.new("TextLabel")
+    BadgeText.Name = "BadgeText"
+    BadgeText.Size = UDim2.new(1, -4, 1, 0)
+    BadgeText.Position = UDim2.new(0, 2, 0, 0)
+    BadgeText.BackgroundTransparency = 1
+    BadgeText.Font = Enum.Font.GothamBold
+    BadgeText.Text = preset.Text
+    BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
+    BadgeText.TextSize = badgeType == "New" and 10 or 9
+    BadgeText.Parent = Badge
+
+    -- Animasi pulse
+    if preset.Pulse == "size" then
+        local pulseIn = TweenService:Create(Badge,
+            TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+            { Size = UDim2.new(0, preset.Width + 3, 0, preset.Height + 2) })
+        local pulseOut = TweenService:Create(Badge,
+            TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+            { Size = UDim2.new(0, preset.Width, 0, preset.Height) })
+        pulseIn.Completed:Connect(function() pulseOut:Play() end)
+        pulseOut.Completed:Connect(function() pulseIn:Play() end)
+        pulseIn:Play()
+
+    elseif preset.Pulse == "transparency" then
+        local pulseIn = TweenService:Create(Badge,
+            TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+            { BackgroundTransparency = 0.35 })
+        local pulseOut = TweenService:Create(Badge,
+            TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
+            { BackgroundTransparency = 0.15 })
+        pulseIn.Completed:Connect(function() pulseOut:Play() end)
+        pulseOut.Completed:Connect(function() pulseIn:Play() end)
+        pulseIn:Play()
+    end
+
+    return Badge
+end
+
+-- Expose ke publik jika perlu dipanggil dari luar
+function Elements:CreateBadge(parent, badgeType)
+    return CreateBadge(parent, badgeType)
 end
 
 -- ── Helper: animasi klik tombol ─────────────────────────────────────────────
@@ -42,44 +140,6 @@ local function AnimateButtonClick(button, color)
     }):Play()
 end
 
--- ── Helper: badge "NEW" dengan animasi pulse ─────────────────────────────────
-local function CreateNewBadge(parent)
-    local NewBadge = Instance.new("Frame")
-    NewBadge.Name = "NewBadge"
-    NewBadge.AnchorPoint = Vector2.new(1, 0)
-    NewBadge.Position = UDim2.new(1, -8, 0, 8)
-    NewBadge.Size = UDim2.new(0, 35, 0, 16)
-    NewBadge.BackgroundColor3 = GuiConfig.Color
-    NewBadge.BorderSizePixel = 0
-    NewBadge.Parent = parent
-
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 4)
-    UICorner.Parent = NewBadge
-
-    local BadgeText = Instance.new("TextLabel")
-    BadgeText.Name = "BadgeText"
-    BadgeText.Size = UDim2.new(1, 0, 1, 0)
-    BadgeText.BackgroundTransparency = 1
-    BadgeText.Font = Enum.Font.GothamBold
-    BadgeText.Text = "NEW"
-    BadgeText.TextColor3 = Color3.fromRGB(255, 255, 255)
-    BadgeText.TextSize = 10
-    BadgeText.Parent = NewBadge
-
-    local pulseIn = TweenService:Create(NewBadge,
-        TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-        { Size = UDim2.new(0, 38, 0, 18) })
-    local pulseOut = TweenService:Create(NewBadge,
-        TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
-        { Size = UDim2.new(0, 35, 0, 16) })
-
-    pulseIn.Completed:Connect(function() pulseOut:Play() end)
-    pulseOut.Completed:Connect(function() pulseIn:Play() end)
-    pulseIn:Play()
-    return NewBadge
-end
-
 -- ── Helper: safe callback ─────────────────────────────────────────────────────
 local function SafeCall(fn, ...)
     if typeof(fn) ~= "function" then return end
@@ -95,15 +155,13 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateParagraph
---  FIX: SetContent/SetTitle sekarang trigger UpdateSize
---  FIX: Layout icon diperbaiki agar tidak overlap
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateParagraph(parent, config, countItem)
     local cfg = config or {}
-    cfg.Title          = cfg.Title   or "Title"
-    cfg.Content        = cfg.Content or "Content"
-    cfg.New            = cfg.New     or false
-    cfg.Color          = cfg.Color   or nil
+    cfg.Title   = cfg.Title   or "Title"
+    cfg.Content = cfg.Content or "Content"
+    cfg.Badge   = cfg.Badge   or nil
+    cfg.Color   = cfg.Color   or nil
 
     local ParagraphFunc = {}
 
@@ -125,7 +183,7 @@ function Elements:CreateParagraph(parent, config, countItem)
 
     Instance.new("UICorner", Paragraph).CornerRadius = UDim.new(0, 8)
 
-    if cfg.New then CreateNewBadge(Paragraph) end
+    if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
     -- Icon
     local iconSize = 0
@@ -180,7 +238,6 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
-    -- Tombol
     local btnBgColor = cfg.ButtonColor    or Color3.fromRGB(255, 255, 255)
     local subBgColor = cfg.SubButtonColor or Color3.fromRGB(255, 255, 255)
     local btnBgTrans = cfg.ButtonColor    and 0.15 or 0.85
@@ -232,7 +289,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         end
     end
 
-    -- UpdateSize
     local function UpdateSize()
         task.wait()
         local contentH = math.max(12, ParagraphContent.TextBounds.Y)
@@ -257,8 +313,6 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
-    -- ── API ──────────────────────────────────────────────────────────────────
-    -- FIX: Set methods sekarang trigger UpdateSize
     function ParagraphFunc:SetContent(content)
         ParagraphContent.Text = tostring(content or "Content")
         UpdateSize()
@@ -268,7 +322,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         ParagraphTitle.Text = tostring(title or "Title")
     end
 
-    -- FIX: tambah GetContent & GetTitle
     function ParagraphFunc:GetContent()
         return ParagraphContent.Text
     end
@@ -282,9 +335,6 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateEditableParagraph
---  FIX: SetContent triggers UpdateSize
---  FIX: GetContent tersedia (sudah ada, pastikan konsisten)
---  FIX: callback dipanggil dengan SafeCall
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateEditableParagraph(parent, config, countItem)
     local cfg = config or {}
@@ -293,7 +343,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     cfg.Placeholder = cfg.Placeholder or "Type something..."
     cfg.Callback    = cfg.Callback    or function() end
     cfg.Default     = cfg.Default     or ""
-    cfg.New         = cfg.New         or false
+    cfg.Badge       = cfg.Badge       or nil
 
     local configKey = "EditableParagraph_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -302,11 +352,11 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
 
     local ParagraphFunc = { Value = cfg.Default }
 
-    local Paragraph     = Instance.new("Frame")
-    local UICorner      = Instance.new("UICorner")
-    local ParagraphTitle = Instance.new("TextLabel")
-    local TextBoxFrame  = Instance.new("Frame")
-    local TextBoxCorner = Instance.new("UICorner")
+    local Paragraph        = Instance.new("Frame")
+    local UICorner         = Instance.new("UICorner")
+    local ParagraphTitle   = Instance.new("TextLabel")
+    local TextBoxFrame     = Instance.new("Frame")
+    local TextBoxCorner    = Instance.new("UICorner")
     local ParagraphTextBox = Instance.new("TextBox")
 
     Paragraph.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -320,7 +370,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     UICorner.CornerRadius = UDim.new(0, 4)
     UICorner.Parent = Paragraph
 
-    if cfg.New then CreateNewBadge(Paragraph) end
+    if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
     local iconOffset = 10
     if cfg.Icon then
@@ -420,8 +470,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     ParagraphTextBox:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
-    -- ── API ──────────────────────────────────────────────────────────────────
-    -- FIX: SetContent sekarang trigger UpdateSize dan update Value
     function ParagraphFunc:SetContent(content)
         ParagraphTextBox.Text = tostring(content or "")
         ParagraphFunc.Value = ParagraphTextBox.Text
@@ -432,7 +480,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         return ParagraphTextBox.Text
     end
 
-    -- FIX: SetTitle tersedia
     function ParagraphFunc:SetTitle(title)
         ParagraphTitle.Text = tostring(title or "Title")
     end
@@ -446,20 +493,18 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreatePanel
---  FIX: tambah GetValue(), callback dipanggil dengan SafeCall
---  FIX: GetInput() sekarang safe jika tidak ada InputBox
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreatePanel(parent, config, countItem)
     local cfg = config or {}
-    cfg.Title            = cfg.Title          or "Title"
-    cfg.Content          = cfg.Content        or ""
-    cfg.Placeholder      = cfg.Placeholder    or nil
-    cfg.Default          = cfg.Default        or ""
-    cfg.ButtonText       = cfg.Button         or cfg.ButtonText    or "Confirm"
-    cfg.ButtonCallback   = cfg.Callback       or cfg.ButtonCallback or function() end
-    cfg.SubButtonText    = cfg.SubButton      or cfg.SubButtonText  or nil
-    cfg.SubButtonCallback = cfg.SubCallback  or cfg.SubButtonCallback or function() end
-    cfg.New              = cfg.New            or false
+    cfg.Title             = cfg.Title          or "Title"
+    cfg.Content           = cfg.Content        or ""
+    cfg.Placeholder       = cfg.Placeholder    or nil
+    cfg.Default           = cfg.Default        or ""
+    cfg.ButtonText        = cfg.Button         or cfg.ButtonText     or "Confirm"
+    cfg.ButtonCallback    = cfg.Callback       or cfg.ButtonCallback  or function() end
+    cfg.SubButtonText     = cfg.SubButton      or cfg.SubButtonText   or nil
+    cfg.SubButtonCallback = cfg.SubCallback    or cfg.SubButtonCallback or function() end
+    cfg.Badge             = cfg.Badge          or nil
 
     local configKey = "Panel_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -480,7 +525,7 @@ function Elements:CreatePanel(parent, config, countItem)
     Panel.Parent = parent
 
     Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 4)
-    if cfg.New then CreateNewBadge(Panel) end
+    if cfg.Badge then CreateBadge(Panel, cfg.Badge) end
 
     local Title = Instance.new("TextLabel")
     Title.Font = Enum.Font.GothamBold
@@ -582,23 +627,18 @@ function Elements:CreatePanel(parent, config, countItem)
         end)
     end
 
-    -- ── API ──────────────────────────────────────────────────────────────────
-    -- FIX: GetInput() safe jika tidak ada InputBox
     function PanelFunc:GetInput()
         return InputBox and InputBox.Text or ""
     end
 
-    -- FIX: GetValue() tersedia
     function PanelFunc:GetValue()
         return PanelFunc.Value
     end
 
-    -- FIX: SetContent() untuk update label content
     function PanelFunc:SetContent(text)
         Content.Text = tostring(text or "")
     end
 
-    -- FIX: SetTitle() tersedia
     function PanelFunc:SetTitle(text)
         Title.Text = tostring(text or "Title")
     end
@@ -608,8 +648,6 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateButton
---  FIX: sekarang return ButtonFunc dengan Fire() dan SetTitle() API
---  FIX: SafeCall pada semua callback
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateButton(parent, config, countItem)
     local cfg = config or {}
@@ -617,7 +655,7 @@ function Elements:CreateButton(parent, config, countItem)
     cfg.Callback    = cfg.Callback    or function() end
     cfg.SubTitle    = cfg.SubTitle    or nil
     cfg.SubCallback = cfg.SubCallback or function() end
-    cfg.New         = cfg.New         or false
+    cfg.Badge       = cfg.Badge       or nil
 
     local ButtonFunc = {}
 
@@ -629,7 +667,7 @@ function Elements:CreateButton(parent, config, countItem)
     Button.Parent = parent
 
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 4)
-    if cfg.New then CreateNewBadge(Button) end
+    if cfg.Badge then CreateBadge(Button, cfg.Badge) end
 
     local MainButton = Instance.new("TextButton")
     MainButton.Font = Enum.Font.GothamBold
@@ -670,14 +708,11 @@ function Elements:CreateButton(parent, config, countItem)
         end)
     end
 
-    -- ── API ──────────────────────────────────────────────────────────────────
-    -- FIX: Fire() untuk trigger tombol utama secara programatik
     function ButtonFunc:Fire()
         AnimateButtonClick(MainButton)
         SafeCall(cfg.Callback)
     end
 
-    -- FIX: FireSub() untuk trigger tombol kedua secara programatik
     function ButtonFunc:FireSub()
         if SubButtonRef then
             AnimateButtonClick(SubButtonRef)
@@ -685,7 +720,6 @@ function Elements:CreateButton(parent, config, countItem)
         end
     end
 
-    -- FIX: SetTitle() untuk ganti label tombol
     function ButtonFunc:SetTitle(text)
         MainButton.Text = tostring(text or "Confirm")
         cfg.Title = MainButton.Text
@@ -698,7 +732,6 @@ function Elements:CreateButton(parent, config, countItem)
         end
     end
 
-    -- FIX: SetCallback() untuk ganti callback
     function ButtonFunc:SetCallback(fn)
         cfg.Callback = typeof(fn) == "function" and fn or function() end
     end
@@ -712,9 +745,6 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateToggle
---  FIX: Set() sekarang update ToggleFunc.Value SEBELUM callback
---  FIX: SafeCall menggantikan pcall manual
---  FIX: Set(nil) di-handle dengan aman (default false)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -723,31 +753,30 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     cfg.Content  = cfg.Content  or ""
     cfg.Default  = cfg.Default  or false
     cfg.Callback = cfg.Callback or function() end
-    cfg.New      = cfg.New      or false
+    cfg.Badge    = cfg.Badge    or nil
 
     local configKey = "Toggle_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
         cfg.Default = ConfigData[configKey]
     end
 
-    -- FIX: pastikan Default adalah boolean, bukan nil/string
     if typeof(cfg.Default) ~= "boolean" then
         cfg.Default = cfg.Default and true or false
     end
 
     local ToggleFunc = { Value = cfg.Default }
 
-    local Toggle       = Instance.new("Frame")
-    local UICorner20   = Instance.new("UICorner")
-    local ToggleTitle  = Instance.new("TextLabel")
-    local ToggleTitle2 = Instance.new("TextLabel")
+    local Toggle        = Instance.new("Frame")
+    local UICorner20    = Instance.new("UICorner")
+    local ToggleTitle   = Instance.new("TextLabel")
+    local ToggleTitle2  = Instance.new("TextLabel")
     local ToggleContent = Instance.new("TextLabel")
-    local ToggleButton = Instance.new("TextButton")
-    local FeatureFrame = Instance.new("Frame")
-    local UICorner22   = Instance.new("UICorner")
-    local UIStroke8    = Instance.new("UIStroke")
-    local ToggleCircle = Instance.new("Frame")
-    local UICorner23   = Instance.new("UICorner")
+    local ToggleButton  = Instance.new("TextButton")
+    local FeatureFrame  = Instance.new("Frame")
+    local UICorner22    = Instance.new("UICorner")
+    local UIStroke8     = Instance.new("UIStroke")
+    local ToggleCircle  = Instance.new("Frame")
+    local UICorner23    = Instance.new("UICorner")
 
     Toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Toggle.BackgroundTransparency = 0.935
@@ -759,7 +788,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     UICorner20.CornerRadius = UDim.new(0, 4)
     UICorner20.Parent = Toggle
 
-    if cfg.New then CreateNewBadge(Toggle) end
+    if cfg.Badge then CreateBadge(Toggle, cfg.Badge) end
 
     ToggleTitle.Font = Enum.Font.GothamBold
     ToggleTitle.Text = cfg.Title
@@ -862,17 +891,11 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         ToggleFunc:Set(not ToggleFunc.Value)
     end)
 
-    -- ── API ──────────────────────────────────────────────────────────────────
     function ToggleFunc:Set(Value)
-        -- FIX: normalize ke boolean
         Value = Value and true or false
-
-        -- FIX: update Value SEBELUM callback dipanggil
         ToggleFunc.Value = Value
         ConfigData[configKey] = Value
         SaveConfig()
-
-        -- FIX: SafeCall menggantikan manual pcall
         SafeCall(cfg.Callback, Value)
 
         if Value then
@@ -888,7 +911,6 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         end
     end
 
-    -- FIX: GetValue() tersedia
     function ToggleFunc:GetValue()
         return ToggleFunc.Value
     end
@@ -900,10 +922,6 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateSlider
---  FIX: Round() infinite-loop / edge-case di-fix dengan RoundToFactor()
---  FIX: TextBox input loop guard (ignore perubahan dari Set sendiri)
---  FIX: Set() clamp dan round sebelum apply
---  FIX: SafeCall pada Callback
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -914,11 +932,9 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     cfg.Max       = cfg.Max       or 100
     cfg.Default   = cfg.Default   or 50
     cfg.Callback  = cfg.Callback  or function() end
-    cfg.New       = cfg.New       or false
+    cfg.Badge     = cfg.Badge     or nil
 
-    -- FIX: pastikan Min < Max
     if cfg.Min >= cfg.Max then cfg.Max = cfg.Min + 1 end
-    -- FIX: pastikan Increment > 0
     if cfg.Increment <= 0 then cfg.Increment = 1 end
 
     local configKey = "Slider_" .. cfg.Title
@@ -928,20 +944,20 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
 
     local SliderFunc = { Value = cfg.Default }
 
-    local Slider        = Instance.new("Frame")
-    local UICorner15    = Instance.new("UICorner")
-    local SliderTitle   = Instance.new("TextLabel")
-    local SliderContent = Instance.new("TextLabel")
-    local SliderInput   = Instance.new("Frame")
-    local UICorner16    = Instance.new("UICorner")
-    local TextBox       = Instance.new("TextBox")
-    local SliderFrame   = Instance.new("Frame")
-    local UICorner17    = Instance.new("UICorner")
+    local Slider          = Instance.new("Frame")
+    local UICorner15      = Instance.new("UICorner")
+    local SliderTitle     = Instance.new("TextLabel")
+    local SliderContent   = Instance.new("TextLabel")
+    local SliderInput     = Instance.new("Frame")
+    local UICorner16      = Instance.new("UICorner")
+    local TextBox         = Instance.new("TextBox")
+    local SliderFrame     = Instance.new("Frame")
+    local UICorner17      = Instance.new("UICorner")
     local SliderDraggable = Instance.new("Frame")
-    local UICorner18    = Instance.new("UICorner")
-    local SliderCircle  = Instance.new("Frame")
-    local UICorner19    = Instance.new("UICorner")
-    local UIStroke6     = Instance.new("UIStroke")
+    local UICorner18      = Instance.new("UICorner")
+    local SliderCircle    = Instance.new("Frame")
+    local UICorner19      = Instance.new("UICorner")
+    local UIStroke6       = Instance.new("UIStroke")
 
     Slider.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Slider.BackgroundTransparency = 0.935
@@ -954,7 +970,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     UICorner15.CornerRadius = UDim.new(0, 4)
     UICorner15.Parent = Slider
 
-    if cfg.New then CreateNewBadge(Slider) end
+    if cfg.Badge then CreateBadge(Slider, cfg.Badge) end
 
     SliderTitle.Font = Enum.Font.GothamBold
     SliderTitle.Text = cfg.Title
@@ -1052,12 +1068,9 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     UIStroke6.Parent = SliderCircle
 
     local Dragging = false
-    -- FIX: guard agar Set() tidak re-trigger TextBox Changed secara loop
     local _settingFromCode = false
 
-    -- ── API ──────────────────────────────────────────────────────────────────
     function SliderFunc:Set(Value)
-        -- FIX: gunakan RoundToFactor yang aman
         Value = math.clamp(RoundToFactor(tonumber(Value) or cfg.Min, cfg.Increment), cfg.Min, cfg.Max)
         SliderFunc.Value = Value
 
@@ -1077,12 +1090,10 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         SaveConfig()
     end
 
-    -- FIX: GetValue() tersedia
     function SliderFunc:GetValue()
         return SliderFunc.Value
     end
 
-    -- FIX: SetMin/SetMax untuk update batas secara dinamis
     function SliderFunc:SetMin(min)
         cfg.Min = tonumber(min) or cfg.Min
         if cfg.Min >= cfg.Max then cfg.Max = cfg.Min + 1 end
@@ -1095,7 +1106,6 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         SliderFunc:Set(SliderFunc.Value)
     end
 
-    -- Drag input
     SliderFrame.InputBegan:Connect(function(Input)
         if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
@@ -1119,7 +1129,6 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         end
     end)
 
-    -- FIX: guard infinite-loop dari TextBox yang diubah oleh Set()
     TextBox.FocusLost:Connect(function()
         if _settingFromCode then return end
         local raw = TextBox.Text:gsub("[^%d%-%.]+", "")
@@ -1127,7 +1136,6 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         if num then
             SliderFunc:Set(num)
         else
-            -- restore ke value saat ini kalau input tidak valid
             _settingFromCode = true
             TextBox.Text = tostring(SliderFunc.Value)
             _settingFromCode = false
@@ -1141,9 +1149,6 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateInput
---  FIX: Set() update Value SEBELUM callback, bukan setelah
---  FIX: SafeCall pada Callback
---  FIX: GetValue() tersedia
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -1151,7 +1156,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     cfg.Content  = cfg.Content  or ""
     cfg.Callback = cfg.Callback or function() end
     cfg.Default  = cfg.Default  or ""
-    cfg.New      = cfg.New      or false
+    cfg.Badge    = cfg.Badge    or nil
 
     local configKey = "Input_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1179,7 +1184,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     UICorner12.CornerRadius = UDim.new(0, 4)
     UICorner12.Parent = Input
 
-    if cfg.New then CreateNewBadge(Input) end
+    if cfg.Badge then CreateBadge(Input, cfg.Badge) end
 
     InputTitle.Font = Enum.Font.GothamBold
     InputTitle.Text = cfg.Title
@@ -1249,10 +1254,8 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     InputTextBox.Name = "InputTextBox"
     InputTextBox.Parent = InputFrame
 
-    -- ── API ──────────────────────────────────────────────────────────────────
     function InputFunc:Set(Value)
         Value = tostring(Value or "")
-        -- FIX: update Value SEBELUM callback dan SEBELUM update TextBox
         InputFunc.Value = Value
         InputTextBox.Text = Value
         ConfigData[configKey] = Value
@@ -1260,12 +1263,10 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
         SafeCall(cfg.Callback, Value)
     end
 
-    -- FIX: GetValue() tersedia
     function InputFunc:GetValue()
         return InputFunc.Value
     end
 
-    -- FIX: Clear() tersedia
     function InputFunc:Clear()
         InputFunc:Set("")
     end
@@ -1281,11 +1282,6 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateDropdown
---  FIX: Set() nil-safe untuk single dan multi mode
---  FIX: AddOption() sekarang update DropdownFunc.Options
---  FIX: Clear() reset Value dengan benar sesuai mode
---  FIX: SetValues() tidak crash jika dipanggil dengan nil
---  FIX: SafeCall pada Callback
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateDropdown(parent, config, countItem, countDropdown, DropdownFolder, MoreBlur, DropdownSelect, DropPageLayout, Elements_Table)
     local cfg = config or {}
@@ -1295,7 +1291,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     cfg.Options  = cfg.Options  or {}
     cfg.Default  = cfg.Default  or (cfg.Multi and {} or nil)
     cfg.Callback = cfg.Callback or function() end
-    cfg.New      = cfg.New      or false
+    cfg.Badge    = cfg.Badge    or nil
 
     local configKey = "Dropdown_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1304,15 +1300,15 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
     local DropdownFunc = { Value = cfg.Default, Options = {} }
 
-    local Dropdown        = Instance.new("Frame")
-    local DropdownButton  = Instance.new("TextButton")
-    local UICorner10      = Instance.new("UICorner")
-    local DropdownTitle   = Instance.new("TextLabel")
-    local DropdownContent = Instance.new("TextLabel")
+    local Dropdown           = Instance.new("Frame")
+    local DropdownButton     = Instance.new("TextButton")
+    local UICorner10         = Instance.new("UICorner")
+    local DropdownTitle      = Instance.new("TextLabel")
+    local DropdownContent    = Instance.new("TextLabel")
     local SelectOptionsFrame = Instance.new("Frame")
-    local UICorner11      = Instance.new("UICorner")
-    local OptionSelecting = Instance.new("TextLabel")
-    local OptionImg       = Instance.new("ImageLabel")
+    local UICorner11         = Instance.new("UICorner")
+    local OptionSelecting    = Instance.new("TextLabel")
+    local OptionImg          = Instance.new("ImageLabel")
 
     Dropdown.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Dropdown.BackgroundTransparency = 0.935
@@ -1331,7 +1327,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     UICorner10.CornerRadius = UDim.new(0, 4)
     UICorner10.Parent = Dropdown
 
-    if cfg.New then CreateNewBadge(Dropdown) end
+    if cfg.Badge then CreateBadge(Dropdown, cfg.Badge) end
 
     DropdownTitle.Font = Enum.Font.GothamBold
     DropdownTitle.Text = cfg.Title
@@ -1449,9 +1445,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         end
     end)
 
-    -- ── API ──────────────────────────────────────────────────────────────────
-
-    -- FIX: Clear() reset Value sesuai mode dan hapus semua option frame
     function DropdownFunc:Clear()
         for _, child in ScrollSelect:GetChildren() do
             if child.Name == "Option" then child:Destroy() end
@@ -1461,7 +1454,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         OptionSelecting.Text = cfg.Multi and "Select Options" or "Select Option"
     end
 
-    -- FIX: AddOption() update DropdownFunc.Options
     function DropdownFunc:AddOption(option)
         local label, value
         if typeof(option) == "table" and option.Label and option.Value ~= nil then
@@ -1472,7 +1464,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
             value = option
         end
 
-        -- FIX: track di Options list
         table.insert(DropdownFunc.Options, option)
 
         local Option = Instance.new("Frame")
@@ -1529,7 +1520,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
                 end
                 DropdownFunc:Set(DropdownFunc.Value)
             else
-                -- FIX: toggle deselect jika klik item yang sama
                 if DropdownFunc.Value == value then
                     DropdownFunc:Set(nil)
                 else
@@ -1539,7 +1529,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         end)
     end
 
-    -- FIX: Set() nil-safe untuk single dan multi
     function DropdownFunc:Set(Value)
         if cfg.Multi then
             if type(Value) == "table" then
@@ -1547,15 +1536,13 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
             elseif Value == nil then
                 DropdownFunc.Value = {}
             else
-                -- single value dimasukkan ke table
                 DropdownFunc.Value = { Value }
             end
         else
-            -- FIX: handle table input untuk mode single
             if type(Value) == "table" then
                 DropdownFunc.Value = Value[1]
             else
-                DropdownFunc.Value = Value  -- bisa nil (deselect)
+                DropdownFunc.Value = Value
             end
         end
 
@@ -1590,7 +1577,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
             and (cfg.Multi and "Select Options" or "Select Option")
             or table.concat(texts, ", ")
 
-        -- FIX: SafeCall dan kirim value yang benar sesuai mode
         if cfg.Multi then
             SafeCall(cfg.Callback, DropdownFunc.Value)
         else
@@ -1601,7 +1587,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     function DropdownFunc:SetValue(val) self:Set(val) end
     function DropdownFunc:GetValue() return self.Value end
 
-    -- FIX: SetValues() safe jika argumen nil
     function DropdownFunc:SetValues(newList, selecting)
         newList   = newList   or {}
         selecting = selecting or (cfg.Multi and {} or nil)
@@ -1618,7 +1603,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateDivider — tidak ada perubahan fungsional, hanya cleanup kecil
+--  CreateDivider
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateDivider(parent, countItem)
     local Divider = Instance.new("Frame")
@@ -1645,7 +1630,7 @@ function Elements:CreateDivider(parent, countItem)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateSubSection — tidak ada perubahan fungsional
+--  CreateSubSection
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateSubSection(parent, title, countItem)
     title = title or "Sub Section"
