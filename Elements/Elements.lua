@@ -711,19 +711,34 @@ function Elements:CreateButton(parent, config, countItem)
 
 
 
-        -- Arrow text kanan
-        local IconImg = Instance.new("TextLabel")
-        IconImg.AnchorPoint = Vector2.new(1, 0.5)
-        IconImg.Position = UDim2.new(1, -12, 0.5, 0)
-        IconImg.Size = UDim2.new(0, 20, 0, 20)
-        IconImg.BackgroundTransparency = 1
-        IconImg.Font = Enum.Font.GothamBold
-        IconImg.Text = ">"
-        IconImg.TextColor3 = Color3.fromRGB(220, 220, 220)
-        IconImg.TextTransparency = 0.2
-        IconImg.TextSize = 14
-        IconImg.Name = "IconImg"
-        IconImg.Parent = Button
+        -- Icon kanan (ImageLabel jika ada Icon, TextLabel ">" jika tidak)
+        local IconImg
+        if cfg.Icon then
+            IconImg = Instance.new("ImageLabel")
+            IconImg.AnchorPoint = Vector2.new(1, 0.5)
+            IconImg.Position = UDim2.new(1, -10, 0.5, 0)
+            IconImg.Size = UDim2.new(0, 20, 0, 20)
+            IconImg.BackgroundTransparency = 1
+            IconImg.ScaleType = Enum.ScaleType.Fit
+            IconImg.Image = (Icons and Icons[cfg.Icon]) and Icons[cfg.Icon] or tostring(cfg.Icon)
+            IconImg.ImageColor3 = Color3.fromRGB(220, 220, 220)
+            IconImg.ImageTransparency = 0.2
+            IconImg.Name = "IconImg"
+            IconImg.Parent = Button
+        else
+            IconImg = Instance.new("TextLabel")
+            IconImg.AnchorPoint = Vector2.new(1, 0.5)
+            IconImg.Position = UDim2.new(1, -12, 0.5, 0)
+            IconImg.Size = UDim2.new(0, 20, 0, 20)
+            IconImg.BackgroundTransparency = 1
+            IconImg.Font = Enum.Font.GothamBold
+            IconImg.Text = ">"
+            IconImg.TextColor3 = Color3.fromRGB(220, 220, 220)
+            IconImg.TextTransparency = 0.2
+            IconImg.TextSize = 14
+            IconImg.Name = "IconImg"
+            IconImg.Parent = Button
+        end
 
         -- Invisible click button
         local ClickButton = Instance.new("TextButton")
