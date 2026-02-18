@@ -5,7 +5,6 @@ local Window = VelarisUI:Window({
     Footer = "By Nexa", -- Footer text shown at the bottom
     Content = "Content",
     Color = "Default", -- UI theme color (Default or custom theme)
-    Dpi = 30,
     Version = 1.0,
     ["Tab Width"] = 120, -- Width size of the tab section
     Image = "101833678008843", -- Window icon asset ID (replace with your own)
@@ -145,6 +144,27 @@ Sec.Button:AddButton({
     end
 })
 
+Sec.Button:AddButton({
+    Title = "Locked",
+    Locked = true,
+    Callback = function()
+        print("This is an example button")
+        Nt("Example clicked!", 2)
+    end
+})
+
+Sec.Button:AddButton({
+    Title = "Button V2 Locked",
+    Locked = true,
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",  -- pakai asset id
+    Callback = function()
+        print("This is an example button")
+        Nt("Example clicked!", 2)
+    end
+})
+
+
 Sec.Toggle = Tabs.Toggle:AddSection({
     Title = "Toggle Section",
     Open = true
@@ -187,6 +207,21 @@ Sec.Toggle:AddToggle({
     Content = "This is an example toggle description",
     Default = false,
     Callback = function(value)
+        if value then
+            Nt("Example enabled!", 2)
+        else
+            Nt("Example disabled!", 2)
+        end
+    end
+})
+
+Sec.Toggle:AddToggle({
+    Title = "Toggle Locked",
+    Locked = true,
+    Default = false,
+    Callback = function(value)
+        print("Example toggle:", value)
+
         if value then
             Nt("Example enabled!", 2)
         else
