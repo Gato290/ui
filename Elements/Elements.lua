@@ -19,7 +19,7 @@ end
 local BADGE_CONFIG = {
     New = {
         Text   = "NEW",
-        Color  = nil,       -- nil = pakai GuiConfig.Color
+        Color  = nil,
         Width  = 35,
         Height = 16,
         Pulse  = "size",
@@ -68,7 +68,6 @@ local function CreateBadge(parent, badgeType)
 
     Instance.new("UICorner", Badge).CornerRadius = UDim.new(0, 4)
 
-    -- UIStroke hanya untuk status badge (bukan New)
     if badgeType ~= "New" then
         local UIStroke = Instance.new("UIStroke")
         UIStroke.Color = color
@@ -88,7 +87,6 @@ local function CreateBadge(parent, badgeType)
     BadgeText.TextSize = badgeType == "New" and 10 or 9
     BadgeText.Parent = Badge
 
-    -- Animasi pulse
     if preset.Pulse == "size" then
         local pulseIn = TweenService:Create(Badge,
             TweenInfo.new(0.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -99,7 +97,6 @@ local function CreateBadge(parent, badgeType)
         pulseIn.Completed:Connect(function() pulseOut:Play() end)
         pulseOut.Completed:Connect(function() pulseIn:Play() end)
         pulseIn:Play()
-
     elseif preset.Pulse == "transparency" then
         local pulseIn = TweenService:Create(Badge,
             TweenInfo.new(0.7, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut),
@@ -115,12 +112,10 @@ local function CreateBadge(parent, badgeType)
     return Badge
 end
 
--- Expose ke publik jika perlu dipanggil dari luar
 function Elements:CreateBadge(parent, badgeType)
     return CreateBadge(parent, badgeType)
 end
 
--- ── Helper: animasi klik tombol ─────────────────────────────────────────────
 local function AnimateButtonClick(button, color)
     color = color or GuiConfig.Color
     local origTrans = button.BackgroundTransparency
@@ -137,14 +132,12 @@ local function AnimateButtonClick(button, color)
     }):Play()
 end
 
--- ── Helper: safe callback ─────────────────────────────────────────────────────
 local function SafeCall(fn, ...)
     if typeof(fn) ~= "function" then return end
     local ok, err = pcall(fn, ...)
     if not ok then warn("[Elements] Callback error:", err) end
 end
 
--- ── Helper: round slider value ────────────────────────────────────────────────
 local function RoundToFactor(value, factor)
     if factor == 0 then return value end
     return math.floor(value / factor + 0.5) * factor
@@ -182,7 +175,6 @@ function Elements:CreateParagraph(parent, config, countItem)
 
     if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
-    -- Icon
     local iconSize = 0
     local iconPadL = 0
     if cfg.Icon then
@@ -226,7 +218,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.Text = cfg.Content
     ParagraphContent.TextColor3 = Color3.fromRGB(255, 255, 255)
     ParagraphContent.TextSize = 11
-    ParagraphContent.TextTransparency = 0.6
+    ParagraphContent.TextTransparency = 0.45
     ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
     ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphContent.BackgroundTransparency = 1
@@ -739,6 +731,228 @@ function Elements:CreateButton(parent, config, countItem)
     end
 
     return ButtonFunc
+end
+
+-- ─────────────────────────────────────────────────────────────────────────────
+--  CreateButtonV2  ★ NEW
+--  Style: wide row dengan Title + SubTitle di kiri, icon bulat di kanan
+--  Mirip "Save Config / Save current settings to config" di foto
+--
+--  Config:
+--    Title       (string)   -- Teks utama, bold
+--    SubTitle    (string)   -- Teks kecil di bawah Title (opsional)
+--    Icon        (string)   -- rbxassetid atau key di Icons table
+--    Callback    (function) -- Dipanggil saat diklik
+--    Badge       (string)   -- Tipe badge opsional
+-- ─────────────────────────────────────────────────────────────────────────────
+function Elements:CreateButtonV2(parent, config, countItem)
+    local cfg = config or {}
+    cfg.Title    = cfg.Title    or "Button"
+    cfg.SubTitle = cfg.SubTitle or nil
+    cfg.Icon     = cfg.Icon     or nil
+    cfg.Callback = cfg.Callback or function() end
+    cfg.Badge    = cfg.Badge    or nil
+
+    local BtnV2Func = {}
+
+    -- ── Outer frame ───────────────────────────────────────────────────────────
+    local height = cfg.SubTitle and 52 or 40
+
+    local Frame = Instance.new("Frame")
+    Frame.Name = "ButtonV2"
+    Frame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    Frame.BackgroundTransparency = 0.935
+    Frame.BorderSizePixel = 0
+    Frame.LayoutOrder = countItem
+    Frame.Size = UDim2.new(1, 0, 0, height)
+    Frame.ClipsDescendants = true
+    Frame.Parent = parent
+    Instance.new("UICorner", Frame).CornerRadius = UDim.new(0, 6)
+
+    if cfg.Badge then CreateBadge(Frame, cfg.Badge) end
+
+    -- ── Invisible click button (full size) ────────────────────────────────────
+    local ClickBtn = Instance.new("TextButton")
+    ClickBtn.Name = "ClickBtn"
+    ClickBtn.Text = ""
+    ClickBtn.BackgroundTransparency = 1
+    ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+    ClickBtn.ZIndex = 3
+    ClickBtn.Parent = Frame
+
+    -- ── Hover ripple overlay ──────────────────────────────────────────────────
+    local HoverOverlay = Instance.new("Frame")
+    HoverOverlay.Name = "HoverOverlay"
+    HoverOverlay.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+    HoverOverlay.BackgroundTransparency = 1
+    HoverOverlay.BorderSizePixel = 0
+    HoverOverlay.Size = UDim2.new(1, 0, 1, 0)
+    HoverOverlay.ZIndex = 2
+    HoverOverlay.Parent = Frame
+    Instance.new("UICorner", HoverOverlay).CornerRadius = UDim.new(0, 6)
+
+    -- ── Left accent bar (GuiConfig.Color) ─────────────────────────────────────
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Name = "AccentBar"
+    AccentBar.BackgroundColor3 = GuiConfig.Color
+    AccentBar.BackgroundTransparency = 0.5
+    AccentBar.BorderSizePixel = 0
+    AccentBar.Position = UDim2.new(0, 0, 0, 0)
+    AccentBar.Size = UDim2.new(0, 2, 1, 0)
+    AccentBar.ZIndex = 2
+    AccentBar.Parent = Frame
+
+    -- ── Title label ───────────────────────────────────────────────────────────
+    local titleYOffset = cfg.SubTitle and 10 or 0
+    local TitleLabel = Instance.new("TextLabel")
+    TitleLabel.Name = "TitleLabel"
+    TitleLabel.Font = Enum.Font.GothamBold
+    TitleLabel.Text = cfg.Title
+    TitleLabel.TextSize = 13
+    TitleLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
+    TitleLabel.TextXAlignment = Enum.TextXAlignment.Left
+    TitleLabel.TextYAlignment = Enum.TextYAlignment.Center
+    TitleLabel.BackgroundTransparency = 1
+    TitleLabel.Position = UDim2.new(0, 14, 0, titleYOffset)
+    TitleLabel.Size = UDim2.new(1, cfg.Icon and -56 or -20, 0, 18)
+    TitleLabel.ZIndex = 2
+    TitleLabel.Parent = Frame
+
+    -- ── SubTitle label ────────────────────────────────────────────────────────
+    local SubLabel
+    if cfg.SubTitle then
+        SubLabel = Instance.new("TextLabel")
+        SubLabel.Name = "SubLabel"
+        SubLabel.Font = Enum.Font.Gotham
+        SubLabel.Text = cfg.SubTitle
+        SubLabel.TextSize = 11
+        SubLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        SubLabel.TextTransparency = 0.5
+        SubLabel.TextXAlignment = Enum.TextXAlignment.Left
+        SubLabel.TextYAlignment = Enum.TextYAlignment.Center
+        SubLabel.BackgroundTransparency = 1
+        SubLabel.Position = UDim2.new(0, 14, 0, 28)
+        SubLabel.Size = UDim2.new(1, cfg.Icon and -56 or -20, 0, 14)
+        SubLabel.ZIndex = 2
+        SubLabel.Parent = Frame
+    end
+
+    -- ── Icon circle di kanan ──────────────────────────────────────────────────
+    local IconCircle, IconImg
+    if cfg.Icon then
+        IconCircle = Instance.new("Frame")
+        IconCircle.Name = "IconCircle"
+        IconCircle.AnchorPoint = Vector2.new(1, 0.5)
+        IconCircle.Position = UDim2.new(1, -12, 0.5, 0)
+        IconCircle.Size = UDim2.new(0, 28, 0, 28)
+        IconCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        IconCircle.BackgroundTransparency = 0.9
+        IconCircle.BorderSizePixel = 0
+        IconCircle.ZIndex = 2
+        IconCircle.Parent = Frame
+        Instance.new("UICorner", IconCircle).CornerRadius = UDim.new(1, 0)
+
+        local UIStroke = Instance.new("UIStroke")
+        UIStroke.Color = Color3.fromRGB(255, 255, 255)
+        UIStroke.Thickness = 1
+        UIStroke.Transparency = 0.85
+        UIStroke.Parent = IconCircle
+
+        IconImg = Instance.new("ImageLabel")
+        IconImg.Name = "IconImg"
+        IconImg.AnchorPoint = Vector2.new(0.5, 0.5)
+        IconImg.Position = UDim2.new(0.5, 0, 0.5, 0)
+        IconImg.Size = UDim2.new(0, 16, 0, 16)
+        IconImg.BackgroundTransparency = 1
+        IconImg.ScaleType = Enum.ScaleType.Fit
+        IconImg.Image = (Icons and Icons[cfg.Icon]) and Icons[cfg.Icon] or tostring(cfg.Icon)
+        IconImg.ImageColor3 = Color3.fromRGB(230, 230, 230)
+        IconImg.ZIndex = 3
+        IconImg.Parent = IconCircle
+    end
+
+    -- ── Hover & Click animasi ─────────────────────────────────────────────────
+    ClickBtn.MouseEnter:Connect(function()
+        TweenService:Create(HoverOverlay, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 0.94
+        }):Play()
+        TweenService:Create(AccentBar, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 0
+        }):Play()
+        if IconCircle then
+            TweenService:Create(IconCircle, TweenInfo.new(0.18, Enum.EasingStyle.Quad), {
+                BackgroundTransparency = 0.75
+            }):Play()
+        end
+    end)
+
+    ClickBtn.MouseLeave:Connect(function()
+        TweenService:Create(HoverOverlay, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 1
+        }):Play()
+        TweenService:Create(AccentBar, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 0.5
+        }):Play()
+        if IconCircle then
+            TweenService:Create(IconCircle, TweenInfo.new(0.2, Enum.EasingStyle.Quad), {
+                BackgroundTransparency = 0.9
+            }):Play()
+        end
+    end)
+
+    ClickBtn.MouseButton1Down:Connect(function()
+        TweenService:Create(Frame, TweenInfo.new(0.08, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 0.88
+        }):Play()
+        if IconCircle then
+            TweenService:Create(IconCircle, TweenInfo.new(0.08), {
+                Size = UDim2.new(0, 24, 0, 24)
+            }):Play()
+        end
+    end)
+
+    ClickBtn.MouseButton1Up:Connect(function()
+        TweenService:Create(Frame, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+            BackgroundTransparency = 0.935
+        }):Play()
+        if IconCircle then
+            TweenService:Create(IconCircle, TweenInfo.new(0.15), {
+                Size = UDim2.new(0, 28, 0, 28)
+            }):Play()
+        end
+    end)
+
+    ClickBtn.MouseButton1Click:Connect(function()
+        SafeCall(cfg.Callback)
+    end)
+
+    -- ── API ───────────────────────────────────────────────────────────────────
+    function BtnV2Func:Fire()
+        SafeCall(cfg.Callback)
+    end
+
+    function BtnV2Func:SetTitle(text)
+        TitleLabel.Text = tostring(text or "Button")
+        cfg.Title = TitleLabel.Text
+    end
+
+    function BtnV2Func:SetSubTitle(text)
+        if SubLabel then
+            SubLabel.Text = tostring(text or "")
+        end
+    end
+
+    function BtnV2Func:SetIcon(iconId)
+        if IconImg then
+            IconImg.Image = (Icons and Icons[iconId]) and Icons[iconId] or tostring(iconId)
+        end
+    end
+
+    function BtnV2Func:SetCallback(fn)
+        cfg.Callback = typeof(fn) == "function" and fn or function() end
+    end
+
+    return BtnV2Func
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
