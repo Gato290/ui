@@ -16,9 +16,6 @@ function Elements:Initialize(config, saveFunc, configData, icons)
     Icons = icons
 end
 
--- ─────────────────────────────────────────────────────────────────────────────
---  Badge Config (gabungan New + Status)
--- ─────────────────────────────────────────────────────────────────────────────
 local BADGE_CONFIG = {
     New = {
         Text   = "NEW",
@@ -28,7 +25,7 @@ local BADGE_CONFIG = {
         Pulse  = "size",
     },
     Warning = {
-        Text   = "WARNING",
+        Text   = "WARNG",
         Color  = Color3.fromRGB(255, 180, 0),
         Width  = 72,
         Height = 16,
@@ -42,7 +39,7 @@ local BADGE_CONFIG = {
         Pulse  = "transparency",
     },
     Fixed = {
-        Text   = "FIXED",
+        Text   = "FXD",
         Color  = Color3.fromRGB(50, 200, 80),
         Width  = 58,
         Height = 16,
@@ -229,6 +226,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.Text = cfg.Content
     ParagraphContent.TextColor3 = Color3.fromRGB(255, 255, 255)
     ParagraphContent.TextSize = 11
+    ParagraphContent.TextTransparency = 0.6
     ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
     ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
     ParagraphContent.BackgroundTransparency = 1
