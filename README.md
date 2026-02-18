@@ -11,19 +11,9 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 
 # 📥 Load UI
 
-# loadstring1
+# loadstring (Recomend)
 ```lua
-local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V1"))()
-```
-
-# loadstring2 (Recomend)
-```lua
-local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
-```
-
-# loadstring3
-```lua
-local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V3"))()
+local VelarisUI = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/main.lua"))()
 ```
 # Support Icon
 ```Lucide, Solar```
