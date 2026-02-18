@@ -58,6 +58,14 @@ local function getColor(colorInput)
     return ColorModule["Default"] or Color3.fromRGB(0, 208, 255)
 end
 
+-- ✅ Helper: Scale TextSize berdasarkan DPI
+-- DPI 10 = normal, makin besar = makin kecil
+local function scaledText(baseSize)
+    local dpi = _G.VelarisTextDpi or 10
+    local scale = 10 / dpi
+    return math.max(6, math.floor(baseSize * scale))
+end
+
 -- Variables
 local ConfigFolder = "Velaris UI"
 local ConfigFile = ""
@@ -126,7 +134,7 @@ local function safeSize(pxWidth, pxHeight)
     return UDim2.new(scaleX, 0, scaleY, 0)
 end
 
--- ✅ MakeDraggable menerima GuiConfig untuk Size & Dpi
+-- ✅ MakeDraggable — DPI tidak mempengaruhi ukuran window
 local function MakeDraggable(topbarobject, object, GuiConfig)
     local function CustomPos(topbarobject, object)
         local Dragging, DragInput, DragStart, StartPosition
@@ -174,19 +182,18 @@ local function MakeDraggable(topbarobject, object, GuiConfig)
         local minSizeX, minSizeY
         local defSizeX, defSizeY
 
-        -- ✅ Gunakan Size & Dpi dari GuiConfig
-        local dpi = (GuiConfig and GuiConfig.Dpi) or 1
+        -- ✅ Ukuran window TIDAK dipengaruhi DPI, hanya pakai Size biasa
         local cfgW = (GuiConfig and GuiConfig.Size and GuiConfig.Size.X.Offset) or 640
         local cfgH = (GuiConfig and GuiConfig.Size and GuiConfig.Size.Y.Offset) or 400
 
         if isMobile then
             minSizeX, minSizeY = 100, 100
-            defSizeX = math.min(cfgW * dpi, 470)
-            defSizeY = math.min(cfgH * dpi, 270)
+            defSizeX = math.min(cfgW, 470)
+            defSizeY = math.min(cfgH, 270)
         else
             minSizeX, minSizeY = 100, 100
-            defSizeX = cfgW * dpi
-            defSizeY = cfgH * dpi
+            defSizeX = cfgW
+            defSizeY = cfgH
         end
 
         object.Size = UDim2.new(0, defSizeX, 0, defSizeY)
@@ -285,7 +292,7 @@ function Chloex:MakeNotify(NotifyConfig)
     NotifyConfig.Color = getColor(NotifyConfig.Color or "Default")
     NotifyConfig.Time = NotifyConfig.Time or 0.5
     NotifyConfig.Delay = NotifyConfig.Delay or 5
-    NotifyConfig.Icon = NotifyConfig.Icon or "" -- ✅ Icon support
+    NotifyConfig.Icon = NotifyConfig.Icon or ""
     local NotifyFunction = {}
     spawn(function()
         if not CoreGui:FindFirstChild("NotifyGui") then
@@ -371,13 +378,11 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.Name = "Top"
         Top.Parent = NotifyFrameReal
 
-        -- ✅ Hitung offset title berdasarkan ada/tidaknya icon
         local hasIcon = NotifyConfig.Icon and NotifyConfig.Icon ~= ""
         local iconSize = 20
         local iconPadding = 8
         local titleOffsetX = hasIcon and (iconPadding + iconSize + 6) or 10
 
-        -- ✅ Icon di sebelah kiri title (dalam Top bar)
         if hasIcon then
             local NotifyIcon = Instance.new("ImageLabel")
             NotifyIcon.AnchorPoint = Vector2.new(0, 0.5)
@@ -398,7 +403,7 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel.Font = Enum.Font.GothamBold
         TextLabel.Text = NotifyConfig.Title
         TextLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TextLabel.TextSize = 14
+        TextLabel.TextSize = scaledText(14) -- ✅ DPI scaled
         TextLabel.TextXAlignment = Enum.TextXAlignment.Left
         TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         TextLabel.BackgroundTransparency = 0.9990000128746033
@@ -414,7 +419,7 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel1.Font = Enum.Font.GothamBold
         TextLabel1.Text = NotifyConfig.Description
         TextLabel1.TextColor3 = NotifyConfig.Color
-        TextLabel1.TextSize = 14
+        TextLabel1.TextSize = scaledText(14) -- ✅ DPI scaled
         TextLabel1.TextXAlignment = Enum.TextXAlignment.Left
         TextLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         TextLabel1.BackgroundTransparency = 0.9990000128746033
@@ -427,7 +432,7 @@ function Chloex:MakeNotify(NotifyConfig)
         Close.Font = Enum.Font.SourceSans
         Close.Text = ""
         Close.TextColor3 = Color3.fromRGB(0, 0, 0)
-        Close.TextSize = 14
+        Close.TextSize = scaledText(14) -- ✅ DPI scaled
         Close.AnchorPoint = Vector2.new(1, 0.5)
         Close.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Close.BackgroundTransparency = 0.9990000128746033
@@ -448,11 +453,10 @@ function Chloex:MakeNotify(NotifyConfig)
         ImageLabel.Size = UDim2.new(1, -8, 1, -8)
         ImageLabel.Parent = Close
 
-        -- ✅ Content text offset ikut icon jika ada
         local contentOffsetX = hasIcon and titleOffsetX or 10
         TextLabel2.Font = Enum.Font.GothamBold
         TextLabel2.TextColor3 = Color3.fromRGB(150, 150, 150)
-        TextLabel2.TextSize = 13
+        TextLabel2.TextSize = scaledText(13) -- ✅ DPI scaled
         TextLabel2.Text = NotifyConfig.Content
         TextLabel2.TextXAlignment = Enum.TextXAlignment.Left
         TextLabel2.TextYAlignment = Enum.TextYAlignment.Top
@@ -462,8 +466,8 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.BorderSizePixel = 0
         TextLabel2.Position = UDim2.new(0, contentOffsetX, 0, 27)
         TextLabel2.Parent = NotifyFrameReal
-        TextLabel2.Size = UDim2.new(1, -(contentOffsetX + 10), 0, 13)
-        TextLabel2.Size = UDim2.new(1, -(contentOffsetX + 10), 0, 13 + (13 * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
+        TextLabel2.Size = UDim2.new(1, -(contentOffsetX + 10), 0, scaledText(13))
+        TextLabel2.Size = UDim2.new(1, -(contentOffsetX + 10), 0, scaledText(13) + (scaledText(13) * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
         TextLabel2.TextWrapped = true
 
         if TextLabel2.AbsoluteSize.Y < 27 then
@@ -512,7 +516,6 @@ function Nt(msg, delay, color, title, desc, icon)
     })
 end
 
--- Notify = alias dari Nt, bisa dipakai keduanya
 Notify = Nt
 
 -- ==================== DIALOG ====================
@@ -583,7 +586,7 @@ function Chloex:Dialog(DialogConfig)
     Title.BackgroundTransparency = 1
     Title.Font = Enum.Font.GothamBold
     Title.Text = DialogConfig.Title
-    Title.TextSize = 22
+    Title.TextSize = scaledText(22) -- ✅ DPI scaled
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.ZIndex = 52
     Title.Parent = Dialog
@@ -594,7 +597,7 @@ function Chloex:Dialog(DialogConfig)
     Message.BackgroundTransparency = 1
     Message.Font = Enum.Font.Gotham
     Message.Text = DialogConfig.Content
-    Message.TextSize = 14
+    Message.TextSize = scaledText(14) -- ✅ DPI scaled
     Message.TextColor3 = Color3.fromRGB(200, 200, 200)
     Message.TextWrapped = true
     Message.ZIndex = 52
@@ -612,7 +615,7 @@ function Chloex:Dialog(DialogConfig)
         Button.BackgroundTransparency = 0.935
         Button.Text = buttonConfig.Name or "Button"
         Button.Font = Enum.Font.GothamBold
-        Button.TextSize = 15
+        Button.TextSize = scaledText(15) -- ✅ DPI scaled
         Button.TextColor3 = Color3.fromRGB(255, 255, 255)
         Button.TextTransparency = 0.3
         Button.ZIndex = 52
@@ -653,9 +656,12 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Image         = GuiConfig.Image or "70884221600423"
     GuiConfig.Configname    = GuiConfig.Configname or "Velaris UI"
 
-    -- ✅ Size default: 640x400 | Dpi default: 1
+    -- ✅ Size default: 640x400 | Dpi default: 10 (normal)
     GuiConfig.Size          = GuiConfig.Size or UDim2.fromOffset(640, 400)
-    GuiConfig.Dpi           = GuiConfig.Dpi or 1
+    GuiConfig.Dpi           = GuiConfig.Dpi or 10
+
+    -- ✅ Simpan DPI ke global agar scaledText() bisa dipakai di mana saja
+    _G.VelarisTextDpi = GuiConfig.Dpi
 
     GuiConfig.Config = GuiConfig.Config or {}
     GuiConfig.Config.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
@@ -705,10 +711,9 @@ function Chloex:Window(GuiConfig)
     DropShadowHolder.AnchorPoint = Vector2.new(0.5, 0.5)
     DropShadowHolder.Position = UDim2.new(0.5, 0, 0.5, 0)
 
-    -- ✅ Terapkan Size * Dpi untuk ukuran awal window
-    local dpi   = GuiConfig.Dpi
-    local baseW = GuiConfig.Size.X.Offset * dpi
-    local baseH = GuiConfig.Size.Y.Offset * dpi
+    -- ✅ Ukuran window TIDAK dipengaruhi DPI
+    local baseW = GuiConfig.Size.X.Offset
+    local baseH = GuiConfig.Size.Y.Offset
     if isMobile then
         DropShadowHolder.Size = safeSize(math.min(baseW, 470), math.min(baseH, 270))
     else
@@ -771,7 +776,7 @@ function Chloex:Window(GuiConfig)
     TextLabel.Font = Enum.Font.GothamBold
     TextLabel.Text = GuiConfig.Title
     TextLabel.TextColor3 = GuiConfig.Color
-    TextLabel.TextSize = 14
+    TextLabel.TextSize = scaledText(14) -- ✅ DPI scaled
     TextLabel.TextXAlignment = Enum.TextXAlignment.Left
     TextLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TextLabel.BackgroundTransparency = 0.9990000128746033
@@ -786,7 +791,7 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Font = Enum.Font.GothamBold
     TextLabel1.Text = GuiConfig.Footer
     TextLabel1.TextColor3 = GuiConfig.Color
-    TextLabel1.TextSize = 14
+    TextLabel1.TextSize = scaledText(14) -- ✅ DPI scaled
     TextLabel1.TextXAlignment = Enum.TextXAlignment.Left
     TextLabel1.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     TextLabel1.BackgroundTransparency = 0.9990000128746033
@@ -799,7 +804,7 @@ function Chloex:Window(GuiConfig)
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
     Close.TextColor3 = Color3.fromRGB(0, 0, 0)
-    Close.TextSize = 14
+    Close.TextSize = scaledText(14) -- ✅ DPI scaled
     Close.AnchorPoint = Vector2.new(1, 0.5)
     Close.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Close.BackgroundTransparency = 0.9990000128746033
@@ -823,7 +828,7 @@ function Chloex:Window(GuiConfig)
     Min.Font = Enum.Font.SourceSans
     Min.Text = ""
     Min.TextColor3 = Color3.fromRGB(0, 0, 0)
-    Min.TextSize = 14
+    Min.TextSize = scaledText(14) -- ✅ DPI scaled
     Min.AnchorPoint = Vector2.new(1, 0.5)
     Min.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Min.BackgroundTransparency = 0.9990000128746033
@@ -861,7 +866,7 @@ function Chloex:Window(GuiConfig)
         ContentLabel.Font = Enum.Font.GothamBold
         ContentLabel.Text = GuiConfig.Content
         ContentLabel.TextColor3 = GuiConfig.Color
-        ContentLabel.TextSize = 14
+        ContentLabel.TextSize = scaledText(14) -- ✅ DPI scaled
         ContentLabel.TextXAlignment = Enum.TextXAlignment.Center
         ContentLabel.TextYAlignment = Enum.TextYAlignment.Center
         ContentLabel.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -996,7 +1001,7 @@ function Chloex:Window(GuiConfig)
         DisplayName.Font = Enum.Font.GothamBold
         DisplayName.Text = LocalPlayer.DisplayName
         DisplayName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        DisplayName.TextSize = 13
+        DisplayName.TextSize = scaledText(13) -- ✅ DPI scaled
         DisplayName.TextXAlignment = Enum.TextXAlignment.Left
         DisplayName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         DisplayName.BackgroundTransparency = 1
@@ -1011,7 +1016,7 @@ function Chloex:Window(GuiConfig)
         Username.Font = Enum.Font.Gotham
         Username.Text = "@" .. LocalPlayer.Name
         Username.TextColor3 = Color3.fromRGB(150, 150, 150)
-        Username.TextSize = 11
+        Username.TextSize = scaledText(11) -- ✅ DPI scaled
         Username.TextXAlignment = Enum.TextXAlignment.Left
         Username.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         Username.BackgroundTransparency = 1
@@ -1050,7 +1055,7 @@ function Chloex:Window(GuiConfig)
     NameTab.Font = Enum.Font.GothamBold
     NameTab.Text = ""
     NameTab.TextColor3 = Color3.fromRGB(255, 255, 255)
-    NameTab.TextSize = 24
+    NameTab.TextSize = scaledText(24) -- ✅ DPI scaled
     NameTab.TextWrapped = true
     NameTab.TextXAlignment = Enum.TextXAlignment.Left
     NameTab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1181,7 +1186,7 @@ function Chloex:Window(GuiConfig)
 
     DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
 
-    -- ✅ Pass GuiConfig ke MakeDraggable agar CustomSize pakai Size & Dpi
+    -- ✅ Pass GuiConfig ke MakeDraggable (DPI hanya untuk teks, bukan ukuran window)
     MakeDraggable(Top, DropShadowHolder, GuiConfig)
 
     local MoreBlur         = Instance.new("Frame")
@@ -1228,7 +1233,7 @@ function Chloex:Window(GuiConfig)
     ConnectButton.Font = Enum.Font.SourceSans
     ConnectButton.Text = ""
     ConnectButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-    ConnectButton.TextSize = 14
+    ConnectButton.TextSize = scaledText(14) -- ✅ DPI scaled
     ConnectButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     ConnectButton.BackgroundTransparency = 0.999
     ConnectButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -1351,7 +1356,7 @@ function Chloex:Window(GuiConfig)
         TabButton.Font = Enum.Font.GothamBold
         TabButton.Text = ""
         TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabButton.TextSize = 13
+        TabButton.TextSize = scaledText(13) -- ✅ DPI scaled
         TabButton.TextXAlignment = Enum.TextXAlignment.Left
         TabButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         TabButton.BackgroundTransparency = 0.9990000128746033
@@ -1364,7 +1369,7 @@ function Chloex:Window(GuiConfig)
         TabName.Font = Enum.Font.GothamBold
         TabName.Text = "| " .. tostring(TabConfig.Name)
         TabName.TextColor3 = Color3.fromRGB(255, 255, 255)
-        TabName.TextSize = 13
+        TabName.TextSize = scaledText(13) -- ✅ DPI scaled
         TabName.TextXAlignment = Enum.TextXAlignment.Left
         TabName.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         TabName.BackgroundTransparency = 0.9990000128746033
@@ -1512,7 +1517,7 @@ function Chloex:Window(GuiConfig)
             SectionButton.Font = Enum.Font.SourceSans
             SectionButton.Text = ""
             SectionButton.TextColor3 = Color3.fromRGB(0, 0, 0)
-            SectionButton.TextSize = 14
+            SectionButton.TextSize = scaledText(14) -- ✅ DPI scaled
             SectionButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             SectionButton.BackgroundTransparency = 0.9990000128746033
             SectionButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
@@ -1546,7 +1551,7 @@ function Chloex:Window(GuiConfig)
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = Title
             SectionTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
-            SectionTitle.TextSize = 13
+            SectionTitle.TextSize = scaledText(13) -- ✅ DPI scaled
             SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
             SectionTitle.TextYAlignment = Enum.TextYAlignment.Top
             SectionTitle.AnchorPoint = Vector2.new(0, 0.5)
@@ -1559,7 +1564,7 @@ function Chloex:Window(GuiConfig)
             else
                 SectionTitle.Position = UDim2.new(0, 10, 0.5, 0)
             end
-            SectionTitle.Size = UDim2.new(1, -50, 0, 13)
+            SectionTitle.Size = UDim2.new(1, -50, 0, scaledText(13))
             SectionTitle.Name = "SectionTitle"
             SectionTitle.Parent = SectionReal
 
