@@ -709,28 +709,13 @@ function Elements:CreateButton(parent, config, countItem)
             ContentLabel.Parent = Button
         end
 
-        -- Icon circle kanan
-        local IconFrame = Instance.new("Frame")
-        IconFrame.AnchorPoint = Vector2.new(1, 0.5)
-        IconFrame.Position = UDim2.new(1, -12, 0.5, 0)
-        IconFrame.Size = UDim2.new(0, 26, 0, 26)
-        IconFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        IconFrame.BackgroundTransparency = 0.85
-        IconFrame.BorderSizePixel = 0
-        IconFrame.Name = "IconFrame"
-        IconFrame.Parent = Button
-        Instance.new("UICorner", IconFrame).CornerRadius = UDim.new(1, 0)
 
-        local UIStrokeIcon = Instance.new("UIStroke")
-        UIStrokeIcon.Color = Color3.fromRGB(255, 255, 255)
-        UIStrokeIcon.Thickness = 1.2
-        UIStrokeIcon.Transparency = 0.7
-        UIStrokeIcon.Parent = IconFrame
 
+        -- Arrow text kanan
         local IconImg = Instance.new("TextLabel")
-        IconImg.AnchorPoint = Vector2.new(0.5, 0.5)
-        IconImg.Position = UDim2.new(0.5, 1, 0.5, 0)
-        IconImg.Size = UDim2.new(1, 0, 1, 0)
+        IconImg.AnchorPoint = Vector2.new(1, 0.5)
+        IconImg.Position = UDim2.new(1, -12, 0.5, 0)
+        IconImg.Size = UDim2.new(0, 20, 0, 20)
         IconImg.BackgroundTransparency = 1
         IconImg.Font = Enum.Font.GothamBold
         IconImg.Text = ">"
@@ -738,7 +723,7 @@ function Elements:CreateButton(parent, config, countItem)
         IconImg.TextTransparency = 0.2
         IconImg.TextSize = 14
         IconImg.Name = "IconImg"
-        IconImg.Parent = IconFrame
+        IconImg.Parent = Button
 
         -- Invisible click button
         local ClickButton = Instance.new("TextButton")
@@ -749,23 +734,7 @@ function Elements:CreateButton(parent, config, countItem)
         ClickButton.Parent = Button
 
         ClickButton.MouseButton1Click:Connect(function()
-            TweenService:Create(IconFrame, TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 0.5,
-                BackgroundColor3 = GuiConfig.Color,
-            }):Play()
-            TweenService:Create(UIStrokeIcon, TweenInfo.new(0.1), {
-                Color = GuiConfig.Color,
-                Transparency = 0,
-            }):Play()
-            task.wait(0.12)
-            TweenService:Create(IconFrame, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                BackgroundTransparency = 0.85,
-                BackgroundColor3 = Color3.fromRGB(255, 255, 255),
-            }):Play()
-            TweenService:Create(UIStrokeIcon, TweenInfo.new(0.25), {
-                Color = Color3.fromRGB(255, 255, 255),
-                Transparency = 0.7,
-            }):Play()
+            AnimateButtonClick(ClickButton)
             SafeCall(cfg.Callback)
         end)
 
