@@ -1,14 +1,14 @@
 local Chloex = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/ChloeX%20V2"))()
 
 local Window = Chloex:Window({
-    Title = "Title", -- Main title displayed at the top of the window
-    Footer = "Footer", -- Footer text shown at the bottom
+    Title = "Velaris UI", -- Main title displayed at the top of the window
+    Footer = "By Nexa", -- Footer text shown at the bottom
     Content = "Content",
     Color = "Default", -- UI theme color (Default or custom theme)
     Version = 1.0,
     ["Tab Width"] = 120, -- Width size of the tab section
-    Image = "70884221600423", -- Window icon asset ID (replace with your own)
-    Configname = "MyCustomConfig", -- Configuration file name for saving settings
+    Image = "101833678008843", -- Window icon asset ID (replace with your own)
+    Configname = "Vilaris Ui", -- Configuration file name for saving settings
     Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
     Config = {
         AutoSave = true, -- Automatically save settings
@@ -19,6 +19,11 @@ local Window = Chloex:Window({
 
 local Tabs = {
     -- Default icon 
+    Badge = Window:AddTab({
+        Name = "Badge",
+        Icon = "lucide:badge-check",
+    }),
+
     Button = Window:AddTab({
         Name = "Button",
         Icon = "lucide:mouse",
@@ -62,6 +67,35 @@ local Tabs = {
 
 local Sec = {}
 
+Sec.Badge = Tabs.Badge:AddSection({
+    Title = "Badge Section",
+    Open = true
+})
+
+Sec.Badge:AddParagraph({ 
+    Title = "Example Badge Bug",
+    Content = "This is Bug paragraph.\nUse \\n for new lines.",
+    Badge = "Bug",
+})
+
+Sec.Badge:AddParagraph({ 
+    Title = "Example Badge New",
+    Content = "This is New paragraph.\nUse \\n for new lines.",
+    Badge = "New",
+})
+
+Sec.Badge:AddParagraph({ 
+    Title = "Example Badge Warning",
+    Content = "This is Warning paragraph.\nUse \\n for new lines.",
+    Badge = "Warning",
+})
+
+Sec.Badge:AddParagraph({ 
+    Title = "Example Badge Fixed",
+    Content = "This is Fixed paragraph.\nUse \\n for new lines.",
+    Badge = "Fixed",
+})
+
 Sec.Button = Tabs.Button:AddSection({
     Title = "Button Section",
     Open = true
@@ -69,7 +103,7 @@ Sec.Button = Tabs.Button:AddSection({
 
 -- Example Button (Single)
 Sec.Button:AddButton({
-    Title = "Example",
+    Title = "Example Single",
     Callback = function()
         print("This is an example button")
         Nt("Example clicked!", 2)
@@ -78,7 +112,7 @@ Sec.Button:AddButton({
 
 -- Example Button (Dual Button)
 Sec.Button:AddButton({
-    Title = "Example",
+    Title = "Example ",
     Callback = function()
         print("Example ON")
         Nt("Example enabled!", 2)
@@ -91,6 +125,24 @@ Sec.Button:AddButton({
     end
 })
 
+Sec.Button:AddButton({
+    Title = "Example Button V2",
+    Version = "V2",
+    Callback = function()
+        print("This is an example button")
+        Nt("Example clicked!", 2)
+    end
+})
+
+Sec.Button:AddButton({
+    Title = "Example Button V2 (Icon)",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",  -- pakai asset id
+    Callback = function()
+        print("This is an example button")
+        Nt("Example clicked!", 2)
+    end
+})
 
 Sec.Toggle = Tabs.Toggle:AddSection({
     Title = "Toggle Section",
@@ -99,7 +151,7 @@ Sec.Toggle = Tabs.Toggle:AddSection({
 
 -- Example Basic
 Sec.Toggle:AddToggle({
-    Title = "Example",
+    Title = "Example Basic",
     Default = false,
     Callback = function(value)
         print("Example toggle:", value)
@@ -114,7 +166,7 @@ Sec.Toggle:AddToggle({
 
 -- Example With Title2
 Sec.Toggle:AddToggle({
-    Title = "Example",
+    Title = "Example Title2",
     Title2 = "Example Sub Title",
     Default = false,
     Callback = function(value)
@@ -130,7 +182,7 @@ Sec.Toggle:AddToggle({
 
 -- Example With Content
 Sec.Toggle:AddToggle({
-    Title = "Example",
+    Title = "Example Content",
     Content = "This is an example toggle description",
     Default = false,
     Callback = function(value)
@@ -149,7 +201,7 @@ Sec.Dropdown = Tabs.Dropdown:AddSection({
 
 -- Example Single
 Sec.Dropdown:AddDropdown({
-    Title = "Example",
+    Title = "Example Single",
     Content = "Example dropdown description",
     Options = {
         "Option A",
@@ -166,7 +218,7 @@ Sec.Dropdown:AddDropdown({
 
 -- Example Multi
 Sec.Dropdown:AddDropdown({
-    Title = "Example",
+    Title = "Example Multi",
     Content = "Example multi dropdown description",
     Options = {
         "Option 1",
@@ -221,7 +273,7 @@ Sec.Panel = Tabs.Panel:AddSection({
 
 -- Example Panel (Single Button)
 Sec.Panel:AddPanel({
-    Title = "Example",
+    Title = "Example (Single Button)",
     Content = "Example panel description",
     Placeholder = "Example_Name",
     Default = "ExampleDefault",
@@ -235,7 +287,7 @@ Sec.Panel:AddPanel({
 
 -- Example Panel (Dual Button)
 Sec.Panel:AddPanel({
-    Title = "Example",
+    Title = "Example (Dual Button)",
     Content = "Example panel with two actions",
     Placeholder = "Example_Name",
     Default = "",
@@ -272,7 +324,7 @@ Sec.Slider = Tabs.Slider:AddSection({
 
 -- Example Basic
 Sec.Slider:AddSlider({
-    Title = "Example",
+    Title = "Example BAsic",
     Content = "Example slider description",
     Min = 0,
     Max = 100,
@@ -285,7 +337,7 @@ Sec.Slider:AddSlider({
 
 -- Example Alternative
 Sec.Slider:AddSlider({
-    Title = "Example",
+    Title = "Example Alternative",
     Content = "Another example slider",
     Min = 0,
     Max = 100,
