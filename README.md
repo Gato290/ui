@@ -42,6 +42,8 @@ local Window = Chloex:Window({
     Image = "70884221600423", -- Window icon asset ID (replace with your own)
     Configname = "MyCustomConfig", -- Configuration file name for saving settings
     Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
+   -- Size = UDim2.fromOffset(580, 460),
+   -- Dpi = 1.2, -- 1 = normal, >1 = lebih besar, <1 = lebih kecil
    --[[ Config = {
         AutoSave = true, -- Automatically save settings
         AutoLoad = true -- Automatically load saved settings 
