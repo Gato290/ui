@@ -2288,5 +2288,3 @@ end
 VelarisUI = Chloex
 
 return Chloex
-
-Search
