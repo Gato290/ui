@@ -965,12 +965,12 @@ function Chloex:Window(GuiConfig)
         SearchBox.Name = "SearchBox"
         SearchBox.Parent = SearchContainer
 
-        -- ==================== FUNGSI SEARCH UTAMA (UPDATED) ====================
+        -- ==================== FUNGSI SEARCH UTAMA (DIPERBAIKI) ====================
         local function PerformSearch(query)
             query = query:lower():gsub("^%s+", ""):gsub("%s+$", "")
             local isSearching = query ~= ""
 
-            -- Helper: paksa buka atau tutup section
+            -- Helper: paksa buka/tutup section secara langsung (tanpa tween)
             local function forceOpenSection(section, open)
                 local sectionAdd   = section:FindFirstChild("SectionAdd")
                 local sectionReal  = section:FindFirstChild("SectionReal")
@@ -981,23 +981,23 @@ function Chloex:Window(GuiConfig)
                 if open then
                     local h = 38
                     for _, v in sectionAdd:GetChildren() do
-                        if v.Name ~= "UIListLayout" and v.Name ~= "UICorner" and v:IsA("Frame") then
+                        if v:IsA("Frame") and v.Name ~= "UICorner" then
                             h = h + v.Size.Y.Offset + 3
                         end
                     end
-                    section.Size       = UDim2.new(1, 1, 0, h)
-                    sectionAdd.Size    = UDim2.new(1, 0, 0, h - 38)
+                    section.Size        = UDim2.new(1, 1, 0, h)
+                    sectionAdd.Size     = UDim2.new(1, 0, 0, h - 38)
                     if featureFrame then featureFrame.Rotation = 90 end
-                    if decideFr     then decideFr.Size = UDim2.new(1, 0, 0, 2) end
+                    if decideFr then decideFr.Size = UDim2.new(1, 0, 0, 2) end
                 else
-                    section.Size       = UDim2.new(1, 1, 0, 30)
-                    sectionAdd.Size    = UDim2.new(1, 0, 0, 100)
+                    section.Size        = UDim2.new(1, 1, 0, 30)
+                    sectionAdd.Size     = UDim2.new(1, 0, 0, 100)
                     if featureFrame then featureFrame.Rotation = 0 end
-                    if decideFr     then decideFr.Size = UDim2.new(0, 0, 0, 2) end
+                    if decideFr then decideFr.Size = UDim2.new(0, 0, 0, 2) end
                 end
             end
 
-            -- Helper: update canvas scroll setelah resize
+            -- Helper: update canvas ukuran scrolling frame setelah item visibility berubah
             local function updateScrollCanvas(scrolLayers)
                 local layout = scrolLayers:FindFirstChildOfClass("UIListLayout")
                 if layout then
@@ -1018,23 +1018,25 @@ function Chloex:Window(GuiConfig)
                                 local anyVisible = false
 
                                 for _, item in sectionAdd:GetChildren() do
+                                    -- Skip layout/corner, hanya Frame item
                                     if item:IsA("Frame") and item.Name ~= "UICorner" then
                                         if isSearching then
                                             -- Kumpulkan semua teks TextLabel dalam item
-                                            local itemName = ""
+                                            local itemText = ""
                                             for _, child in item:GetDescendants() do
                                                 if child:IsA("TextLabel") and child.Text ~= "" then
                                                     local txt = child.Text:lower()
-                                                    -- skip teks bracket keybind seperti [RightShift]
+                                                    -- skip teks sangat pendek atau bracket (keybind)
                                                     if #txt > 1 and not txt:match("^%[") then
-                                                        itemName = itemName .. " " .. txt
+                                                        itemText = itemText .. " " .. txt
                                                     end
                                                 end
                                             end
-                                            local matched = itemName:find(query, 1, true) ~= nil
+                                            local matched = itemText:find(query, 1, true) ~= nil
                                             item.Visible = matched
                                             if matched then anyVisible = true end
                                         else
+                                            -- Tidak ada query: tampilkan semua item
                                             item.Visible = true
                                             anyVisible = true
                                         end
@@ -1042,12 +1044,18 @@ function Chloex:Window(GuiConfig)
                                 end
 
                                 if isSearching then
-                                    -- Tampilkan section & buka paksa jika ada hasil
+                                    -- Tampilkan section hanya jika ada item yang cocok
                                     section.Visible = anyVisible
-                                    forceOpenSection(section, anyVisible)
-                                    if anyVisible then tabHasResult = true end
+                                    if anyVisible then
+                                        -- Buka section supaya item terlihat
+                                        forceOpenSection(section, true)
+                                        tabHasResult = true
+                                    else
+                                        -- Tutup section yang kosong
+                                        forceOpenSection(section, false)
+                                    end
                                 else
-                                    -- Reset: tampilkan semua section, tutup yang tidak open
+                                    -- Reset: tampilkan semua section
                                     section.Visible = true
                                     tabHasResult = true
                                 end
@@ -1055,10 +1063,10 @@ function Chloex:Window(GuiConfig)
                         end
                     end
 
-                    -- Update canvas setelah visibility berubah
+                    -- Update canvas scroll setelah visibility berubah
                     task.defer(function() updateScrollCanvas(scrolLayers) end)
 
-                    -- Catat tab pertama yang ada hasilnya
+                    -- Catat tab pertama yang punya hasil pencarian
                     if isSearching and tabHasResult and not firstTabWithResult then
                         firstTabWithResult = scrolLayers
                     end
@@ -1066,23 +1074,25 @@ function Chloex:Window(GuiConfig)
             end
 
             if isSearching and firstTabWithResult then
-                -- Pindah ke tab yang ada hasilnya
+                -- Pindah ke tab pertama yang ada hasilnya
                 LayersPageLayout:JumpToIndex(firstTabWithResult.LayoutOrder)
 
-                -- Auto scroll ke section pertama yang visible
+                -- Scroll ke section pertama yang visible di dalam tab itu
                 task.defer(function()
                     local offsetY = 0
                     for _, section in firstTabWithResult:GetChildren() do
-                        if section.Name == "Section" and section.Visible then
-                            firstTabWithResult.CanvasPosition = Vector2.new(0, offsetY)
-                            break
-                        elseif section.Name ~= "UIListLayout" then
-                            offsetY = offsetY + section.Size.Y.Offset + 3
+                        if section.Name == "Section" then
+                            if section.Visible then
+                                firstTabWithResult.CanvasPosition = Vector2.new(0, math.max(0, offsetY - 4))
+                                break
+                            else
+                                offsetY = offsetY + section.Size.Y.Offset + 3
+                            end
                         end
                     end
                 end)
             elseif not isSearching then
-                -- Kembali ke tab index 0 saat search dikosongkan
+                -- Tidak ada query: kembali ke tab pertama
                 LayersPageLayout:JumpToIndex(0)
             end
         end
