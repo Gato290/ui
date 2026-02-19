@@ -965,83 +965,101 @@ function Chloex:Window(GuiConfig)
         SearchBox.Name = "SearchBox"
         SearchBox.Parent = SearchContainer
 
-        -- ==================== SEARCH RESULT OVERLAY ====================
-        local SearchOverlay = Instance.new("Frame")
-        SearchOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
-        SearchOverlay.BackgroundTransparency = 0.6
-        SearchOverlay.BorderSizePixel = 0
-        SearchOverlay.Size = UDim2.new(1, 0, 1, 0)
-        SearchOverlay.Position = UDim2.new(0, 0, 0, 0)
-        SearchOverlay.ZIndex = 5
-        SearchOverlay.Name = "SearchOverlay"
-        SearchOverlay.Visible = false
-        SearchOverlay.Parent = Main
+        -- ==================== MINI DROPDOWN HASIL SEARCH ====================
+        -- Tombol X untuk clear search
+        local ClearBtn = Instance.new("TextButton")
+        ClearBtn.Font = Enum.Font.GothamBold
+        ClearBtn.Text = "×"
+        ClearBtn.TextColor3 = Color3.fromRGB(160, 160, 160)
+        ClearBtn.TextSize = 16
+        ClearBtn.BackgroundTransparency = 1
+        ClearBtn.BorderSizePixel = 0
+        ClearBtn.AnchorPoint = Vector2.new(1, 0.5)
+        ClearBtn.Position = UDim2.new(1, -4, 0.5, 0)
+        ClearBtn.Size = UDim2.new(0, 20, 0, 20)
+        ClearBtn.ZIndex = 10
+        ClearBtn.Visible = false
+        ClearBtn.Name = "ClearBtn"
+        ClearBtn.Parent = SearchContainer
 
-        local OverlayCorner = Instance.new("UICorner")
-        OverlayCorner.CornerRadius = UDim.new(0, 4)
-        OverlayCorner.Parent = SearchOverlay
+        ClearBtn.MouseButton1Click:Connect(function()
+            SearchBox.Text = ""
+        end)
 
-        -- Header overlay
-        local OverlayHeader = Instance.new("TextLabel")
-        OverlayHeader.Font = Enum.Font.GothamBold
-        OverlayHeader.Text = "Search Results"
-        OverlayHeader.TextColor3 = GuiConfig.Color
-        OverlayHeader.TextSize = 13
-        OverlayHeader.TextXAlignment = Enum.TextXAlignment.Left
-        OverlayHeader.BackgroundTransparency = 1
-        OverlayHeader.BorderSizePixel = 0
-        OverlayHeader.Position = UDim2.new(0, 12, 0, topOffset + 8)
-        OverlayHeader.Size = UDim2.new(1, -20, 0, 20)
-        OverlayHeader.ZIndex = 6
-        OverlayHeader.Name = "OverlayHeader"
-        OverlayHeader.Parent = SearchOverlay
+        -- Dropdown mini: parent ke LayersTab supaya posisi relatif ke SearchContainer
+        local MiniDropdown = Instance.new("Frame")
+        MiniDropdown.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
+        MiniDropdown.BackgroundTransparency = 0
+        MiniDropdown.BorderSizePixel = 0
+        MiniDropdown.ClipsDescendants = true
+        -- Posisi tepat di bawah SearchContainer (Y=28), lebar sama
+        MiniDropdown.Position = UDim2.new(0, 0, 0, 30)
+        MiniDropdown.Size = UDim2.new(1, 0, 0, 0) -- tinggi dimulai 0, tumbuh sesuai hasil
+        MiniDropdown.ZIndex = 20
+        MiniDropdown.Visible = false
+        MiniDropdown.Name = "MiniDropdown"
+        MiniDropdown.Parent = LayersTab
 
-        -- Divider bawah header
-        local OverlayDivider = Instance.new("Frame")
-        OverlayDivider.BackgroundColor3 = GuiConfig.Color
-        OverlayDivider.BackgroundTransparency = 0.6
-        OverlayDivider.BorderSizePixel = 0
-        OverlayDivider.Position = UDim2.new(0, 10, 0, topOffset + 32)
-        OverlayDivider.Size = UDim2.new(1, -20, 0, 1)
-        OverlayDivider.ZIndex = 6
-        OverlayDivider.Parent = SearchOverlay
+        local MiniCorner = Instance.new("UICorner")
+        MiniCorner.CornerRadius = UDim.new(0, 6)
+        MiniCorner.Parent = MiniDropdown
 
-        -- Scroll frame hasil
+        local MiniStroke = Instance.new("UIStroke")
+        MiniStroke.Color = Color3.fromRGB(50, 50, 50)
+        MiniStroke.Thickness = 1
+        MiniStroke.Transparency = 0
+        MiniStroke.Parent = MiniDropdown
+
+        -- ScrollingFrame di dalam dropdown
         local ResultScroll = Instance.new("ScrollingFrame")
-        ResultScroll.ScrollBarThickness = 3
-        ResultScroll.ScrollBarImageColor3 = GuiConfig.Color
+        ResultScroll.ScrollBarThickness = 2
+        ResultScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
         ResultScroll.BackgroundTransparency = 1
         ResultScroll.BorderSizePixel = 0
-        ResultScroll.Position = UDim2.new(0, 6, 0, topOffset + 38)
-        ResultScroll.Size = UDim2.new(1, -12, 1, -(topOffset + 44))
+        ResultScroll.Position = UDim2.new(0, 0, 0, 0)
+        ResultScroll.Size = UDim2.new(1, 0, 1, 0)
         ResultScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
-        ResultScroll.ZIndex = 6
+        ResultScroll.ZIndex = 21
         ResultScroll.Name = "ResultScroll"
-        ResultScroll.Parent = SearchOverlay
+        ResultScroll.Parent = MiniDropdown
 
         local ResultList = Instance.new("UIListLayout")
-        ResultList.Padding = UDim.new(0, 4)
+        ResultList.Padding = UDim.new(0, 0)
         ResultList.SortOrder = Enum.SortOrder.LayoutOrder
         ResultList.Parent = ResultScroll
 
         ResultList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
-            ResultScroll.CanvasSize = UDim2.new(0, 0, 0, ResultList.AbsoluteContentSize.Y + 8)
+            ResultScroll.CanvasSize = UDim2.new(0, 0, 0, ResultList.AbsoluteContentSize.Y)
         end)
 
         -- Label tidak ada hasil
         local NoResultLabel = Instance.new("TextLabel")
         NoResultLabel.Font = Enum.Font.Gotham
-        NoResultLabel.Text = "Tidak ada hasil ditemukan"
-        NoResultLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
-        NoResultLabel.TextSize = 12
+        NoResultLabel.Text = "No results found"
+        NoResultLabel.TextColor3 = Color3.fromRGB(100, 100, 100)
+        NoResultLabel.TextSize = 11
         NoResultLabel.BackgroundTransparency = 1
         NoResultLabel.BorderSizePixel = 0
-        NoResultLabel.Position = UDim2.new(0, 0, 0.4, 0)
-        NoResultLabel.Size = UDim2.new(1, 0, 0, 20)
-        NoResultLabel.ZIndex = 6
+        NoResultLabel.Size = UDim2.new(1, 0, 0, 36)
+        NoResultLabel.ZIndex = 22
         NoResultLabel.Visible = false
         NoResultLabel.Name = "NoResultLabel"
-        NoResultLabel.Parent = SearchOverlay
+        NoResultLabel.Parent = MiniDropdown
+
+        -- Fungsi resize dropdown sesuai jumlah hasil (max 5 item = 180px)
+        local ITEM_H = 36
+        local MAX_VISIBLE = 5
+        local function ResizeDropdown(count)
+            local h = math.min(count, MAX_VISIBLE) * ITEM_H
+            if count == 0 then h = ITEM_H end -- "no results" row
+            TweenService:Create(MiniDropdown, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
+                Size = UDim2.new(1, 0, 0, h)
+            }):Play()
+        end
+
+        -- Dummy reference agar kompatibel dengan kode di bawah
+        local SearchOverlay = MiniDropdown
+        local OverlayHeader = { Text = "" } -- dummy, tidak dipakai
 
         -- ==================== FUNGSI NAVIGASI ====================
         local function NavigateToItem(tabLayoutOrder, sectionRef, itemRef)
@@ -1139,103 +1157,112 @@ function Chloex:Window(GuiConfig)
             end
         end
 
-        -- ==================== BUAT RESULT CARD ====================
+        -- ==================== BUAT RESULT ROW (MINI FLAT) ====================
         local function CreateResultCard(tabName, tabOrder, sectionRef, sectionTitle, itemName, itemRef, orderIdx)
-            local Card = Instance.new("Frame")
-            Card.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-            Card.BackgroundTransparency = 0.92
-            Card.BorderSizePixel = 0
-            Card.Size = UDim2.new(1, -4, 0, 52)
-            Card.LayoutOrder = orderIdx
-            Card.Name = "ResultCard"
-            Card.ZIndex = 7
-            Card.Parent = ResultScroll
+            -- Row container
+            local Row = Instance.new("Frame")
+            Row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            Row.BackgroundTransparency = 1
+            Row.BorderSizePixel = 0
+            Row.Size = UDim2.new(1, 0, 0, ITEM_H)
+            Row.LayoutOrder = orderIdx
+            Row.Name = "ResultRow"
+            Row.ZIndex = 21
+            Row.Parent = ResultScroll
 
-            local CardCorner = Instance.new("UICorner")
-            CardCorner.CornerRadius = UDim.new(0, 5)
-            CardCorner.Parent = Card
+            -- Garis bawah tipis pemisah (kecuali item pertama tidak perlu tapi konsisten aja)
+            local Divider = Instance.new("Frame")
+            Divider.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            Divider.BackgroundTransparency = 0
+            Divider.BorderSizePixel = 0
+            Divider.AnchorPoint = Vector2.new(0, 1)
+            Divider.Position = UDim2.new(0, 0, 1, 0)
+            Divider.Size = UDim2.new(1, 0, 0, 1)
+            Divider.ZIndex = 22
+            Divider.Parent = Row
 
-            local CardStroke = Instance.new("UIStroke")
-            CardStroke.Color = GuiConfig.Color
-            CardStroke.Thickness = 1
-            CardStroke.Transparency = 0.75
-            CardStroke.Parent = Card
+            -- Ikon kecil di kiri (pakai ikon item jika ada, fallback: kotak)
+            local RowIcon = Instance.new("ImageLabel")
+            RowIcon.BackgroundTransparency = 1
+            RowIcon.BorderSizePixel = 0
+            RowIcon.Position = UDim2.new(0, 10, 0.5, -8)
+            RowIcon.Size = UDim2.new(0, 16, 0, 16)
+            RowIcon.ImageColor3 = Color3.fromRGB(130, 130, 130)
+            RowIcon.Image = "rbxassetid://77021539815611"
+            RowIcon.ImageRectOffset = Vector2.new(0, 0)
+            RowIcon.ImageRectSize = Vector2.new(0, 0)
+            RowIcon.ZIndex = 22
+            RowIcon.Parent = Row
 
-            -- Breadcrumb: NamaTab › NamaSection
-            local BreadcrumbLabel = Instance.new("TextLabel")
-            BreadcrumbLabel.Font = Enum.Font.Gotham
-            BreadcrumbLabel.Text = tabName .. "  ›  " .. sectionTitle
-            BreadcrumbLabel.TextColor3 = GuiConfig.Color
-            BreadcrumbLabel.TextTransparency = 0.2
-            BreadcrumbLabel.TextSize = 10
-            BreadcrumbLabel.TextXAlignment = Enum.TextXAlignment.Left
-            BreadcrumbLabel.BackgroundTransparency = 1
-            BreadcrumbLabel.BorderSizePixel = 0
-            BreadcrumbLabel.Position = UDim2.new(0, 10, 0, 7)
-            BreadcrumbLabel.Size = UDim2.new(1, -40, 0, 14)
-            BreadcrumbLabel.ZIndex = 8
-            BreadcrumbLabel.Name = "Breadcrumb"
-            BreadcrumbLabel.Parent = Card
+            -- Nama item (bold, putih)
+            local NameLabel = Instance.new("TextLabel")
+            NameLabel.Font = Enum.Font.GothamBold
+            NameLabel.Text = itemName
+            NameLabel.TextColor3 = Color3.fromRGB(230, 230, 230)
+            NameLabel.TextSize = 12
+            NameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            NameLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            NameLabel.BackgroundTransparency = 1
+            NameLabel.BorderSizePixel = 0
+            NameLabel.Position = UDim2.new(0, 32, 0, 5)
+            NameLabel.Size = UDim2.new(1, -36, 0, 14)
+            NameLabel.ZIndex = 22
+            NameLabel.Parent = Row
 
-            -- Ikon panah
-            local ArrowIcon = Instance.new("TextLabel")
-            ArrowIcon.Font = Enum.Font.GothamBold
-            ArrowIcon.Text = "›"
-            ArrowIcon.TextColor3 = Color3.fromRGB(180, 180, 180)
-            ArrowIcon.TextSize = 16
-            ArrowIcon.AnchorPoint = Vector2.new(1, 0.5)
-            ArrowIcon.BackgroundTransparency = 1
-            ArrowIcon.BorderSizePixel = 0
-            ArrowIcon.Position = UDim2.new(1, -8, 0.5, 0)
-            ArrowIcon.Size = UDim2.new(0, 16, 0, 20)
-            ArrowIcon.ZIndex = 8
-            ArrowIcon.Parent = Card
+            -- Breadcrumb kecil di bawah nama: "Tab › Section"
+            local BreadLabel = Instance.new("TextLabel")
+            BreadLabel.Font = Enum.Font.Gotham
+            BreadLabel.Text = tabName .. " › " .. sectionTitle
+            BreadLabel.TextColor3 = Color3.fromRGB(90, 90, 90)
+            BreadLabel.TextSize = 10
+            BreadLabel.TextXAlignment = Enum.TextXAlignment.Left
+            BreadLabel.TextTruncate = Enum.TextTruncate.AtEnd
+            BreadLabel.BackgroundTransparency = 1
+            BreadLabel.BorderSizePixel = 0
+            BreadLabel.Position = UDim2.new(0, 32, 0, 20)
+            BreadLabel.Size = UDim2.new(1, -36, 0, 12)
+            BreadLabel.ZIndex = 22
+            BreadLabel.Parent = Row
 
-            -- Nama item
-            local ItemNameLabel = Instance.new("TextLabel")
-            ItemNameLabel.Font = Enum.Font.GothamBold
-            ItemNameLabel.Text = itemName
-            ItemNameLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
-            ItemNameLabel.TextSize = 13
-            ItemNameLabel.TextXAlignment = Enum.TextXAlignment.Left
-            ItemNameLabel.BackgroundTransparency = 1
-            ItemNameLabel.BorderSizePixel = 0
-            ItemNameLabel.Position = UDim2.new(0, 10, 0, 26)
-            ItemNameLabel.Size = UDim2.new(1, -30, 0, 16)
-            ItemNameLabel.ZIndex = 8
-            ItemNameLabel.Name = "ItemName"
-            ItemNameLabel.Parent = Card
-
-            -- Tombol klik transparan
+            -- Tombol klik
             local ClickBtn = Instance.new("TextButton")
             ClickBtn.BackgroundTransparency = 1
             ClickBtn.Text = ""
             ClickBtn.Size = UDim2.new(1, 0, 1, 0)
-            ClickBtn.ZIndex = 9
-            ClickBtn.Parent = Card
+            ClickBtn.ZIndex = 23
+            ClickBtn.Parent = Row
 
-            -- Hover effect
+            -- Hover: highlight baris
             ClickBtn.MouseEnter:Connect(function()
-                TweenService:Create(Card, TweenInfo.new(0.2), { BackgroundTransparency = 0.82 }):Play()
-                TweenService:Create(CardStroke, TweenInfo.new(0.2), { Transparency = 0.4 }):Play()
+                TweenService:Create(Row, TweenInfo.new(0.12), {
+                    BackgroundColor3 = Color3.fromRGB(40, 40, 40),
+                    BackgroundTransparency = 0
+                }):Play()
+                TweenService:Create(NameLabel, TweenInfo.new(0.12), {
+                    TextColor3 = Color3.fromRGB(255, 255, 255)
+                }):Play()
             end)
             ClickBtn.MouseLeave:Connect(function()
-                TweenService:Create(Card, TweenInfo.new(0.2), { BackgroundTransparency = 0.92 }):Play()
-                TweenService:Create(CardStroke, TweenInfo.new(0.2), { Transparency = 0.75 }):Play()
+                TweenService:Create(Row, TweenInfo.new(0.12), {
+                    BackgroundTransparency = 1
+                }):Play()
+                TweenService:Create(NameLabel, TweenInfo.new(0.12), {
+                    TextColor3 = Color3.fromRGB(230, 230, 230)
+                }):Play()
             end)
 
-            -- Klik → tutup overlay + navigate
+            -- Klik → tutup dropdown + navigate
             ClickBtn.MouseButton1Click:Connect(function()
-                CircleClick(ClickBtn, Mouse.X, Mouse.Y)
                 SearchBox.Text = ""
-                SearchOverlay.Visible = false
+                MiniDropdown.Visible = false
+                ClearBtn.Visible = false
                 task.spawn(function()
                     task.wait(0.05)
                     NavigateToItem(tabOrder, sectionRef, itemRef)
                 end)
             end)
 
-            return Card
+            return Row
         end
 
         -- ==================== FUNGSI SEARCH UTAMA ====================
@@ -1243,12 +1270,12 @@ function Chloex:Window(GuiConfig)
             query = query:lower():gsub("^%s+", ""):gsub("%s+$", "")
             local isSearching = query ~= ""
 
+            ClearBtn.Visible = isSearching
+
             if not isSearching then
-                SearchOverlay.Visible = false
+                MiniDropdown.Visible = false
                 return
             end
-
-            SearchOverlay.Visible = true
 
             -- Bersihkan hasil lama
             for _, child in ResultScroll:GetChildren() do
@@ -1291,22 +1318,25 @@ function Chloex:Window(GuiConfig)
                             if sectionAdd then
                                 for _, item in sectionAdd:GetChildren() do
                                     if item:IsA("Frame") and item.Name ~= "UICorner" then
-                                        local itemText   = ""
+                                        local titleText  = ""
                                         local displayName = ""
 
-                                        for _, child in item:GetDescendants() do
+                                        -- Hanya ambil Title: cari direct child TextLabel
+                                        -- dengan TextSize terbesar (itu adalah label judul)
+                                        local bestSize = 0
+                                        for _, child in item:GetChildren() do
                                             if child:IsA("TextLabel") and child.Text ~= "" then
-                                                local txt = child.Text:lower()
-                                                if #txt > 1 and not txt:match("^%[") then
-                                                    itemText = itemText .. " " .. txt
-                                                    if displayName == "" then
-                                                        displayName = child.Text
-                                                    end
+                                                local txt = child.Text
+                                                -- Skip teks yang jelas bukan title (keybind, simbol, dll)
+                                                if #txt > 1 and not txt:match("^%[") and child.TextSize >= bestSize then
+                                                    bestSize = child.TextSize
+                                                    titleText = txt:lower()
+                                                    displayName = txt
                                                 end
                                             end
                                         end
 
-                                        if itemText:find(query, 1, true) ~= nil then
+                                        if titleText:find(query, 1, true) ~= nil and titleText ~= "" then
                                             CreateResultCard(
                                                 tabName,
                                                 tabOrder,
@@ -1327,8 +1357,9 @@ function Chloex:Window(GuiConfig)
                 end
             end
 
-            OverlayHeader.Text = "Search Results  (" .. resultCount .. ")"
             NoResultLabel.Visible = (resultCount == 0)
+            MiniDropdown.Visible = true
+            ResizeDropdown(resultCount)
         end
         -- ==================== END SEARCH ====================
 
