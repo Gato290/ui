@@ -1188,7 +1188,7 @@ function Chloex:Window(GuiConfig)
             RowIcon.Position = UDim2.new(0, 10, 0.5, -8)
             RowIcon.Size = UDim2.new(0, 16, 0, 16)
             RowIcon.ImageColor3 = Color3.fromRGB(130, 130, 130)
-            RowIcon.Image = "rbxassetid://77021539815611"
+            RowIcon.Image = "rbxassetid://86512767702085"
             RowIcon.ImageRectOffset = Vector2.new(0, 0)
             RowIcon.ImageRectSize = Vector2.new(0, 0)
             RowIcon.ZIndex = 22
@@ -2288,3 +2288,5 @@ end
 VelarisUI = Chloex
 
 return Chloex
+
+Search
