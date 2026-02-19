@@ -1,5 +1,6 @@
--- Elements.lua V0.3.1
+-- Elements.lua V0.3.2
 -- UI Elements Module for NexaHub
+-- Changelog V0.3.2: Improved slider mobile responsiveness (larger hitbox, global InputEnded, GetScaleFromInput helper)
 -- Changelog V0.3.1: Fixed button highlight bug (AnimateButtonClick race condition + AutoButtonColor)
 
 local TweenService = game:GetService("TweenService")
@@ -112,6 +113,9 @@ local function ApplyLock(frame, isLocked)
     return LockFunc
 end
 
+-- ─────────────────────────────────────────────────────────────────────────────
+--  CreateBadge  (Badge ditengah / center dari parent)
+-- ─────────────────────────────────────────────────────────────────────────────
 local function CreateBadge(parent, badgeType)
     local preset = BADGE_CONFIG[badgeType]
     if not preset then
@@ -123,8 +127,8 @@ local function CreateBadge(parent, badgeType)
 
     local Badge = Instance.new("Frame")
     Badge.Name = badgeType .. "Badge"
-    Badge.AnchorPoint = Vector2.new(1, 0)
-    Badge.Position = UDim2.new(1, -8, 0, 8)
+    Badge.AnchorPoint = Vector2.new(0.5, 0)      -- anchor tengah atas
+    Badge.Position = UDim2.new(0.5, 0, 0, 8)    -- posisi tengah atas parent
     Badge.Size = UDim2.new(0, preset.Width, 0, preset.Height)
     Badge.BackgroundColor3 = color
     Badge.BackgroundTransparency = badgeType == "New" and 0 or 0.15
@@ -183,14 +187,38 @@ function Elements:CreateBadge(parent, badgeType)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  FIX V0.3.1: AnimateButtonClick — hapus task.wait(), pakai Completed chain
---  + simpan origTrans/origColor SEBELUM tween berjalan
+--  AnimateButtonClick — V0.3.1 fix: simpan origTrans/origColor SEBELUM tween
 -- ─────────────────────────────────────────────────────────────────────────────
+-- Tabel untuk menyimpan tween aktif per button
+local _activeTweens = {}
+
 local function AnimateButtonClick(button, color)
     color = color or GuiConfig.Color
-    -- Ambil nilai asli SEBELUM tween apapun dijalankan
-    local origTrans = button.BackgroundTransparency
-    local origColor = button.BackgroundColor3
+
+    -- Simpan nilai ASLI sebelum tween apapun berjalan
+    -- Gunakan attribute agar tidak terkorupsi oleh tween sebelumnya
+    if not button:GetAttribute("_origTrans") then
+        button:SetAttribute("_origTrans", button.BackgroundTransparency)
+    end
+    if not button:GetAttribute("_origColorR") then
+        local c = button.BackgroundColor3
+        button:SetAttribute("_origColorR", c.R)
+        button:SetAttribute("_origColorG", c.G)
+        button:SetAttribute("_origColorB", c.B)
+    end
+
+    local origTrans = button:GetAttribute("_origTrans")
+    local origColor = Color3.new(
+        button:GetAttribute("_origColorR"),
+        button:GetAttribute("_origColorG"),
+        button:GetAttribute("_origColorB")
+    )
+
+    -- Cancel tween yang sedang berjalan untuk button ini
+    if _activeTweens[button] then
+        _activeTweens[button]:Cancel()
+        _activeTweens[button] = nil
+    end
 
     local tweenIn = TweenService:Create(button,
         TweenInfo.new(0.1, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
@@ -201,9 +229,18 @@ local function AnimateButtonClick(button, color)
         { BackgroundTransparency = origTrans, BackgroundColor3 = origColor }
     )
 
-    tweenIn.Completed:Connect(function()
-        tweenOut:Play()
+    _activeTweens[button] = tweenIn
+
+    tweenIn.Completed:Connect(function(playbackState)
+        if playbackState == Enum.PlaybackState.Completed then
+            _activeTweens[button] = tweenOut
+            tweenOut:Play()
+            tweenOut.Completed:Connect(function()
+                _activeTweens[button] = nil
+            end)
+        end
     end)
+
     tweenIn:Play()
 end
 
@@ -325,7 +362,7 @@ function Elements:CreateParagraph(parent, config, countItem)
         ParagraphButton.Text = cfg.ButtonText
         ParagraphButton.Size = hasSubBtn and UDim2.new(0.5, -13, 0, 28) or UDim2.new(1, -16, 0, 28)
         ParagraphButton.Position = UDim2.new(0, 8, 0, 0)
-        ParagraphButton.AutoButtonColor = false  -- FIX
+        ParagraphButton.AutoButtonColor = false
         ParagraphButton.Parent = Paragraph
         Instance.new("UICorner", ParagraphButton).CornerRadius = UDim.new(0, 6)
 
@@ -346,7 +383,7 @@ function Elements:CreateParagraph(parent, config, countItem)
             ParagraphSubButton.Text = cfg.SubButtonText
             ParagraphSubButton.Size = UDim2.new(0.5, -13, 0, 28)
             ParagraphSubButton.Position = UDim2.new(0.5, 5, 0, 0)
-            ParagraphSubButton.AutoButtonColor = false  -- FIX
+            ParagraphSubButton.AutoButtonColor = false
             ParagraphSubButton.Parent = Paragraph
             Instance.new("UICorner", ParagraphSubButton).CornerRadius = UDim.new(0, 6)
 
@@ -516,7 +553,7 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         ParagraphButton.TextColor3 = Color3.fromRGB(255, 255, 255)
         ParagraphButton.Text = cfg.ButtonText
         ParagraphButton.Position = UDim2.new(0, 10, 0, 75)
-        ParagraphButton.AutoButtonColor = false  -- FIX
+        ParagraphButton.AutoButtonColor = false
         ParagraphButton.Parent = Paragraph
         Instance.new("UICorner", ParagraphButton).CornerRadius = UDim.new(0, 6)
 
@@ -679,7 +716,7 @@ function Elements:CreatePanel(parent, config, countItem)
     ButtonMain.BackgroundTransparency = 0.935
     ButtonMain.Size = cfg.SubButtonText and UDim2.new(0.5, -12, 0, 30) or UDim2.new(1, -20, 0, 30)
     ButtonMain.Position = UDim2.new(0, 10, 0, yBtn)
-    ButtonMain.AutoButtonColor = false  -- FIX
+    ButtonMain.AutoButtonColor = false
     ButtonMain.Parent = Panel
     Instance.new("UICorner", ButtonMain).CornerRadius = UDim.new(0, 6)
 
@@ -701,7 +738,7 @@ function Elements:CreatePanel(parent, config, countItem)
         SubButton.BackgroundTransparency = 0.935
         SubButton.Size = UDim2.new(0.5, -12, 0, 30)
         SubButton.Position = UDim2.new(0.5, 2, 0, yBtn)
-        SubButton.AutoButtonColor = false  -- FIX
+        SubButton.AutoButtonColor = false
         SubButton.Parent = Panel
         Instance.new("UICorner", SubButton).CornerRadius = UDim.new(0, 6)
 
@@ -853,7 +890,7 @@ function Elements:CreateButton(parent, config, countItem)
         ClickButton.BackgroundTransparency = 1
         ClickButton.Size = UDim2.new(1, 0, 1, 0)
         ClickButton.Name = "ClickButton"
-        ClickButton.AutoButtonColor = false  -- FIX
+        ClickButton.AutoButtonColor = false
         ClickButton.Parent = Button
 
         ClickButton.MouseButton1Click:Connect(function()
@@ -922,7 +959,7 @@ function Elements:CreateButton(parent, config, countItem)
     MainButton.BackgroundTransparency = 0.935
     MainButton.Size = cfg.SubTitle and UDim2.new(0.5, -8, 1, -10) or UDim2.new(1, -12, 1, -10)
     MainButton.Position = UDim2.new(0, 6, 0, 5)
-    MainButton.AutoButtonColor = false  -- FIX
+    MainButton.AutoButtonColor = false
     MainButton.Parent = Button
     Instance.new("UICorner", MainButton).CornerRadius = UDim.new(0, 4)
 
@@ -943,7 +980,7 @@ function Elements:CreateButton(parent, config, countItem)
         SubButtonRef.BackgroundTransparency = 0.935
         SubButtonRef.Size = UDim2.new(0.5, -8, 1, -10)
         SubButtonRef.Position = UDim2.new(0.5, 2, 0, 5)
-        SubButtonRef.AutoButtonColor = false  -- FIX
+        SubButtonRef.AutoButtonColor = false
         SubButtonRef.Parent = Button
         Instance.new("UICorner", SubButtonRef).CornerRadius = UDim.new(0, 4)
 
@@ -1115,7 +1152,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleButton.Font = Enum.Font.SourceSans
     ToggleButton.Text = ""
     ToggleButton.BackgroundTransparency = 1
-    ToggleButton.AutoButtonColor = false  -- FIX
+    ToggleButton.AutoButtonColor = false
     ToggleButton.Size = UDim2.new(1, 0, 1, 0)
     ToggleButton.Name = "ToggleButton"
     ToggleButton.Parent = Toggle
@@ -1188,7 +1225,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateSlider
+--  CreateSlider  (V0.3.2 — Mobile Responsiveness Fix)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -1335,8 +1372,26 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     UIStroke6.Color = GuiConfig.Color
     UIStroke6.Parent = SliderCircle
 
+    local SliderHitbox = Instance.new("TextButton")
+    SliderHitbox.Text = ""
+    SliderHitbox.BackgroundTransparency = 1
+    SliderHitbox.AutoButtonColor = false
+    SliderHitbox.AnchorPoint = Vector2.new(1, 0.5)
+    SliderHitbox.Position = UDim2.new(1, -20, 0.5, 0)
+    SliderHitbox.Size = UDim2.new(0, 100, 0, 44)
+    SliderHitbox.ZIndex = 5
+    SliderHitbox.Name = "SliderHitbox"
+    SliderHitbox.Parent = Slider
+
     local Dragging = false
     local _settingFromCode = false
+
+    local function GetScaleFromInput(inputX)
+        return math.clamp(
+            (inputX - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X,
+            0, 1
+        )
+    end
 
     function SliderFunc:Set(Value)
         Value = math.clamp(RoundToFactor(tonumber(Value) or cfg.Min, cfg.Increment), cfg.Min, cfg.Max)
@@ -1374,26 +1429,35 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         SliderFunc:Set(SliderFunc.Value)
     end
 
-    SliderFrame.InputBegan:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+    SliderHitbox.InputBegan:Connect(function(Input)
+        if Input.UserInputType == Enum.UserInputType.MouseButton1
+        or Input.UserInputType == Enum.UserInputType.Touch then
             Dragging = true
-            TweenService:Create(SliderCircle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 14, 0, 14) }):Play()
-            local SizeScale = math.clamp((Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
-            SliderFunc:Set(cfg.Min + ((cfg.Max - cfg.Min) * SizeScale))
+            TweenService:Create(SliderCircle,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { Size = UDim2.new(0, 14, 0, 14) }
+            ):Play()
+            SliderFunc:Set(cfg.Min + ((cfg.Max - cfg.Min) * GetScaleFromInput(Input.Position.X)))
         end
     end)
 
-    SliderFrame.InputEnded:Connect(function(Input)
-        if Input.UserInputType == Enum.UserInputType.MouseButton1 or Input.UserInputType == Enum.UserInputType.Touch then
+    UserInputService.InputEnded:Connect(function(Input)
+        if Dragging
+        and (Input.UserInputType == Enum.UserInputType.MouseButton1
+          or Input.UserInputType == Enum.UserInputType.Touch) then
             Dragging = false
-            TweenService:Create(SliderCircle, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(0, 8, 0, 8) }):Play()
+            TweenService:Create(SliderCircle,
+                TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
+                { Size = UDim2.new(0, 8, 0, 8) }
+            ):Play()
         end
     end)
 
     UserInputService.InputChanged:Connect(function(Input)
-        if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement or Input.UserInputType == Enum.UserInputType.Touch) then
-            local SizeScale = math.clamp((Input.Position.X - SliderFrame.AbsolutePosition.X) / SliderFrame.AbsoluteSize.X, 0, 1)
-            SliderFunc:Set(cfg.Min + ((cfg.Max - cfg.Min) * SizeScale))
+        if Dragging
+        and (Input.UserInputType == Enum.UserInputType.MouseMovement
+          or Input.UserInputType == Enum.UserInputType.Touch) then
+            SliderFunc:Set(cfg.Min + ((cfg.Max - cfg.Min) * GetScaleFromInput(Input.Position.X)))
         end
     end)
 
@@ -1610,7 +1674,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
     DropdownButton.Text = ""
     DropdownButton.BackgroundTransparency = 1
-    DropdownButton.AutoButtonColor = false  -- FIX
+    DropdownButton.AutoButtonColor = false
     DropdownButton.Size = UDim2.new(1, 0, 1, 0)
     DropdownButton.Name = "ToggleButton"
     DropdownButton.Parent = Dropdown
@@ -1766,7 +1830,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
         local OptionButton = Instance.new("TextButton")
         OptionButton.BackgroundTransparency = 1
-        OptionButton.AutoButtonColor = false  -- FIX
+        OptionButton.AutoButtonColor = false
         OptionButton.Size = UDim2.new(1, 0, 1, 0)
         OptionButton.Text = ""
         OptionButton.Name = "OptionButton"
