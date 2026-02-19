@@ -10,6 +10,8 @@ local Window = VelarisUI:Window({
     Image = "101833678008843", -- Window icon asset ID (replace with your own)
     Configname = "Vilaris Ui", -- Configuration file name for saving settings
     Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
+    ShowUser true,
+    Search = true,  
     Config = {
         AutoSave = true, -- Automatically save settings
         AutoLoad = true -- Automatically load saved settings
@@ -62,6 +64,11 @@ local Tabs = {
     Paragraph = Window:AddTab({
         Name = "Paragraph",
         Icon = "lucide:rows-2",
+    }),
+
+    Config = Window:AddTab({
+        Name = "Config",
+        Icon = "lucide:folder",
     }),
 }
 
