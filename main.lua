@@ -935,7 +935,7 @@ function Chloex:Window(GuiConfig)
         local SearchStroke = Instance.new("UIStroke")
         SearchStroke.Color = GuiConfig.Color
         SearchStroke.Thickness = 1
-        SearchStroke.Transparency = 0.65
+        SearchStroke.Transparency = 1
         SearchStroke.Parent = SearchContainer
 
         local SearchIcon = Instance.new("ImageLabel")
