@@ -913,7 +913,7 @@ function Chloex:Window(GuiConfig)
     ScrollTab.BorderSizePixel = 0
     ScrollTab.Name = "ScrollTab"
 
-    -- ==================== SEARCH BAR ====================
+    -- ==================== SEARCH BAR (VERSI BARU) ====================
     local searchOffset = 0
 
     if GuiConfig.Search then
@@ -965,138 +965,372 @@ function Chloex:Window(GuiConfig)
         SearchBox.Name = "SearchBox"
         SearchBox.Parent = SearchContainer
 
-        -- ==================== FUNGSI SEARCH UTAMA (DIPERBAIKI) ====================
-        local function PerformSearch(query)
-            query = query:lower():gsub("^%s+", ""):gsub("%s+$", "")
-            local isSearching = query ~= ""
+        -- ==================== SEARCH RESULT OVERLAY ====================
+        local SearchOverlay = Instance.new("Frame")
+        SearchOverlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+        SearchOverlay.BackgroundTransparency = 0.6
+        SearchOverlay.BorderSizePixel = 0
+        SearchOverlay.Size = UDim2.new(1, 0, 1, 0)
+        SearchOverlay.Position = UDim2.new(0, 0, 0, 0)
+        SearchOverlay.ZIndex = 5
+        SearchOverlay.Name = "SearchOverlay"
+        SearchOverlay.Visible = false
+        SearchOverlay.Parent = Main
 
-            -- Helper: paksa buka/tutup section secara langsung (tanpa tween)
-            local function forceOpenSection(section, open)
-                local sectionAdd   = section:FindFirstChild("SectionAdd")
-                local sectionReal  = section:FindFirstChild("SectionReal")
+        local OverlayCorner = Instance.new("UICorner")
+        OverlayCorner.CornerRadius = UDim.new(0, 4)
+        OverlayCorner.Parent = SearchOverlay
+
+        -- Header overlay
+        local OverlayHeader = Instance.new("TextLabel")
+        OverlayHeader.Font = Enum.Font.GothamBold
+        OverlayHeader.Text = "Search Results"
+        OverlayHeader.TextColor3 = GuiConfig.Color
+        OverlayHeader.TextSize = 13
+        OverlayHeader.TextXAlignment = Enum.TextXAlignment.Left
+        OverlayHeader.BackgroundTransparency = 1
+        OverlayHeader.BorderSizePixel = 0
+        OverlayHeader.Position = UDim2.new(0, 12, 0, topOffset + 8)
+        OverlayHeader.Size = UDim2.new(1, -20, 0, 20)
+        OverlayHeader.ZIndex = 6
+        OverlayHeader.Name = "OverlayHeader"
+        OverlayHeader.Parent = SearchOverlay
+
+        -- Divider bawah header
+        local OverlayDivider = Instance.new("Frame")
+        OverlayDivider.BackgroundColor3 = GuiConfig.Color
+        OverlayDivider.BackgroundTransparency = 0.6
+        OverlayDivider.BorderSizePixel = 0
+        OverlayDivider.Position = UDim2.new(0, 10, 0, topOffset + 32)
+        OverlayDivider.Size = UDim2.new(1, -20, 0, 1)
+        OverlayDivider.ZIndex = 6
+        OverlayDivider.Parent = SearchOverlay
+
+        -- Scroll frame hasil
+        local ResultScroll = Instance.new("ScrollingFrame")
+        ResultScroll.ScrollBarThickness = 3
+        ResultScroll.ScrollBarImageColor3 = GuiConfig.Color
+        ResultScroll.BackgroundTransparency = 1
+        ResultScroll.BorderSizePixel = 0
+        ResultScroll.Position = UDim2.new(0, 6, 0, topOffset + 38)
+        ResultScroll.Size = UDim2.new(1, -12, 1, -(topOffset + 44))
+        ResultScroll.CanvasSize = UDim2.new(0, 0, 0, 0)
+        ResultScroll.ZIndex = 6
+        ResultScroll.Name = "ResultScroll"
+        ResultScroll.Parent = SearchOverlay
+
+        local ResultList = Instance.new("UIListLayout")
+        ResultList.Padding = UDim.new(0, 4)
+        ResultList.SortOrder = Enum.SortOrder.LayoutOrder
+        ResultList.Parent = ResultScroll
+
+        ResultList:GetPropertyChangedSignal("AbsoluteContentSize"):Connect(function()
+            ResultScroll.CanvasSize = UDim2.new(0, 0, 0, ResultList.AbsoluteContentSize.Y + 8)
+        end)
+
+        -- Label tidak ada hasil
+        local NoResultLabel = Instance.new("TextLabel")
+        NoResultLabel.Font = Enum.Font.Gotham
+        NoResultLabel.Text = "Tidak ada hasil ditemukan"
+        NoResultLabel.TextColor3 = Color3.fromRGB(120, 120, 120)
+        NoResultLabel.TextSize = 12
+        NoResultLabel.BackgroundTransparency = 1
+        NoResultLabel.BorderSizePixel = 0
+        NoResultLabel.Position = UDim2.new(0, 0, 0.4, 0)
+        NoResultLabel.Size = UDim2.new(1, 0, 0, 20)
+        NoResultLabel.ZIndex = 6
+        NoResultLabel.Visible = false
+        NoResultLabel.Name = "NoResultLabel"
+        NoResultLabel.Parent = SearchOverlay
+
+        -- ==================== FUNGSI NAVIGASI ====================
+        local function NavigateToItem(tabLayoutOrder, sectionRef, itemRef)
+            -- 1. Pindah ke tab yang benar
+            LayersPageLayout:JumpToIndex(tabLayoutOrder)
+
+            -- Update highlight tab button
+            for _, tabFrame in _G.ScrollTab:GetChildren() do
+                if tabFrame.Name == "Tab" then
+                    TweenService:Create(tabFrame, TweenInfo.new(0.3), {
+                        BackgroundTransparency = tabFrame.LayoutOrder == tabLayoutOrder
+                            and 0.9200000166893005
+                            or  0.9990000128746033
+                    }):Play()
+                end
+            end
+
+            -- Update NameTab
+            for _, tabFrame in _G.ScrollTab:GetChildren() do
+                if tabFrame.Name == "Tab" and tabFrame.LayoutOrder == tabLayoutOrder then
+                    local tn = tabFrame:FindFirstChild("TabName")
+                    if tn then
+                        NameTab.Text = tn.Text:gsub("^| ", "")
+                    end
+                end
+            end
+
+            -- 2. Buka section yang dituju
+            if sectionRef then
+                local sectionAdd   = sectionRef:FindFirstChild("SectionAdd")
+                local sectionReal  = sectionRef:FindFirstChild("SectionReal")
                 local featureFrame = sectionReal and sectionReal:FindFirstChild("FeatureFrame")
-                local decideFr     = section:FindFirstChild("SectionDecideFrame")
-                if not sectionAdd then return end
+                local decideFr     = sectionRef:FindFirstChild("SectionDecideFrame")
 
-                if open then
+                if sectionAdd then
                     local h = 38
                     for _, v in sectionAdd:GetChildren() do
                         if v:IsA("Frame") and v.Name ~= "UICorner" then
                             h = h + v.Size.Y.Offset + 3
                         end
                     end
-                    section.Size        = UDim2.new(1, 1, 0, h)
-                    sectionAdd.Size     = UDim2.new(1, 0, 0, h - 38)
-                    if featureFrame then featureFrame.Rotation = 90 end
-                    if decideFr then decideFr.Size = UDim2.new(1, 0, 0, 2) end
-                else
-                    section.Size        = UDim2.new(1, 1, 0, 30)
-                    sectionAdd.Size     = UDim2.new(1, 0, 0, 100)
-                    if featureFrame then featureFrame.Rotation = 0 end
-                    if decideFr then decideFr.Size = UDim2.new(0, 0, 0, 2) end
+                    TweenService:Create(sectionRef, TweenInfo.new(0.4), { Size = UDim2.new(1, 1, 0, h) }):Play()
+                    TweenService:Create(sectionAdd, TweenInfo.new(0.4), { Size = UDim2.new(1, 0, 0, h - 38) }):Play()
+                    if featureFrame then
+                        TweenService:Create(featureFrame, TweenInfo.new(0.4), { Rotation = 90 }):Play()
+                    end
+                    if decideFr then
+                        TweenService:Create(decideFr, TweenInfo.new(0.4), { Size = UDim2.new(1, 0, 0, 2) }):Play()
+                    end
+                end
+
+                -- 3. Scroll ke item setelah section terbuka
+                task.wait(0.45)
+                if itemRef then
+                    local scrolParent
+                    for _, sc in LayersFolder:GetChildren() do
+                        if sc:IsA("ScrollingFrame") and sc.LayoutOrder == tabLayoutOrder then
+                            scrolParent = sc
+                            break
+                        end
+                    end
+                    if scrolParent then
+                        local offsetY = 0
+                        for _, sec in scrolParent:GetChildren() do
+                            if sec.Name == "Section" then
+                                if sec == sectionRef then
+                                    local secAdd = sec:FindFirstChild("SectionAdd")
+                                    if secAdd then
+                                        local innerY = 0
+                                        for _, it in secAdd:GetChildren() do
+                                            if it.Name ~= "UIListLayout" and it.Name ~= "UICorner" then
+                                                if it == itemRef then break end
+                                                innerY = innerY + it.Size.Y.Offset + 3
+                                            end
+                                        end
+                                        offsetY = offsetY + 38 + innerY
+                                    end
+                                    break
+                                else
+                                    offsetY = offsetY + sec.Size.Y.Offset + 3
+                                end
+                            end
+                        end
+                        TweenService:Create(scrolParent, TweenInfo.new(0.4, Enum.EasingStyle.Quad), {
+                            CanvasPosition = Vector2.new(0, math.max(0, offsetY - 10))
+                        }):Play()
+
+                        -- Flash highlight item
+                        local origTrans = itemRef.BackgroundTransparency
+                        TweenService:Create(itemRef, TweenInfo.new(0.3), { BackgroundTransparency = 0.5 }):Play()
+                        task.wait(0.5)
+                        TweenService:Create(itemRef, TweenInfo.new(0.5), { BackgroundTransparency = origTrans }):Play()
+                    end
+                end
+            end
+        end
+
+        -- ==================== BUAT RESULT CARD ====================
+        local function CreateResultCard(tabName, tabOrder, sectionRef, sectionTitle, itemName, itemRef, orderIdx)
+            local Card = Instance.new("Frame")
+            Card.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            Card.BackgroundTransparency = 0.92
+            Card.BorderSizePixel = 0
+            Card.Size = UDim2.new(1, -4, 0, 52)
+            Card.LayoutOrder = orderIdx
+            Card.Name = "ResultCard"
+            Card.ZIndex = 7
+            Card.Parent = ResultScroll
+
+            local CardCorner = Instance.new("UICorner")
+            CardCorner.CornerRadius = UDim.new(0, 5)
+            CardCorner.Parent = Card
+
+            local CardStroke = Instance.new("UIStroke")
+            CardStroke.Color = GuiConfig.Color
+            CardStroke.Thickness = 1
+            CardStroke.Transparency = 0.75
+            CardStroke.Parent = Card
+
+            -- Breadcrumb: NamaTab › NamaSection
+            local BreadcrumbLabel = Instance.new("TextLabel")
+            BreadcrumbLabel.Font = Enum.Font.Gotham
+            BreadcrumbLabel.Text = tabName .. "  ›  " .. sectionTitle
+            BreadcrumbLabel.TextColor3 = GuiConfig.Color
+            BreadcrumbLabel.TextTransparency = 0.2
+            BreadcrumbLabel.TextSize = 10
+            BreadcrumbLabel.TextXAlignment = Enum.TextXAlignment.Left
+            BreadcrumbLabel.BackgroundTransparency = 1
+            BreadcrumbLabel.BorderSizePixel = 0
+            BreadcrumbLabel.Position = UDim2.new(0, 10, 0, 7)
+            BreadcrumbLabel.Size = UDim2.new(1, -40, 0, 14)
+            BreadcrumbLabel.ZIndex = 8
+            BreadcrumbLabel.Name = "Breadcrumb"
+            BreadcrumbLabel.Parent = Card
+
+            -- Ikon panah
+            local ArrowIcon = Instance.new("TextLabel")
+            ArrowIcon.Font = Enum.Font.GothamBold
+            ArrowIcon.Text = "›"
+            ArrowIcon.TextColor3 = Color3.fromRGB(180, 180, 180)
+            ArrowIcon.TextSize = 16
+            ArrowIcon.AnchorPoint = Vector2.new(1, 0.5)
+            ArrowIcon.BackgroundTransparency = 1
+            ArrowIcon.BorderSizePixel = 0
+            ArrowIcon.Position = UDim2.new(1, -8, 0.5, 0)
+            ArrowIcon.Size = UDim2.new(0, 16, 0, 20)
+            ArrowIcon.ZIndex = 8
+            ArrowIcon.Parent = Card
+
+            -- Nama item
+            local ItemNameLabel = Instance.new("TextLabel")
+            ItemNameLabel.Font = Enum.Font.GothamBold
+            ItemNameLabel.Text = itemName
+            ItemNameLabel.TextColor3 = Color3.fromRGB(235, 235, 235)
+            ItemNameLabel.TextSize = 13
+            ItemNameLabel.TextXAlignment = Enum.TextXAlignment.Left
+            ItemNameLabel.BackgroundTransparency = 1
+            ItemNameLabel.BorderSizePixel = 0
+            ItemNameLabel.Position = UDim2.new(0, 10, 0, 26)
+            ItemNameLabel.Size = UDim2.new(1, -30, 0, 16)
+            ItemNameLabel.ZIndex = 8
+            ItemNameLabel.Name = "ItemName"
+            ItemNameLabel.Parent = Card
+
+            -- Tombol klik transparan
+            local ClickBtn = Instance.new("TextButton")
+            ClickBtn.BackgroundTransparency = 1
+            ClickBtn.Text = ""
+            ClickBtn.Size = UDim2.new(1, 0, 1, 0)
+            ClickBtn.ZIndex = 9
+            ClickBtn.Parent = Card
+
+            -- Hover effect
+            ClickBtn.MouseEnter:Connect(function()
+                TweenService:Create(Card, TweenInfo.new(0.2), { BackgroundTransparency = 0.82 }):Play()
+                TweenService:Create(CardStroke, TweenInfo.new(0.2), { Transparency = 0.4 }):Play()
+            end)
+            ClickBtn.MouseLeave:Connect(function()
+                TweenService:Create(Card, TweenInfo.new(0.2), { BackgroundTransparency = 0.92 }):Play()
+                TweenService:Create(CardStroke, TweenInfo.new(0.2), { Transparency = 0.75 }):Play()
+            end)
+
+            -- Klik → tutup overlay + navigate
+            ClickBtn.MouseButton1Click:Connect(function()
+                CircleClick(ClickBtn, Mouse.X, Mouse.Y)
+                SearchBox.Text = ""
+                SearchOverlay.Visible = false
+                task.spawn(function()
+                    task.wait(0.05)
+                    NavigateToItem(tabOrder, sectionRef, itemRef)
+                end)
+            end)
+
+            return Card
+        end
+
+        -- ==================== FUNGSI SEARCH UTAMA ====================
+        local function PerformSearch(query)
+            query = query:lower():gsub("^%s+", ""):gsub("%s+$", "")
+            local isSearching = query ~= ""
+
+            if not isSearching then
+                SearchOverlay.Visible = false
+                return
+            end
+
+            SearchOverlay.Visible = true
+
+            -- Bersihkan hasil lama
+            for _, child in ResultScroll:GetChildren() do
+                if child:IsA("Frame") then
+                    child:Destroy()
                 end
             end
 
-            -- Helper: update canvas ukuran scrolling frame setelah item visibility berubah
-            local function updateScrollCanvas(scrolLayers)
-                local layout = scrolLayers:FindFirstChildOfClass("UIListLayout")
-                if layout then
-                    scrolLayers.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
-                end
-            end
-
-            local firstTabWithResult = nil
+            local resultCount = 0
+            local orderIdx = 0
 
             for _, scrolLayers in LayersFolder:GetChildren() do
                 if scrolLayers:IsA("ScrollingFrame") then
-                    local tabHasResult = false
+                    local tabOrder = scrolLayers.LayoutOrder
 
-                    for _, section in scrolLayers:GetChildren() do
-                        if section.Name == "Section" then
-                            local sectionAdd = section:FindFirstChild("SectionAdd")
-                            if sectionAdd then
-                                local anyVisible = false
-
-                                for _, item in sectionAdd:GetChildren() do
-                                    -- Skip layout/corner, hanya Frame item
-                                    if item:IsA("Frame") and item.Name ~= "UICorner" then
-                                        if isSearching then
-                                            -- Kumpulkan semua teks TextLabel dalam item
-                                            local itemText = ""
-                                            for _, child in item:GetDescendants() do
-                                                if child:IsA("TextLabel") and child.Text ~= "" then
-                                                    local txt = child.Text:lower()
-                                                    -- skip teks sangat pendek atau bracket (keybind)
-                                                    if #txt > 1 and not txt:match("^%[") then
-                                                        itemText = itemText .. " " .. txt
-                                                    end
-                                                end
-                                            end
-                                            local matched = itemText:find(query, 1, true) ~= nil
-                                            item.Visible = matched
-                                            if matched then anyVisible = true end
-                                        else
-                                            -- Tidak ada query: tampilkan semua item
-                                            item.Visible = true
-                                            anyVisible = true
-                                        end
-                                    end
-                                end
-
-                                if isSearching then
-                                    -- Tampilkan section hanya jika ada item yang cocok
-                                    section.Visible = anyVisible
-                                    if anyVisible then
-                                        -- Buka section supaya item terlihat
-                                        forceOpenSection(section, true)
-                                        tabHasResult = true
-                                    else
-                                        -- Tutup section yang kosong
-                                        forceOpenSection(section, false)
-                                    end
-                                else
-                                    -- Reset: tampilkan semua section
-                                    section.Visible = true
-                                    tabHasResult = true
-                                end
+                    -- Ambil nama tab
+                    local tabName = "Tab"
+                    for _, tabFrame in _G.ScrollTab:GetChildren() do
+                        if tabFrame.Name == "Tab" and tabFrame.LayoutOrder == tabOrder then
+                            local tn = tabFrame:FindFirstChild("TabName")
+                            if tn then
+                                tabName = tn.Text:gsub("^| ", "")
                             end
+                            break
                         end
                     end
 
-                    -- Update canvas scroll setelah visibility berubah
-                    task.defer(function() updateScrollCanvas(scrolLayers) end)
+                    for _, section in scrolLayers:GetChildren() do
+                        if section.Name == "Section" then
+                            local sectionAdd  = section:FindFirstChild("SectionAdd")
+                            local sectionReal = section:FindFirstChild("SectionReal")
 
-                    -- Catat tab pertama yang punya hasil pencarian
-                    if isSearching and tabHasResult and not firstTabWithResult then
-                        firstTabWithResult = scrolLayers
+                            -- Ambil judul section
+                            local sectionTitle = "Section"
+                            if sectionReal then
+                                local st = sectionReal:FindFirstChild("SectionTitle")
+                                if st then sectionTitle = st.Text end
+                            end
+
+                            if sectionAdd then
+                                for _, item in sectionAdd:GetChildren() do
+                                    if item:IsA("Frame") and item.Name ~= "UICorner" then
+                                        local itemText   = ""
+                                        local displayName = ""
+
+                                        for _, child in item:GetDescendants() do
+                                            if child:IsA("TextLabel") and child.Text ~= "" then
+                                                local txt = child.Text:lower()
+                                                if #txt > 1 and not txt:match("^%[") then
+                                                    itemText = itemText .. " " .. txt
+                                                    if displayName == "" then
+                                                        displayName = child.Text
+                                                    end
+                                                end
+                                            end
+                                        end
+
+                                        if itemText:find(query, 1, true) ~= nil then
+                                            CreateResultCard(
+                                                tabName,
+                                                tabOrder,
+                                                section,
+                                                sectionTitle,
+                                                displayName ~= "" and displayName or "Item",
+                                                item,
+                                                orderIdx
+                                            )
+                                            orderIdx    = orderIdx + 1
+                                            resultCount = resultCount + 1
+                                        end
+                                    end
+                                end
+                            end
+                        end
                     end
                 end
             end
 
-            if isSearching and firstTabWithResult then
-                -- Pindah ke tab pertama yang ada hasilnya
-                LayersPageLayout:JumpToIndex(firstTabWithResult.LayoutOrder)
-
-                -- Scroll ke section pertama yang visible di dalam tab itu
-                task.defer(function()
-                    local offsetY = 0
-                    for _, section in firstTabWithResult:GetChildren() do
-                        if section.Name == "Section" then
-                            if section.Visible then
-                                firstTabWithResult.CanvasPosition = Vector2.new(0, math.max(0, offsetY - 4))
-                                break
-                            else
-                                offsetY = offsetY + section.Size.Y.Offset + 3
-                            end
-                        end
-                    end
-                end)
-            elseif not isSearching then
-                -- Tidak ada query: kembali ke tab pertama
-                LayersPageLayout:JumpToIndex(0)
-            end
+            OverlayHeader.Text = "Search Results  (" .. resultCount .. ")"
+            NoResultLabel.Visible = (resultCount == 0)
         end
-        -- ==================== END FUNGSI SEARCH ====================
+        -- ==================== END SEARCH ====================
 
         SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
             PerformSearch(SearchBox.Text)
