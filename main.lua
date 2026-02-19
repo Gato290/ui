@@ -645,7 +645,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Image         = GuiConfig.Image or "70884221600423"
     GuiConfig.Configname    = GuiConfig.Configname or "Velaris UI"
     GuiConfig.Size          = GuiConfig.Size or UDim2.fromOffset(640, 400)
-    GuiConfig.Search        = GuiConfig.Search ~= nil and GuiConfig.Search or false  -- ✅ Search flag
+    GuiConfig.Search        = GuiConfig.Search ~= nil and GuiConfig.Search or false
 
     GuiConfig.Config = GuiConfig.Config or {}
     GuiConfig.Config.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
@@ -913,11 +913,11 @@ function Chloex:Window(GuiConfig)
     ScrollTab.BorderSizePixel = 0
     ScrollTab.Name = "ScrollTab"
 
-    -- ==================== SEARCH BAR (aktif jika Search = true) ====================
+    -- ==================== SEARCH BAR ====================
     local searchOffset = 0
 
     if GuiConfig.Search then
-        searchOffset = 34  -- tinggi search bar + sedikit gap
+        searchOffset = 34
 
         local SearchContainer = Instance.new("Frame")
         SearchContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -932,14 +932,12 @@ function Chloex:Window(GuiConfig)
         SearchCorner.CornerRadius = UDim.new(0, 5)
         SearchCorner.Parent = SearchContainer
 
-        -- Border tipis warna tema
         local SearchStroke = Instance.new("UIStroke")
         SearchStroke.Color = GuiConfig.Color
         SearchStroke.Thickness = 1
         SearchStroke.Transparency = 0.65
         SearchStroke.Parent = SearchContainer
 
-        -- Ikon kaca pembesar
         local SearchIcon = Instance.new("ImageLabel")
         SearchIcon.BackgroundTransparency = 1
         SearchIcon.BorderSizePixel = 0
@@ -967,29 +965,69 @@ function Chloex:Window(GuiConfig)
         SearchBox.Name = "SearchBox"
         SearchBox.Parent = SearchContainer
 
-        -- Fungsi utama pencarian
+        -- ==================== FUNGSI SEARCH UTAMA (UPDATED) ====================
         local function PerformSearch(query)
             query = query:lower():gsub("^%s+", ""):gsub("%s+$", "")
             local isSearching = query ~= ""
 
+            -- Helper: paksa buka atau tutup section
+            local function forceOpenSection(section, open)
+                local sectionAdd   = section:FindFirstChild("SectionAdd")
+                local sectionReal  = section:FindFirstChild("SectionReal")
+                local featureFrame = sectionReal and sectionReal:FindFirstChild("FeatureFrame")
+                local decideFr     = section:FindFirstChild("SectionDecideFrame")
+                if not sectionAdd then return end
+
+                if open then
+                    local h = 38
+                    for _, v in sectionAdd:GetChildren() do
+                        if v.Name ~= "UIListLayout" and v.Name ~= "UICorner" and v:IsA("Frame") then
+                            h = h + v.Size.Y.Offset + 3
+                        end
+                    end
+                    section.Size       = UDim2.new(1, 1, 0, h)
+                    sectionAdd.Size    = UDim2.new(1, 0, 0, h - 38)
+                    if featureFrame then featureFrame.Rotation = 90 end
+                    if decideFr     then decideFr.Size = UDim2.new(1, 0, 0, 2) end
+                else
+                    section.Size       = UDim2.new(1, 1, 0, 30)
+                    sectionAdd.Size    = UDim2.new(1, 0, 0, 100)
+                    if featureFrame then featureFrame.Rotation = 0 end
+                    if decideFr     then decideFr.Size = UDim2.new(0, 0, 0, 2) end
+                end
+            end
+
+            -- Helper: update canvas scroll setelah resize
+            local function updateScrollCanvas(scrolLayers)
+                local layout = scrolLayers:FindFirstChildOfClass("UIListLayout")
+                if layout then
+                    scrolLayers.CanvasSize = UDim2.new(0, 0, 0, layout.AbsoluteContentSize.Y + 10)
+                end
+            end
+
+            local firstTabWithResult = nil
+
             for _, scrolLayers in LayersFolder:GetChildren() do
                 if scrolLayers:IsA("ScrollingFrame") then
+                    local tabHasResult = false
+
                     for _, section in scrolLayers:GetChildren() do
                         if section.Name == "Section" then
                             local sectionAdd = section:FindFirstChild("SectionAdd")
                             if sectionAdd then
                                 local anyVisible = false
+
                                 for _, item in sectionAdd:GetChildren() do
-                                    if item:IsA("Frame") then
+                                    if item:IsA("Frame") and item.Name ~= "UICorner" then
                                         if isSearching then
-                                            -- Cari teks dari semua TextLabel di dalam item
+                                            -- Kumpulkan semua teks TextLabel dalam item
                                             local itemName = ""
                                             for _, child in item:GetDescendants() do
                                                 if child:IsA("TextLabel") and child.Text ~= "" then
                                                     local txt = child.Text:lower()
-                                                    if #txt > 1 then
-                                                        itemName = txt
-                                                        break
+                                                    -- skip teks bracket keybind seperti [RightShift]
+                                                    if #txt > 1 and not txt:match("^%[") then
+                                                        itemName = itemName .. " " .. txt
                                                     end
                                                 end
                                             end
@@ -1002,33 +1040,53 @@ function Chloex:Window(GuiConfig)
                                         end
                                     end
                                 end
-                                -- Sembunyikan section jika tidak ada item yang cocok
-                                section.Visible = isSearching and anyVisible or true
+
+                                if isSearching then
+                                    -- Tampilkan section & buka paksa jika ada hasil
+                                    section.Visible = anyVisible
+                                    forceOpenSection(section, anyVisible)
+                                    if anyVisible then tabHasResult = true end
+                                else
+                                    -- Reset: tampilkan semua section, tutup yang tidak open
+                                    section.Visible = true
+                                    tabHasResult = true
+                                end
                             end
                         end
+                    end
+
+                    -- Update canvas setelah visibility berubah
+                    task.defer(function() updateScrollCanvas(scrolLayers) end)
+
+                    -- Catat tab pertama yang ada hasilnya
+                    if isSearching and tabHasResult and not firstTabWithResult then
+                        firstTabWithResult = scrolLayers
                     end
                 end
             end
 
-            -- Auto pindah ke tab pertama yang ada hasilnya
-            if isSearching then
-                for _, scrolLayers in LayersFolder:GetChildren() do
-                    if scrolLayers:IsA("ScrollingFrame") then
-                        local hasResult = false
-                        for _, section in scrolLayers:GetChildren() do
-                            if section.Name == "Section" and section.Visible then
-                                hasResult = true
-                                break
-                            end
-                        end
-                        if hasResult then
-                            LayersPageLayout:JumpToIndex(scrolLayers.LayoutOrder)
+            if isSearching and firstTabWithResult then
+                -- Pindah ke tab yang ada hasilnya
+                LayersPageLayout:JumpToIndex(firstTabWithResult.LayoutOrder)
+
+                -- Auto scroll ke section pertama yang visible
+                task.defer(function()
+                    local offsetY = 0
+                    for _, section in firstTabWithResult:GetChildren() do
+                        if section.Name == "Section" and section.Visible then
+                            firstTabWithResult.CanvasPosition = Vector2.new(0, offsetY)
                             break
+                        elseif section.Name ~= "UIListLayout" then
+                            offsetY = offsetY + section.Size.Y.Offset + 3
                         end
                     end
-                end
+                end)
+            elseif not isSearching then
+                -- Kembali ke tab index 0 saat search dikosongkan
+                LayersPageLayout:JumpToIndex(0)
             end
         end
+        -- ==================== END FUNGSI SEARCH ====================
 
         SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
             PerformSearch(SearchBox.Text)
@@ -1036,7 +1094,6 @@ function Chloex:Window(GuiConfig)
     end
     -- ==================== END SEARCH BAR ====================
 
-    -- Posisi ScrollTab bergeser ke bawah jika ada search bar
     if GuiConfig.ShowUser then
         ScrollTab.Position = UDim2.new(0, 0, 0, searchOffset)
         ScrollTab.Size = UDim2.new(1, 0, 1, -(40 + searchOffset))
@@ -1200,7 +1257,6 @@ function Chloex:Window(GuiConfig)
         end
     end
 
-    -- ✅ SetToggleKey: ganti keybind toggle UI secara runtime
     function GuiFunc:SetToggleKey(keyCode)
         GuiConfig.Keybind = keyCode
     end
@@ -1296,7 +1352,6 @@ function Chloex:Window(GuiConfig)
 
     GuiFunc:ToggleUI()
 
-    -- ✅ Keybind toggle UI (default: RightShift)
     GuiConfig.Keybind = GuiConfig.Keybind or Enum.KeyCode.RightShift
 
     UserInputService.InputBegan:Connect(function(input, gameProcessed)
@@ -1843,7 +1898,6 @@ function Chloex:Window(GuiConfig)
                 return subsection
             end
 
-            -- ✅ AddKeybind
             function Items:AddKeybind(KeybindConfig)
                 KeybindConfig = KeybindConfig or {}
                 KeybindConfig.Title = KeybindConfig.Title or "Keybind"
