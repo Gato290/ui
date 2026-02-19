@@ -645,6 +645,7 @@ function Chloex:Window(GuiConfig)
     GuiConfig.Image         = GuiConfig.Image or "70884221600423"
     GuiConfig.Configname    = GuiConfig.Configname or "Velaris UI"
     GuiConfig.Size          = GuiConfig.Size or UDim2.fromOffset(640, 400)
+    GuiConfig.Search        = GuiConfig.Search ~= nil and GuiConfig.Search or false  -- ✅ Search flag
 
     GuiConfig.Config = GuiConfig.Config or {}
     GuiConfig.Config.AutoSave = GuiConfig.Config.AutoSave ~= nil and GuiConfig.Config.AutoSave or true
@@ -870,14 +871,14 @@ function Chloex:Window(GuiConfig)
     end
     -- ==================== END CONTENT ====================
 
-    local LayersTab       = Instance.new("Frame")
-    local UICorner2       = Instance.new("UICorner")
-    local DecideFrame     = Instance.new("Frame")
-    local Layers          = Instance.new("Frame")
-    local UICorner6       = Instance.new("UICorner")
-    local NameTab         = Instance.new("TextLabel")
-    local LayersReal      = Instance.new("Frame")
-    local LayersFolder    = Instance.new("Folder")
+    local LayersTab        = Instance.new("Frame")
+    local UICorner2        = Instance.new("UICorner")
+    local DecideFrame      = Instance.new("Frame")
+    local Layers           = Instance.new("Frame")
+    local UICorner6        = Instance.new("UICorner")
+    local NameTab          = Instance.new("TextLabel")
+    local LayersReal       = Instance.new("Frame")
+    local LayersFolder     = Instance.new("Folder")
     local LayersPageLayout = Instance.new("UIPageLayout")
 
     local topOffset
@@ -910,16 +911,140 @@ function Chloex:Window(GuiConfig)
     ScrollTab.BackgroundTransparency = 0.9990000128746033
     ScrollTab.BorderColor3 = Color3.fromRGB(0, 0, 0)
     ScrollTab.BorderSizePixel = 0
+    ScrollTab.Name = "ScrollTab"
 
+    -- ==================== SEARCH BAR (aktif jika Search = true) ====================
+    local searchOffset = 0
+
+    if GuiConfig.Search then
+        searchOffset = 34  -- tinggi search bar + sedikit gap
+
+        local SearchContainer = Instance.new("Frame")
+        SearchContainer.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        SearchContainer.BackgroundTransparency = 0.88
+        SearchContainer.BorderSizePixel = 0
+        SearchContainer.Size = UDim2.new(1, 0, 0, 28)
+        SearchContainer.Position = UDim2.new(0, 0, 0, 0)
+        SearchContainer.Name = "SearchContainer"
+        SearchContainer.Parent = LayersTab
+
+        local SearchCorner = Instance.new("UICorner")
+        SearchCorner.CornerRadius = UDim.new(0, 5)
+        SearchCorner.Parent = SearchContainer
+
+        -- Border tipis warna tema
+        local SearchStroke = Instance.new("UIStroke")
+        SearchStroke.Color = GuiConfig.Color
+        SearchStroke.Thickness = 1
+        SearchStroke.Transparency = 0.65
+        SearchStroke.Parent = SearchContainer
+
+        -- Ikon kaca pembesar
+        local SearchIcon = Instance.new("ImageLabel")
+        SearchIcon.BackgroundTransparency = 1
+        SearchIcon.BorderSizePixel = 0
+        SearchIcon.Position = UDim2.new(0, 7, 0.5, -7)
+        SearchIcon.Size = UDim2.new(0, 14, 0, 14)
+        SearchIcon.Image = "rbxassetid://3926305904"
+        SearchIcon.ImageRectOffset = Vector2.new(964, 324)
+        SearchIcon.ImageRectSize = Vector2.new(36, 36)
+        SearchIcon.ImageColor3 = Color3.fromRGB(160, 160, 160)
+        SearchIcon.Parent = SearchContainer
+
+        local SearchBox = Instance.new("TextBox")
+        SearchBox.Font = Enum.Font.Gotham
+        SearchBox.PlaceholderText = "Search..."
+        SearchBox.PlaceholderColor3 = Color3.fromRGB(90, 90, 90)
+        SearchBox.Text = ""
+        SearchBox.TextColor3 = Color3.fromRGB(220, 220, 220)
+        SearchBox.TextSize = 12
+        SearchBox.TextXAlignment = Enum.TextXAlignment.Left
+        SearchBox.BackgroundTransparency = 1
+        SearchBox.BorderSizePixel = 0
+        SearchBox.ClearTextOnFocus = false
+        SearchBox.Position = UDim2.new(0, 26, 0, 0)
+        SearchBox.Size = UDim2.new(1, -30, 1, 0)
+        SearchBox.Name = "SearchBox"
+        SearchBox.Parent = SearchContainer
+
+        -- Fungsi utama pencarian
+        local function PerformSearch(query)
+            query = query:lower():gsub("^%s+", ""):gsub("%s+$", "")
+            local isSearching = query ~= ""
+
+            for _, scrolLayers in LayersFolder:GetChildren() do
+                if scrolLayers:IsA("ScrollingFrame") then
+                    for _, section in scrolLayers:GetChildren() do
+                        if section.Name == "Section" then
+                            local sectionAdd = section:FindFirstChild("SectionAdd")
+                            if sectionAdd then
+                                local anyVisible = false
+                                for _, item in sectionAdd:GetChildren() do
+                                    if item:IsA("Frame") then
+                                        if isSearching then
+                                            -- Cari teks dari semua TextLabel di dalam item
+                                            local itemName = ""
+                                            for _, child in item:GetDescendants() do
+                                                if child:IsA("TextLabel") and child.Text ~= "" then
+                                                    local txt = child.Text:lower()
+                                                    if #txt > 1 then
+                                                        itemName = txt
+                                                        break
+                                                    end
+                                                end
+                                            end
+                                            local matched = itemName:find(query, 1, true) ~= nil
+                                            item.Visible = matched
+                                            if matched then anyVisible = true end
+                                        else
+                                            item.Visible = true
+                                            anyVisible = true
+                                        end
+                                    end
+                                end
+                                -- Sembunyikan section jika tidak ada item yang cocok
+                                section.Visible = isSearching and anyVisible or true
+                            end
+                        end
+                    end
+                end
+            end
+
+            -- Auto pindah ke tab pertama yang ada hasilnya
+            if isSearching then
+                for _, scrolLayers in LayersFolder:GetChildren() do
+                    if scrolLayers:IsA("ScrollingFrame") then
+                        local hasResult = false
+                        for _, section in scrolLayers:GetChildren() do
+                            if section.Name == "Section" and section.Visible then
+                                hasResult = true
+                                break
+                            end
+                        end
+                        if hasResult then
+                            LayersPageLayout:JumpToIndex(scrolLayers.LayoutOrder)
+                            break
+                        end
+                    end
+                end
+            end
+        end
+
+        SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+            PerformSearch(SearchBox.Text)
+        end)
+    end
+    -- ==================== END SEARCH BAR ====================
+
+    -- Posisi ScrollTab bergeser ke bawah jika ada search bar
     if GuiConfig.ShowUser then
-        ScrollTab.Position = UDim2.new(0, 0, 0, 0)
-        ScrollTab.Size = UDim2.new(1, 0, 1, -40)
+        ScrollTab.Position = UDim2.new(0, 0, 0, searchOffset)
+        ScrollTab.Size = UDim2.new(1, 0, 1, -(40 + searchOffset))
     else
-        ScrollTab.Position = UDim2.new(0, 0, 0, 0)
-        ScrollTab.Size = UDim2.new(1, 0, 1, 0)
+        ScrollTab.Position = UDim2.new(0, 0, 0, searchOffset)
+        ScrollTab.Size = UDim2.new(1, 0, 1, -searchOffset)
     end
 
-    ScrollTab.Name = "ScrollTab"
     ScrollTab.Parent = LayersTab
 
     UIListLayout.Padding = UDim.new(0, 3)
@@ -1185,11 +1310,11 @@ function Chloex:Window(GuiConfig)
 
     MakeDraggable(Top, DropShadowHolder, GuiConfig)
 
-    local MoreBlur         = Instance.new("Frame")
+    local MoreBlur          = Instance.new("Frame")
     local DropShadowHolder1 = Instance.new("Frame")
-    local DropShadow1      = Instance.new("ImageLabel")
-    local UICorner28       = Instance.new("UICorner")
-    local ConnectButton    = Instance.new("TextButton")
+    local DropShadow1       = Instance.new("ImageLabel")
+    local UICorner28        = Instance.new("UICorner")
+    local ConnectButton     = Instance.new("TextButton")
 
     MoreBlur.AnchorPoint = Vector2.new(1, 1)
     MoreBlur.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
@@ -1238,12 +1363,12 @@ function Chloex:Window(GuiConfig)
     ConnectButton.Name = "ConnectButton"
     ConnectButton.Parent = MoreBlur
 
-    local DropdownSelect    = Instance.new("Frame")
-    local UICorner36        = Instance.new("UICorner")
-    local UIStroke14        = Instance.new("UIStroke")
+    local DropdownSelect     = Instance.new("Frame")
+    local UICorner36         = Instance.new("UICorner")
+    local UIStroke14         = Instance.new("UIStroke")
     local DropdownSelectReal = Instance.new("Frame")
-    local DropdownFolder    = Instance.new("Folder")
-    local DropPageLayout    = Instance.new("UIPageLayout")
+    local DropdownFolder     = Instance.new("Folder")
+    local DropPageLayout     = Instance.new("UIPageLayout")
 
     DropdownSelect.AnchorPoint = Vector2.new(1, 0.5)
     DropdownSelect.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
@@ -1306,7 +1431,7 @@ function Chloex:Window(GuiConfig)
         TabConfig.Name = TabConfig.Name or "Tab"
         TabConfig.Icon = TabConfig.Icon or ""
 
-        local ScrolLayers  = Instance.new("ScrollingFrame")
+        local ScrolLayers   = Instance.new("ScrollingFrame")
         local UIListLayout1 = Instance.new("UIListLayout")
 
         ScrolLayers.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
@@ -1325,13 +1450,13 @@ function Chloex:Window(GuiConfig)
         UIListLayout1.SortOrder = Enum.SortOrder.LayoutOrder
         UIListLayout1.Parent = ScrolLayers
 
-        local Tab       = Instance.new("Frame")
-        local UICorner3 = Instance.new("UICorner")
-        local TabButton = Instance.new("TextButton")
-        local TabName   = Instance.new("TextLabel")
+        local Tab        = Instance.new("Frame")
+        local UICorner3  = Instance.new("UICorner")
+        local TabButton  = Instance.new("TextButton")
+        local TabName    = Instance.new("TextLabel")
         local FeatureImg = Instance.new("ImageLabel")
-        local UIStroke2 = Instance.new("UIStroke")
-        local UICorner4 = Instance.new("UICorner")
+        local UIStroke2  = Instance.new("UIStroke")
+        local UICorner4  = Instance.new("UICorner")
 
         Tab.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
         if CountTab == 0 then
@@ -1456,10 +1581,10 @@ function Chloex:Window(GuiConfig)
                 Open  = SectionConfig.Open or false
             end
 
-            local Section          = Instance.new("Frame")
+            local Section            = Instance.new("Frame")
             local SectionDecideFrame = Instance.new("Frame")
-            local UICorner1        = Instance.new("UICorner")
-            local UIGradient       = Instance.new("UIGradient")
+            local UICorner1          = Instance.new("UICorner")
+            local UIGradient         = Instance.new("UIGradient")
 
             Section.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             Section.BackgroundTransparency = 0.9990000128746033
@@ -1749,6 +1874,7 @@ function Chloex:Window(GuiConfig)
                 KBTitle.BorderSizePixel = 0
                 KBTitle.Position = UDim2.new(0, 10, 0, 0)
                 KBTitle.Size = UDim2.new(0.6, 0, 0.5, 0)
+                KBTitle.Name = "KBTitle"
                 KBTitle.Parent = KeybindFrame
 
                 local KBContent = Instance.new("TextLabel")
