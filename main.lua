@@ -657,6 +657,15 @@ function Chloex:Window(GuiConfig)
 
     ConfigFolder = GuiConfig.Configname
 
+    -- ==================== FIX: Hapus GUI lama biar ga dobel ====================
+    if game.CoreGui:FindFirstChild("Chloeex") then
+        game.CoreGui.Chloeex:Destroy()
+    end
+    if game.CoreGui:FindFirstChild("ToggleUIButton") then
+        game.CoreGui.ToggleUIButton:Destroy()
+    end
+    -- ==================== END FIX ====================
+
     if not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
     if not isfolder(ConfigFolder .. "/Config") then makefolder(ConfigFolder .. "/Config") end
 
@@ -783,6 +792,25 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Size = UDim2.new(1, -(TextLabel.TextBounds.X + 104), 1, 0)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
+
+    -- ==================== FIX: Title & Footer ga tabrakan ====================
+    local function UpdateFooterPosition()
+        local titleWidth = TextLabel.TextBounds.X
+        local availableSpace = Top.AbsoluteSize.X - titleWidth - 104
+
+        if availableSpace > 30 then
+            TextLabel1.Visible = true
+            TextLabel1.Position = UDim2.new(0, titleWidth + 15, 0, 0)
+            TextLabel1.Size = UDim2.new(1, -(titleWidth + 104), 1, 0)
+        else
+            -- Title terlalu panjang, sembunyiin Footer biar ga tabrakan
+            TextLabel1.Visible = false
+        end
+    end
+
+    TextLabel:GetPropertyChangedSignal("TextBounds"):Connect(UpdateFooterPosition)
+    UpdateFooterPosition()
+    -- ==================== END FIX ====================
 
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
@@ -913,7 +941,7 @@ function Chloex:Window(GuiConfig)
     ScrollTab.BorderSizePixel = 0
     ScrollTab.Name = "ScrollTab"
 
-    -- ==================== SEARCH BAR (VERSI BARU) ====================
+    -- ==================== SEARCH BAR ====================
     local searchOffset = 0
 
     if GuiConfig.Search then
@@ -965,8 +993,6 @@ function Chloex:Window(GuiConfig)
         SearchBox.Name = "SearchBox"
         SearchBox.Parent = SearchContainer
 
-        -- ==================== MINI DROPDOWN HASIL SEARCH ====================
-        -- Tombol X untuk clear search
         local ClearBtn = Instance.new("TextButton")
         ClearBtn.Font = Enum.Font.GothamBold
         ClearBtn.Text = "×"
@@ -986,15 +1012,13 @@ function Chloex:Window(GuiConfig)
             SearchBox.Text = ""
         end)
 
-        -- Dropdown mini: parent ke LayersTab supaya posisi relatif ke SearchContainer
         local MiniDropdown = Instance.new("Frame")
         MiniDropdown.BackgroundColor3 = Color3.fromRGB(18, 18, 18)
         MiniDropdown.BackgroundTransparency = 0
         MiniDropdown.BorderSizePixel = 0
         MiniDropdown.ClipsDescendants = true
-        -- Posisi tepat di bawah SearchContainer (Y=28), lebar sama
         MiniDropdown.Position = UDim2.new(0, 0, 0, 30)
-        MiniDropdown.Size = UDim2.new(1, 0, 0, 0) -- tinggi dimulai 0, tumbuh sesuai hasil
+        MiniDropdown.Size = UDim2.new(1, 0, 0, 0)
         MiniDropdown.ZIndex = 20
         MiniDropdown.Visible = false
         MiniDropdown.Name = "MiniDropdown"
@@ -1010,7 +1034,6 @@ function Chloex:Window(GuiConfig)
         MiniStroke.Transparency = 0
         MiniStroke.Parent = MiniDropdown
 
-        -- ScrollingFrame di dalam dropdown
         local ResultScroll = Instance.new("ScrollingFrame")
         ResultScroll.ScrollBarThickness = 2
         ResultScroll.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
@@ -1032,7 +1055,6 @@ function Chloex:Window(GuiConfig)
             ResultScroll.CanvasSize = UDim2.new(0, 0, 0, ResultList.AbsoluteContentSize.Y)
         end)
 
-        -- Label tidak ada hasil
         local NoResultLabel = Instance.new("TextLabel")
         NoResultLabel.Font = Enum.Font.Gotham
         NoResultLabel.Text = "No results found"
@@ -1046,27 +1068,22 @@ function Chloex:Window(GuiConfig)
         NoResultLabel.Name = "NoResultLabel"
         NoResultLabel.Parent = MiniDropdown
 
-        -- Fungsi resize dropdown sesuai jumlah hasil (max 5 item = 180px)
         local ITEM_H = 36
         local MAX_VISIBLE = 5
         local function ResizeDropdown(count)
             local h = math.min(count, MAX_VISIBLE) * ITEM_H
-            if count == 0 then h = ITEM_H end -- "no results" row
+            if count == 0 then h = ITEM_H end
             TweenService:Create(MiniDropdown, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
                 Size = UDim2.new(1, 0, 0, h)
             }):Play()
         end
 
-        -- Dummy reference agar kompatibel dengan kode di bawah
         local SearchOverlay = MiniDropdown
-        local OverlayHeader = { Text = "" } -- dummy, tidak dipakai
+        local OverlayHeader = { Text = "" }
 
-        -- ==================== FUNGSI NAVIGASI ====================
         local function NavigateToItem(tabLayoutOrder, sectionRef, itemRef)
-            -- 1. Pindah ke tab yang benar
             LayersPageLayout:JumpToIndex(tabLayoutOrder)
 
-            -- Update highlight tab button
             for _, tabFrame in _G.ScrollTab:GetChildren() do
                 if tabFrame.Name == "Tab" then
                     TweenService:Create(tabFrame, TweenInfo.new(0.3), {
@@ -1077,7 +1094,6 @@ function Chloex:Window(GuiConfig)
                 end
             end
 
-            -- Update NameTab
             for _, tabFrame in _G.ScrollTab:GetChildren() do
                 if tabFrame.Name == "Tab" and tabFrame.LayoutOrder == tabLayoutOrder then
                     local tn = tabFrame:FindFirstChild("TabName")
@@ -1087,7 +1103,6 @@ function Chloex:Window(GuiConfig)
                 end
             end
 
-            -- 2. Buka section yang dituju
             if sectionRef then
                 local sectionAdd   = sectionRef:FindFirstChild("SectionAdd")
                 local sectionReal  = sectionRef:FindFirstChild("SectionReal")
@@ -1111,7 +1126,6 @@ function Chloex:Window(GuiConfig)
                     end
                 end
 
-                -- 3. Scroll ke item setelah section terbuka
                 task.wait(0.45)
                 if itemRef then
                     local scrolParent
@@ -1147,7 +1161,6 @@ function Chloex:Window(GuiConfig)
                             CanvasPosition = Vector2.new(0, math.max(0, offsetY - 10))
                         }):Play()
 
-                        -- Flash highlight item
                         local origTrans = itemRef.BackgroundTransparency
                         TweenService:Create(itemRef, TweenInfo.new(0.3), { BackgroundTransparency = 0.5 }):Play()
                         task.wait(0.5)
@@ -1157,9 +1170,7 @@ function Chloex:Window(GuiConfig)
             end
         end
 
-        -- ==================== BUAT RESULT ROW (MINI FLAT) ====================
         local function CreateResultCard(tabName, tabOrder, sectionRef, sectionTitle, itemName, itemRef, orderIdx)
-            -- Row container
             local Row = Instance.new("Frame")
             Row.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
             Row.BackgroundTransparency = 1
@@ -1170,7 +1181,6 @@ function Chloex:Window(GuiConfig)
             Row.ZIndex = 21
             Row.Parent = ResultScroll
 
-            -- Garis bawah tipis pemisah (kecuali item pertama tidak perlu tapi konsisten aja)
             local Divider = Instance.new("Frame")
             Divider.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
             Divider.BackgroundTransparency = 0
@@ -1181,7 +1191,6 @@ function Chloex:Window(GuiConfig)
             Divider.ZIndex = 22
             Divider.Parent = Row
 
-            -- Ikon kecil di kiri (pakai ikon item jika ada, fallback: kotak)
             local RowIcon = Instance.new("ImageLabel")
             RowIcon.BackgroundTransparency = 1
             RowIcon.BorderSizePixel = 0
@@ -1194,7 +1203,6 @@ function Chloex:Window(GuiConfig)
             RowIcon.ZIndex = 22
             RowIcon.Parent = Row
 
-            -- Nama item (bold, putih)
             local NameLabel = Instance.new("TextLabel")
             NameLabel.Font = Enum.Font.GothamBold
             NameLabel.Text = itemName
@@ -1209,7 +1217,6 @@ function Chloex:Window(GuiConfig)
             NameLabel.ZIndex = 22
             NameLabel.Parent = Row
 
-            -- Breadcrumb kecil di bawah nama: "Tab › Section"
             local BreadLabel = Instance.new("TextLabel")
             BreadLabel.Font = Enum.Font.Gotham
             BreadLabel.Text = tabName .. " › " .. sectionTitle
@@ -1224,7 +1231,6 @@ function Chloex:Window(GuiConfig)
             BreadLabel.ZIndex = 22
             BreadLabel.Parent = Row
 
-            -- Tombol klik
             local ClickBtn = Instance.new("TextButton")
             ClickBtn.BackgroundTransparency = 1
             ClickBtn.Text = ""
@@ -1232,7 +1238,6 @@ function Chloex:Window(GuiConfig)
             ClickBtn.ZIndex = 23
             ClickBtn.Parent = Row
 
-            -- Hover: highlight baris
             ClickBtn.MouseEnter:Connect(function()
                 TweenService:Create(Row, TweenInfo.new(0.12), {
                     BackgroundColor3 = Color3.fromRGB(40, 40, 40),
@@ -1251,7 +1256,6 @@ function Chloex:Window(GuiConfig)
                 }):Play()
             end)
 
-            -- Klik → tutup dropdown + navigate
             ClickBtn.MouseButton1Click:Connect(function()
                 SearchBox.Text = ""
                 MiniDropdown.Visible = false
@@ -1265,7 +1269,6 @@ function Chloex:Window(GuiConfig)
             return Row
         end
 
-        -- ==================== FUNGSI SEARCH UTAMA ====================
         local function PerformSearch(query)
             query = query:lower():gsub("^%s+", ""):gsub("%s+$", "")
             local isSearching = query ~= ""
@@ -1277,7 +1280,6 @@ function Chloex:Window(GuiConfig)
                 return
             end
 
-            -- Bersihkan hasil lama
             for _, child in ResultScroll:GetChildren() do
                 if child:IsA("Frame") then
                     child:Destroy()
@@ -1291,7 +1293,6 @@ function Chloex:Window(GuiConfig)
                 if scrolLayers:IsA("ScrollingFrame") then
                     local tabOrder = scrolLayers.LayoutOrder
 
-                    -- Ambil nama tab
                     local tabName = "Tab"
                     for _, tabFrame in _G.ScrollTab:GetChildren() do
                         if tabFrame.Name == "Tab" and tabFrame.LayoutOrder == tabOrder then
@@ -1308,7 +1309,6 @@ function Chloex:Window(GuiConfig)
                             local sectionAdd  = section:FindFirstChild("SectionAdd")
                             local sectionReal = section:FindFirstChild("SectionReal")
 
-                            -- Ambil judul section
                             local sectionTitle = "Section"
                             if sectionReal then
                                 local st = sectionReal:FindFirstChild("SectionTitle")
@@ -1321,13 +1321,10 @@ function Chloex:Window(GuiConfig)
                                         local titleText  = ""
                                         local displayName = ""
 
-                                        -- Hanya ambil Title: cari direct child TextLabel
-                                        -- dengan TextSize terbesar (itu adalah label judul)
                                         local bestSize = 0
                                         for _, child in item:GetChildren() do
                                             if child:IsA("TextLabel") and child.Text ~= "" then
                                                 local txt = child.Text
-                                                -- Skip teks yang jelas bukan title (keybind, simbol, dll)
                                                 if #txt > 1 and not txt:match("^%[") and child.TextSize >= bestSize then
                                                     bestSize = child.TextSize
                                                     titleText = txt:lower()
@@ -1361,7 +1358,6 @@ function Chloex:Window(GuiConfig)
             MiniDropdown.Visible = true
             ResizeDropdown(resultCount)
         end
-        -- ==================== END SEARCH ====================
 
         SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
             PerformSearch(SearchBox.Text)
@@ -1565,6 +1561,12 @@ function Chloex:Window(GuiConfig)
     end)
 
     function GuiFunc:ToggleUI()
+        -- ==================== FIX: Hapus ToggleUIButton lama biar ga dobel ====================
+        if game.CoreGui:FindFirstChild("ToggleUIButton") then
+            game.CoreGui.ToggleUIButton:Destroy()
+        end
+        -- ==================== END FIX ====================
+
         local ScreenGui = Instance.new("ScreenGui")
         ScreenGui.Parent = game:GetService("CoreGui")
         ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
@@ -1636,7 +1638,14 @@ function Chloex:Window(GuiConfig)
         end
     end)
 
-    DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
+    -- ==================== FIX: Update window size berdasarkan TextBounds ====================
+    local function UpdateWindowSize()
+        DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
+    end
+    UpdateWindowSize()
+    TextLabel:GetPropertyChangedSignal("TextBounds"):Connect(UpdateWindowSize)
+    TextLabel1:GetPropertyChangedSignal("TextBounds"):Connect(UpdateWindowSize)
+    -- ==================== END FIX ====================
 
     MakeDraggable(Top, DropShadowHolder, GuiConfig)
 
