@@ -796,19 +796,11 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
 
-    -- ==================== FIX: Title & Footer ga tabrakan ====================
+    -- ==================== FIX: Footer posisi ngikut Title ====================
     local function UpdateFooterPosition()
         local titleWidth = TextLabel.TextBounds.X
-        local availableSpace = Top.AbsoluteSize.X - titleWidth - 104
-
-        if availableSpace > 30 then
-            TextLabel1.Visible = true
-            TextLabel1.Position = UDim2.new(0, titleWidth + 15, 0, 0)
-            TextLabel1.Size = UDim2.new(1, -(titleWidth + 104), 1, 0)
-        else
-            -- Title terlalu panjang, sembunyiin Footer biar ga tabrakan
-            TextLabel1.Visible = false
-        end
+        TextLabel1.Position = UDim2.new(0, titleWidth + 15, 0, 0)
+        TextLabel1.Size = UDim2.new(1, -(titleWidth + 104), 1, 0)
     end
 
     TextLabel:GetPropertyChangedSignal("TextBounds"):Connect(UpdateFooterPosition)
@@ -1644,15 +1636,6 @@ function Chloex:Window(GuiConfig)
             DropShadowHolder.Visible = not DropShadowHolder.Visible
         end
     end)
-
-    -- ==================== FIX: Update window size berdasarkan TextBounds ====================
-    local function UpdateWindowSize()
-        DropShadowHolder.Size = UDim2.new(0, 115 + TextLabel.TextBounds.X + 1 + TextLabel1.TextBounds.X, 0, 350)
-    end
-    UpdateWindowSize()
-    TextLabel:GetPropertyChangedSignal("TextBounds"):Connect(UpdateWindowSize)
-    TextLabel1:GetPropertyChangedSignal("TextBounds"):Connect(UpdateWindowSize)
-    -- ==================== END FIX ====================
 
     MakeDraggable(Top, DropShadowHolder, GuiConfig)
 
