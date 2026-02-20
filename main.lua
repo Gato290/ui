@@ -8,6 +8,9 @@ local ColorModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/G
 -- Load Elements Module
 local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
 
+-- Load Keybind Module
+local KeybindModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/keybind.lua"))()
+
 -- Load Icon Libraries
 local defaultIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Icon/defaulticons.lua"))()
 local lucideIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Icon/lucideIcons.lua"))()
@@ -2187,102 +2190,9 @@ function Chloex:Window(GuiConfig)
             end
 
             function Items:AddKeybind(KeybindConfig)
-                KeybindConfig = KeybindConfig or {}
-                KeybindConfig.Title = KeybindConfig.Title or "Keybind"
-                KeybindConfig.Content = KeybindConfig.Content or ""
-                KeybindConfig.Value = KeybindConfig.Value or "RightShift"
-                KeybindConfig.Callback = KeybindConfig.Callback or function() end
-
-                local KeybindFrame = Instance.new("Frame")
-                KeybindFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                KeybindFrame.BackgroundTransparency = 0.935
-                KeybindFrame.BorderSizePixel = 0
-                KeybindFrame.Size = UDim2.new(1, 0, 0, 38)
-                KeybindFrame.LayoutOrder = CountItem
-                KeybindFrame.Name = "KeybindFrame"
-                KeybindFrame.Parent = SectionAdd
-
-                local KBCorner = Instance.new("UICorner")
-                KBCorner.CornerRadius = UDim.new(0, 4)
-                KBCorner.Parent = KeybindFrame
-
-                local KBTitle = Instance.new("TextLabel")
-                KBTitle.Font = Enum.Font.GothamBold
-                KBTitle.Text = KeybindConfig.Title
-                KBTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
-                KBTitle.TextSize = 13
-                KBTitle.TextXAlignment = Enum.TextXAlignment.Left
-                KBTitle.BackgroundTransparency = 1
-                KBTitle.BorderSizePixel = 0
-                KBTitle.Position = UDim2.new(0, 10, 0, 0)
-                KBTitle.Size = UDim2.new(0.6, 0, 0.5, 0)
-                KBTitle.Name = "KBTitle"
-                KBTitle.Parent = KeybindFrame
-
-                local KBContent = Instance.new("TextLabel")
-                KBContent.Font = Enum.Font.Gotham
-                KBContent.Text = KeybindConfig.Content
-                KBContent.TextColor3 = Color3.fromRGB(150, 150, 150)
-                KBContent.TextSize = 11
-                KBContent.TextXAlignment = Enum.TextXAlignment.Left
-                KBContent.BackgroundTransparency = 1
-                KBContent.BorderSizePixel = 0
-                KBContent.Position = UDim2.new(0, 10, 0.5, 0)
-                KBContent.Size = UDim2.new(0.6, 0, 0.5, 0)
-                KBContent.Parent = KeybindFrame
-
-                local KBButton = Instance.new("TextButton")
-                KBButton.Font = Enum.Font.GothamBold
-                KBButton.Text = "[" .. KeybindConfig.Value .. "]"
-                KBButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-                KBButton.TextSize = 12
-                KBButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-                KBButton.BackgroundTransparency = 0.85
-                KBButton.BorderSizePixel = 0
-                KBButton.AnchorPoint = Vector2.new(1, 0.5)
-                KBButton.Position = UDim2.new(1, -8, 0.5, 0)
-                KBButton.Size = UDim2.new(0, 70, 0, 24)
-                KBButton.Name = "KBButton"
-                KBButton.Parent = KeybindFrame
-
-                local KBButtonCorner = Instance.new("UICorner")
-                KBButtonCorner.CornerRadius = UDim.new(0, 4)
-                KBButtonCorner.Parent = KBButton
-
-                local currentKey = KeybindConfig.Value
-                local listening = false
-
-                KBButton.MouseButton1Click:Connect(function()
-                    if listening then return end
-                    listening = true
-                    KBButton.Text = "[...]"
-                    local conn
-                    conn = UserInputService.InputBegan:Connect(function(input, gpe)
-                        if gpe then return end
-                        if input.UserInputType == Enum.UserInputType.Keyboard then
-                            local keyName = input.KeyCode.Name
-                            currentKey = keyName
-                            KBButton.Text = "[" .. keyName .. "]"
-                            listening = false
-                            conn:Disconnect()
-                            pcall(function()
-                                KeybindConfig.Callback(keyName)
-                            end)
-                        end
-                    end)
-                end)
-
-                local KeybindFunc = {}
-                function KeybindFunc:Set(value)
-                    currentKey = value
-                    KBButton.Text = "[" .. value .. "]"
-                end
-                function KeybindFunc:Get()
-                    return currentKey
-                end
-
+                local func = KeybindModule:CreateKeybind(SectionAdd, KeybindConfig, CountItem, Elements)
                 CountItem = CountItem + 1
-                return KeybindFunc
+                return func
             end
 
             CountSection = CountSection + 1
