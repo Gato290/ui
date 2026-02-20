@@ -1547,8 +1547,9 @@ function Chloex:Window(GuiConfig)
                     Name = "Yes",
                     Callback = function()
                         if Chloeex then Chloeex:Destroy() end
-                        if game.CoreGui:FindFirstChild("ToggleUIButton") then
-                            game.CoreGui.ToggleUIButton:Destroy()
+                        if GuiFunc._toggleGui then
+                            pcall(function() GuiFunc._toggleGui:Destroy() end)
+                            GuiFunc._toggleGui = nil
                         end
                     end
                 },
@@ -1561,16 +1562,19 @@ function Chloex:Window(GuiConfig)
     end)
 
     function GuiFunc:ToggleUI()
-        -- ==================== FIX: Hapus ToggleUIButton lama biar ga dobel ====================
-        if game.CoreGui:FindFirstChild("ToggleUIButton") then
-            game.CoreGui.ToggleUIButton:Destroy()
+        -- Destroy ToggleUI milik window INI aja lewat referensi langsung
+        if GuiFunc._toggleGui then
+            pcall(function() GuiFunc._toggleGui:Destroy() end)
+            GuiFunc._toggleGui = nil
         end
-        -- ==================== END FIX ====================
 
         local ScreenGui = Instance.new("ScreenGui")
         ScreenGui.Parent = game:GetService("CoreGui")
         ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         ScreenGui.Name = "ToggleUIButton"
+
+        -- Simpan referensi ke ScreenGui ini supaya bisa di-destroy nanti
+        GuiFunc._toggleGui = ScreenGui
 
         local MainButton = Instance.new("ImageLabel")
         MainButton.Parent = ScreenGui
