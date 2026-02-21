@@ -660,15 +660,6 @@ function Chloex:Window(GuiConfig)
 
     ConfigFolder = GuiConfig.Configname
 
-    -- ==================== FIX: Hapus GUI lama biar ga dobel ====================
-    if game.CoreGui:FindFirstChild("Chloeex") then
-        game.CoreGui.Chloeex:Destroy()
-    end
-    if game.CoreGui:FindFirstChild("ToggleUIButton") then
-        game.CoreGui.ToggleUIButton:Destroy()
-    end
-    -- ==================== END FIX ====================
-
     if not isfolder(ConfigFolder) then makefolder(ConfigFolder) end
     if not isfolder(ConfigFolder .. "/Config") then makefolder(ConfigFolder .. "/Config") end
 
