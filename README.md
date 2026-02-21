@@ -142,9 +142,37 @@ Sec.Botton:AddButton({
 
 ## Button V2
 ```lua
-Soon
+Sec.Button:AddButton({
+    Title = "Example Button V2 (Icon)",
+    Version = "V2",
+    Icon = "rbxassetid://79715859717613",  -- pakai asset id
+    Callback = function()
+        print("This is an example button")
+        Nt("Example clicked!", 2)
+    end
+})
 ```
 
+## Funcions Button
+```lua
+V1:
+:Fire() → Trigger callback utama
+:FireSub() → Trigger callback sub button
+:SetTitle(text) → Ubah teks button utama
+:SetSubTitle(text) → Ubah teks sub button
+:SetCallback(fn) → Ganti callback utama
+:SetSubCallback(fn) → Ganti callback sub button
+:SetLocked(state) → Kunci/buka elemen
+:GetLocked() → Cek status kunci
+
+V2:
+:Fire() → Trigger callback
+:SetTitle(text) → Ubah judul
+:SetContent(text) → Ubah content
+:SetCallback(fn) → Ganti callback
+:SetLocked(state) → Kunci/buka elemen
+:GetLocked() → Cek status kunci
+```
 # 🔁 Toggle
 ```lua
 Sec.Toggle = Tabs.Main:AddSection("Toggle")
@@ -204,6 +232,14 @@ Sec.Toggle:AddToggle({
 })
 ```
 
+## Funcions Toggle
+```lua
+.Value → Status toggle saat ini (boolean)
+:Set(value) → Set toggle true/false
+:GetValue() → Ambil nilai toggle
+:SetLocked(state) → Kunci/buka elemen
+:GetLocked() → Cek status kunci
+```
 # 🎚 Slider
 
 ```lua
@@ -242,6 +278,16 @@ Sec.Slider:AddSlider({
 })
 ```
 
+## Funcions Slider
+```lua
+.Value → Nilai slider saat ini
+:Set(value) → Set nilai slider
+:GetValue() → Ambil nilai slider
+:SetMin(min) → Ubah nilai minimum
+:SetMax(max) → Ubah nilai maximum
+:SetLocked(state) → Kunci/buka elemen
+:GetLocked() → Cek status kunci
+```
 
 # 📂 Dropdown
 
@@ -316,32 +362,16 @@ Sec.Dropdwon:AddDropdown({
 
 ## Funcions Dropdwom
 ```lua
--- 1. Get Value
-local currentExample = ExampleSelect:GetValue()
-print("Current example selected:", currentExample)
-
--- 2. Set Value
--- Single select
-ExampleSelect:Set("Example Option A")
-
--- Multi select
-ExampleMultiSelect:Set({"Example Option 1", "Example Option 2"})
-
--- 3. Clear Options
-ExampleSelect:Clear()
-
--- 4. Add New Option
-ExampleSelect:AddOption("Example Option X")
-ExampleSelect:AddOption({Label = "Example Label Y", Value = "example_value_y"})
-
--- 5. Set All Options
--- Update all options at once, with default value
-ExampleSelect:SetValues({
-    "Example Option A",
-    "Example Option B",
-    "Example Option C",
-    {Label = "Example Label D", Value = "example_value_d"}
-}, "Example Option A") -- Default value after update
+.Value → Nilai/opsi terpilih
+.Options → List semua opsi
+:Set(value) → Set pilihan
+:SetValue(val) → Alias dari :Set()
+:GetValue() → Ambil nilai terpilih
+:AddOption(option) → Tambah satu opsi
+:Clear() → Hapus semua opsi & reset
+:SetValues(list, selecting) → Reset & isi ulang semua opsi
+:SetLocked(state) → Kunci/buka elemen
+:GetLocked() → Cek status kunci
 ```
 
 # ⌨ Input
@@ -388,18 +418,12 @@ Sec.Input:AddInput({
 
 ## Funcions Input
 ```lua
--- 1. Get Value
-local currentExampleInput = ExampleInput.Value
--- atau
-local currentExampleInput = ExampleInput:Get()
-print("Current example input:", currentExampleInput)
-
--- 2. Set Value
--- Update input box value
-ExampleInput:Set("ExampleNewValue123")
-
--- Clear input
-ExampleInput:Set("")
+.Value → Nilai input saat ini
+:Set(value) → Set nilai input
+:GetValue() → Ambil nilai input
+:Clear() → Kosongkan input
+:SetLocked(state) → Kunci/buka elemen
+:GetLocked() → Cek status kunci
 ```
 
 # 🧾 Panel
@@ -454,7 +478,14 @@ Sec.Panel:AddPanel({
 
 ## Funcions Panel
 ```lua
-PanelFunc:GetInput()
+Panel — CreatePanel
+.Value → Nilai input saat ini
+:GetInput() → Ambil teks dari InputBox
+:GetValue() → Ambil value tersimpan
+:SetContent(text) → Ubah teks content
+:SetTitle(text) → Ubah teks judul
+:SetLocked(state) → Kunci/buka elemen
+:GetLocked() → Cek status kunci
 ```
 
 # 📄 Paragraph
@@ -498,7 +529,23 @@ Sec.Paragraph:AddParagraph({
 ```
 ## Funcions Paragraph
 ```lua
-ParagraphFunc:SetContent(newContent)
+Method: :SetContent(content)
+Deskripsi: Ubah teks content/isi paragraph
+
+Method: :GetContent()
+Deskripsi: Ambil teks content saat ini
+
+Method: :SetTitle(title)
+Deskripsi: Ubah teks judul paragraph
+
+Method: :GetTitle()
+Deskripsi: Ambil teks judul saat ini
+
+Method: :SetLocked(state)
+Deskripsi: Kunci/buka elemen (true/false)
+
+Method: :GetLocked()
+Deskripsi: Cek apakah elemen sedang terkunci
 ```
 
 # ➖ Divider & SubSection
