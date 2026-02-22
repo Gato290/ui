@@ -497,9 +497,10 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
+-- ✅ FIX: Title sekarang pakai ConfigFolder (dari Configname) bukan hardcoded "Velaris UI"
 function Nt(msg, delay, color, title, desc, icon)
     return Chloex:MakeNotify({
-        Title = title or "Velaris UI",
+        Title = title or ConfigFolder,
         Description = desc or "Notification",
         Content = msg or "Content",
         Color = getColor(color or "Default"),
@@ -1548,7 +1549,6 @@ function Chloex:Window(GuiConfig)
     end)
 
     function GuiFunc:ToggleUI()
-        -- Destroy ToggleUI milik window INI aja lewat referensi langsung
         if GuiFunc._toggleGui then
             pcall(function() GuiFunc._toggleGui:Destroy() end)
             GuiFunc._toggleGui = nil
@@ -1559,7 +1559,6 @@ function Chloex:Window(GuiConfig)
         ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
         ScreenGui.Name = "ToggleUIButton"
 
-        -- Simpan referensi ke ScreenGui ini supaya bisa di-destroy nanti
         GuiFunc._toggleGui = ScreenGui
 
         local MainButton = Instance.new("ImageLabel")
