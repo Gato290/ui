@@ -1,5 +1,7 @@
--- Elements.lua V0.3.2
+-- Elements.lua V0.4.0
 -- UI Elements Module for NexaHub
+-- Changelog V0.4.0: CreateParagraph now supports image/video thumbnails
+--                   Added :StartVideo() / :StopVideo() / :SetMedia() API
 -- Changelog V0.3.2: Improved slider mobile responsiveness (larger hitbox, global InputEnded, GetScaleFromInput helper)
 -- Changelog V0.3.1: Fixed button highlight bug (AnimateButtonClick race condition + AutoButtonColor)
 
@@ -114,7 +116,7 @@ local function ApplyLock(frame, isLocked)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateBadge  (Badge ditengah / center dari parent)
+--  CreateBadge
 -- ─────────────────────────────────────────────────────────────────────────────
 local function CreateBadge(parent, badgeType)
     local preset = BADGE_CONFIG[badgeType]
@@ -127,8 +129,8 @@ local function CreateBadge(parent, badgeType)
 
     local Badge = Instance.new("Frame")
     Badge.Name = badgeType .. "Badge"
-    Badge.AnchorPoint = Vector2.new(0.5, 0)      -- anchor tengah atas
-    Badge.Position = UDim2.new(0.5, 0, 0, 8)    -- posisi tengah atas parent
+    Badge.AnchorPoint = Vector2.new(0.5, 0)
+    Badge.Position = UDim2.new(0.5, 0, 0, 8)
     Badge.Size = UDim2.new(0, preset.Width, 0, preset.Height)
     Badge.BackgroundColor3 = color
     Badge.BackgroundTransparency = badgeType == "New" and 0 or 0.15
@@ -187,16 +189,13 @@ function Elements:CreateBadge(parent, badgeType)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  AnimateButtonClick — V0.3.1 fix: simpan origTrans/origColor SEBELUM tween
+--  AnimateButtonClick — V0.3.1 fix
 -- ─────────────────────────────────────────────────────────────────────────────
--- Tabel untuk menyimpan tween aktif per button
 local _activeTweens = {}
 
 local function AnimateButtonClick(button, color)
     color = color or GuiConfig.Color
 
-    -- Simpan nilai ASLI sebelum tween apapun berjalan
-    -- Gunakan attribute agar tidak terkorupsi oleh tween sebelumnya
     if not button:GetAttribute("_origTrans") then
         button:SetAttribute("_origTrans", button.BackgroundTransparency)
     end
@@ -214,7 +213,6 @@ local function AnimateButtonClick(button, color)
         button:GetAttribute("_origColorB")
     )
 
-    -- Cancel tween yang sedang berjalan untuk button ini
     if _activeTweens[button] then
         _activeTweens[button]:Cancel()
         _activeTweens[button] = nil
@@ -256,18 +254,38 @@ local function RoundToFactor(value, factor)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateParagraph
+--  CreateParagraph  (V0.4.0 — Image / Video Thumbnail Support)
+--
+--  New config fields:
+--    cfg.MediaType   = "Image" | "Video"   (nil = no media)
+--    cfg.MediaId     = "rbxassetid://..."   asset id gambar atau thumbnail video
+--    cfg.VideoId     = "rbxassetid://..."   asset id video (hanya untuk MediaType="Video")
+--    cfg.MediaWidth  = number (default 80)  lebar thumbnail dalam px
+--    cfg.MediaHeight = number (default 60)  tinggi thumbnail dalam px
+--    cfg.AutoPlay    = boolean (default false) langsung putar saat dibuat
+--
+--  Returned API tambahan:
+--    ParagraphFunc:StartVideo()   — mulai putar video
+--    ParagraphFunc:StopVideo()    — hentikan video
+--    ParagraphFunc:SetMedia(mediaType, mediaId, videoId)  — ganti media
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateParagraph(parent, config, countItem)
     local cfg = config or {}
-    cfg.Title   = cfg.Title   or "Title"
-    cfg.Content = cfg.Content or "Content"
-    cfg.Badge   = cfg.Badge   or nil
-    cfg.Color   = cfg.Color   or nil
-    cfg.Locked  = cfg.Locked  or false
+    cfg.Title      = cfg.Title      or "Title"
+    cfg.Content    = cfg.Content    or "Content"
+    cfg.Badge      = cfg.Badge      or nil
+    cfg.Color      = cfg.Color      or nil
+    cfg.Locked     = cfg.Locked     or false
+    cfg.MediaType  = cfg.MediaType  or nil   -- "Image" | "Video" | nil
+    cfg.MediaId    = cfg.MediaId    or nil   -- thumbnail asset id
+    cfg.VideoId    = cfg.VideoId    or nil   -- video asset id
+    cfg.MediaWidth  = cfg.MediaWidth  or 80
+    cfg.MediaHeight = cfg.MediaHeight or 60
+    cfg.AutoPlay   = cfg.AutoPlay   or false
 
     local ParagraphFunc = {}
 
+    -- ── Main Frame ────────────────────────────────────────────────────────────
     local Paragraph = Instance.new("Frame")
     Paragraph.Name = "Paragraph"
     Paragraph.BorderSizePixel = 0
@@ -285,12 +303,101 @@ function Elements:CreateParagraph(parent, config, countItem)
     end
 
     Instance.new("UICorner", Paragraph).CornerRadius = UDim.new(0, 8)
-
     if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
+    -- ── Media Area (kiri) ─────────────────────────────────────────────────────
+    local mediaW = 0
+    local mediaPadL = 0
+    local VideoObject = nil        -- VideoFrame jika MediaType == "Video"
+    local ThumbnailImg = nil       -- ImageLabel thumbnail
+    local PlayOverlay = nil        -- tombol play di atas thumbnail
+    local IsPlaying = false
+
+    if cfg.MediaType == "Image" or cfg.MediaType == "Video" then
+        mediaW   = cfg.MediaWidth
+        mediaPadL = 10
+
+        -- Container thumbnail
+        local MediaContainer = Instance.new("Frame")
+        MediaContainer.Name = "MediaContainer"
+        MediaContainer.Position = UDim2.new(0, mediaPadL, 0, 8)
+        MediaContainer.Size = UDim2.new(0, mediaW, 0, cfg.MediaHeight)
+        MediaContainer.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+        MediaContainer.BackgroundTransparency = 0.3
+        MediaContainer.BorderSizePixel = 0
+        MediaContainer.ClipsDescendants = true
+        MediaContainer.Parent = Paragraph
+        Instance.new("UICorner", MediaContainer).CornerRadius = UDim.new(0, 6)
+
+        -- Thumbnail image (untuk Image & sebagai poster Video)
+        -- Jika MediaType == "Video" dan tidak ada MediaId, thumbnail disembunyikan
+        ThumbnailImg = Instance.new("ImageLabel")
+        ThumbnailImg.Name = "ThumbnailImg"
+        ThumbnailImg.Size = UDim2.new(1, 0, 1, 0)
+        ThumbnailImg.BackgroundTransparency = 1
+        ThumbnailImg.ScaleType = Enum.ScaleType.Crop
+        ThumbnailImg.Image = cfg.MediaId or ""
+        ThumbnailImg.Visible = (cfg.MediaId ~= nil and cfg.MediaId ~= "")
+        ThumbnailImg.Parent = MediaContainer
+
+        if cfg.MediaType == "Video" then
+            -- VideoFrame (tersembunyi sampai play)
+            VideoObject = Instance.new("VideoFrame")
+            VideoObject.Name = "VideoFrame"
+            VideoObject.Size = UDim2.new(1, 0, 1, 0)
+            VideoObject.BackgroundTransparency = 1
+            VideoObject.Video = cfg.VideoId or ""
+            VideoObject.Volume = 0.5
+            VideoObject.Visible = false
+            VideoObject.Parent = MediaContainer
+
+            -- Overlay tombol Play / Pause
+            PlayOverlay = Instance.new("TextButton")
+            PlayOverlay.Name = "PlayOverlay"
+            PlayOverlay.Size = UDim2.new(1, 0, 1, 0)
+            PlayOverlay.BackgroundTransparency = 1
+            PlayOverlay.AutoButtonColor = false
+            PlayOverlay.Text = ""
+            PlayOverlay.ZIndex = 5
+            PlayOverlay.Parent = MediaContainer
+
+            -- Ikon Play
+            local PlayIcon = Instance.new("ImageLabel")
+            PlayIcon.Name = "PlayIcon"
+            PlayIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+            PlayIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
+            PlayIcon.Size = UDim2.new(0, 24, 0, 24)
+            PlayIcon.BackgroundTransparency = 1
+            PlayIcon.ScaleType = Enum.ScaleType.Fit
+            -- Pakai built-in Roblox play icon (bisa diganti asset sendiri)
+            PlayIcon.Image = "rbxassetid://7743870813"
+            PlayIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
+            PlayIcon.ZIndex = 6
+            PlayIcon.Parent = PlayOverlay
+
+            -- Tombol play/pause klik
+            PlayOverlay.MouseButton1Click:Connect(function()
+                if IsPlaying then
+                    ParagraphFunc:StopVideo()
+                else
+                    ParagraphFunc:StartVideo()
+                end
+            end)
+
+            -- Auto-hide overlay saat video selesai
+            VideoObject.DidLoop:Connect(function()
+                -- optional: bisa tambahkan logika di sini
+            end)
+            VideoObject.Ended:Connect(function()
+                ParagraphFunc:StopVideo()
+            end)
+        end
+    end
+
+    -- ── Icon (non-media) di sebelah kiri ──────────────────────────────────────
     local iconSize = 0
     local iconPadL = 0
-    if cfg.Icon then
+    if cfg.Icon and not cfg.MediaType then
         iconSize = 36
         iconPadL = 10
         local IconContainer = Instance.new("Frame")
@@ -309,8 +416,15 @@ function Elements:CreateParagraph(parent, config, countItem)
         IconImg.Parent = IconContainer
     end
 
-    local textLeft = iconPadL + iconSize + 10
+    -- Hitung offset teks kiri
+    local textLeft
+    if cfg.MediaType then
+        textLeft = mediaPadL + mediaW + 10
+    else
+        textLeft = iconPadL + iconSize + 10
+    end
 
+    -- ── Title & Content labels ────────────────────────────────────────────────
     local ParagraphTitle = Instance.new("TextLabel")
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Font = Enum.Font.GothamBold
@@ -341,6 +455,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
+    -- ── Optional Buttons ──────────────────────────────────────────────────────
     local btnBgColor = cfg.ButtonColor    or Color3.fromRGB(255, 255, 255)
     local subBgColor = cfg.SubButtonColor or Color3.fromRGB(255, 255, 255)
     local btnBgTrans = cfg.ButtonColor    and 0.15 or 0.85
@@ -394,12 +509,18 @@ function Elements:CreateParagraph(parent, config, countItem)
         end
     end
 
+    -- ── UpdateSize ────────────────────────────────────────────────────────────
     local function UpdateSize()
         task.wait()
         local contentH = math.max(12, ParagraphContent.TextBounds.Y)
         ParagraphContent.Size = UDim2.new(1, -(textLeft + 10), 0, contentH)
 
-        local headerBottom = math.max(10 + 15 + 2 + contentH + 8, iconSize > 0 and (iconSize + 20) or 0)
+        local textBottom = 10 + 15 + 2 + contentH + 8
+
+        -- Jika ada media, pastikan frame minimal setinggi media
+        local mediaMinH = (cfg.MediaType and cfg.MediaHeight > 0) and (cfg.MediaHeight + 16) or 0
+        local headerBottom = math.max(textBottom, mediaMinH)
+
         local totalH = headerBottom
 
         if ParagraphButton then
@@ -418,8 +539,109 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
+    -- ── Lock ──────────────────────────────────────────────────────────────────
     local LockFunc = ApplyLock(Paragraph, cfg.Locked)
 
+    -- ─────────────────────────────────────────────────────────────────────────
+    --  Video API
+    -- ─────────────────────────────────────────────────────────────────────────
+
+    --[[
+        ParagraphFunc:StartVideo()
+        Memutar video yang sudah diset via cfg.VideoId atau SetMedia().
+        - Menyembunyikan thumbnail dan menampilkan VideoFrame.
+        - Mengubah ikon overlay menjadi tombol Pause.
+        - Tidak melakukan apa-apa jika MediaType bukan "Video".
+    ]]
+    function ParagraphFunc:StartVideo()
+        if not VideoObject then
+            warn("[Elements] StartVideo: bukan tipe Video atau VideoId tidak diset.")
+            return
+        end
+        if IsPlaying then return end
+        IsPlaying = true
+
+        -- Sembunyikan thumbnail, tampilkan video
+        if ThumbnailImg then ThumbnailImg.Visible = false end
+        VideoObject.Visible = true
+        VideoObject:Play()
+
+        -- Ganti ikon play → pause
+        if PlayOverlay and PlayOverlay:FindFirstChild("PlayIcon") then
+            PlayOverlay.PlayIcon.Image = "rbxassetid://7743871507" -- pause icon
+        end
+    end
+
+    --[[
+        ParagraphFunc:StopVideo()
+        Menghentikan pemutaran video.
+        - Menampilkan kembali thumbnail.
+        - Mengubah ikon overlay menjadi tombol Play.
+        - Tidak melakukan apa-apa jika MediaType bukan "Video".
+    ]]
+    function ParagraphFunc:StopVideo()
+        if not VideoObject then return end
+        if not IsPlaying then return end
+        IsPlaying = false
+
+        VideoObject:Pause()
+        VideoObject.Visible = false
+
+        -- Tampilkan kembali thumbnail hanya jika ada MediaId
+        if ThumbnailImg and cfg.MediaId and cfg.MediaId ~= "" then
+            ThumbnailImg.Visible = true
+        end
+
+        -- Ganti ikon pause → play
+        if PlayOverlay and PlayOverlay:FindFirstChild("PlayIcon") then
+            PlayOverlay.PlayIcon.Image = "rbxassetid://7743870813" -- play icon
+        end
+    end
+
+    --[[
+        ParagraphFunc:SetMedia(mediaType, mediaId, videoId?)
+        Mengganti media secara runtime.
+          mediaType : "Image" | "Video"
+          mediaId   : asset id gambar / thumbnail
+          videoId   : asset id video (wajib jika mediaType == "Video")
+
+        Catatan: fungsi ini hanya bekerja jika Paragraph sudah dibuat dengan
+        cfg.MediaType (media container harus sudah ada di frame).
+    ]]
+    function ParagraphFunc:SetMedia(mediaType, mediaId, videoId)
+        if not ThumbnailImg then
+            warn("[Elements] SetMedia: Paragraph tidak dibuat dengan MediaType. Buat ulang dengan cfg.MediaType.")
+            return
+        end
+
+        -- Stop dulu kalau lagi play
+        if IsPlaying then ParagraphFunc:StopVideo() end
+
+        -- Update thumbnail
+        ThumbnailImg.Image = mediaId or ""
+
+        -- Update VideoFrame jika ada
+        if VideoObject then
+            VideoObject.Video = videoId or ""
+        end
+
+        -- Update local config
+        cfg.MediaType = mediaType
+        cfg.MediaId   = mediaId
+        cfg.VideoId   = videoId
+    end
+
+    --[[
+        ParagraphFunc:IsVideoPlaying()
+        Mengembalikan true jika video sedang diputar.
+    ]]
+    function ParagraphFunc:IsVideoPlaying()
+        return IsPlaying
+    end
+
+    -- ─────────────────────────────────────────────────────────────────────────
+    --  Standard API
+    -- ─────────────────────────────────────────────────────────────────────────
     function ParagraphFunc:SetContent(content)
         ParagraphContent.Text = tostring(content or "Content")
         UpdateSize()
@@ -443,6 +665,11 @@ function Elements:CreateParagraph(parent, config, countItem)
 
     function ParagraphFunc:GetLocked()
         return LockFunc:GetLocked()
+    end
+
+    -- AutoPlay jika diminta
+    if cfg.AutoPlay and cfg.MediaType == "Video" then
+        task.defer(function() ParagraphFunc:StartVideo() end)
     end
 
     return ParagraphFunc
@@ -802,7 +1029,6 @@ function Elements:CreateButton(parent, config, countItem)
 
     local ButtonFunc = {}
 
-    -- ── V2 Layout ────────────────────────────────────────────────────────────
     if cfg.Version == "V2" then
         local hasContent = cfg.Content ~= ""
         local frameH = hasContent and 56 or 40
@@ -938,7 +1164,7 @@ function Elements:CreateButton(parent, config, countItem)
         return ButtonFunc
     end
 
-    -- ── V1 Layout ─────────────────────────────────────────────────────────────
+    -- V1
     local Button = Instance.new("Frame")
     Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Button.BackgroundTransparency = 0.935
@@ -1225,7 +1451,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateSlider  (V0.3.2 — Mobile Responsiveness Fix)
+--  CreateSlider  (V0.3.2)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
