@@ -563,15 +563,29 @@ local MyKeybind = Section:AddKeybind({
 
 # 🔔 Notification
 ```lua
--- Custom notification basic
-VelarisUI:MakeNotify({
-    Title = "Example Success",                 -- Title
-    Description = "Example System",             -- Description / category
-    Content = "Example action completed!",     -- Main content
-    Color = Color3.fromRGB(0, 255, 0),          -- Color
-    Time = 0.5,                                -- Animation time (optional)
-    Delay = 3                                  -- Display duration in seconds
+-- Basic
+Notify("Ini isi pesan")
+
+-- Lengkap
+Notify(
+    "Script berhasil diload!",  -- Content (isi pesan)
+    5,                           -- Delay (berapa detik tampil)
+    "Default",                   -- Color (nama warna atau Color3)
+    "My Script",                 -- Title
+    "Success",                   -- Description (teks berwarna di samping title)
+    ""                           -- Icon (opsional)
+)
+
+Chloex:MakeNotify({ -- VelarisUI Or Chloex
+    Title = "My Script",
+    Description = "Success",       -- teks berwarna di samping title
+    Content = "Script telah diload dengan sukses!",
+    Color = "Default",             -- bisa "Default", "Red", "Green", dll
+    Time = 0.5,                    -- durasi animasi masuk/keluar
+    Delay = 5,                     -- berapa detik sebelum auto close
+    Icon = ""                      -- icon opsional
 })
+
 ```
 
 # Dialog
