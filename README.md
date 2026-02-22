@@ -27,14 +27,15 @@ local Window = VelarisUI:Window({
     ["Tab Width"] = 120, -- Width size of the tab section
     Image = "70884221600423", -- Window icon asset ID (replace with your own)
     Configname = "MyCustomConfig", -- Configuration file name for saving settings
-    Uitransparent = 0.15, -- UI transparency (0 = solid, 1 = fully transparent)
-   -- Size = UDim2.fromOffset(580, 460),
-   --[[ Config = {
-        AutoSave = true, -- Automatically save settings
-        AutoLoad = true -- Automatically load saved settings 
-     ]]
+    Uitransparent = 0.20,
+    ShowUser = true,
+	Search = true,  
+    Config = {
+        AutoSave = true,
+        AutoLoad = true, 
     }
 })
+
 ```
 
 # 🗂 Tabs
@@ -86,25 +87,18 @@ local Tabs = {
 Section adalah container untuk button/toggle dll.
 ```lua
 local Sec = {}
-
-Sec.Section1 = Tabs.Tabs1:AddSection("Section Example 1", true) -- true = selalu terbuka tidak bisa di tutup
-Sec.Section2 = Tabs.Tabs1:AddSection("Section Example 2") -- tertutup secara default
--- (Beta Tester Only)
--- Icon
---[[
 Sec.Player = Tabs.Main:AddSection({
     Title = "Player",
     Icon = "lucide:user",
-    AlwaysOpen = true
+    Open = true
 })
 
 -- Section dengan icon Solar
 Sec.Weapon = Tabs.Main:AddSection({
     Title = "Weapons",
     Icon = "solar:home",
-    AlwaysOpen = false
+    Open = false
 })
-]]
 ```
 
 # 🔘 Button
@@ -558,37 +552,17 @@ Sec.Other:AddSubSection("Example Sub Section")
 
 # Keybind
 ```lua
-Soon
+local MyKeybind = Section:AddKeybind({
+    Title = "Toggle ESP",
+    Content = "Tekan untuk toggle",  -- subtitle kecil di bawah title
+    Value = "RightShift",            -- default key
+    Callback = function(key)
+    end
+})
 ```
+
 # 🔔 Notification
 ```lua
--- Basic notification
-Notify(
-    "Example message"  -- Notification message
-)
-
--- Notification with custom duration
-Notify(
-    "Example started!",  -- Message
-    5                   -- Duration in seconds
-)
-
--- Notification with custom color
-Notify(
-    "Example success!",                  -- Message
-    3,                                 -- Duration
-    Color3.fromRGB(0, 255, 0)           -- Color
-)
-
--- Full notification (message, duration, color, title, subtitle)
-Notify(
-    "Example completed",                -- Main message
-    4,                                 -- Duration
-    Color3.fromRGB(0, 208, 255),       -- Color
-    "Example System",                   -- Title
-    "Example Notification"              -- Subtitle / category
-)
-
 -- Custom notification basic
 VelarisUI:MakeNotify({
     Title = "Example Success",                 -- Title
@@ -598,82 +572,28 @@ VelarisUI:MakeNotify({
     Time = 0.5,                                -- Animation time (optional)
     Delay = 3                                  -- Display duration in seconds
 })
-
--- Warning notification
-VelarisUI:MakeNotify({
-    Title = "Example Warning",                 -- Title
-    Description = "⚠️ Example Alert",           -- Additional description
-    Content = "This is an example warning!",   -- Message content
-    Color = Color3.fromRGB(255, 165, 0),        -- Warning color
-    Delay = 5                                  -- Display duration
-})
-
--- Error notification
-VelarisUI:MakeNotify({
-    Title = "Example Error",                   -- Title
-    Description = "❌ Example Failed",          -- Error description
-    Content = "Example error occurred.",       -- Message
-    Color = Color3.fromRGB(255, 0, 0),          -- Error color
-    Delay = 4                                  -- Duration
-})
-
--- Create custom notification and save reference
-local exampleCustomNotify = VelarisUI:MakeNotify({
-    Title = "Example Title",              -- Title
-    Description = "Example Info",         -- Description
-    Content = "Click or close manually",  -- Content message
-    Delay = 60                            -- Max display time (seconds)
-})
 ```
 
-## Icon Notification
+# Dialog
 ```lua
-Soon
-```
-
-## Mini Notification
-```lua
-Soon
-```
-
-## Funcions Notify
-```lua
-NotifyFunc:Close()
-```
-
-# 🧩 UI Settings
-```lua
-Sec.Ui = Tabs.Main:AddSection("Ui")
-
--- Example Input: UI Transparency
-Sec.Ui:AddInput({
-    Title = "Example",
-    Content = "0 = solid, 1 = transparent",
-    Default = "0.15",
-    Callback = function(value)
-        local transparency = tonumber(value)
-        if not transparency then return end
-
-        transparency = math.clamp(transparency, 0, 1)
-
-        -- Contoh update UI element (dummy)
-        print("Example transparency set to:", transparency)
-
-        -- Simulasi penyimpanan konfigurasi
-        -- ConfigData.ExampleTransparency = transparency
-        -- SaveConfig()
-    end
-})
-
--- Example Input: Hotkey Setting
-Sec.Ui:AddInput({
-    Title = "Example",
-    Content = "Enter key name (e.g. F4)",
-    Default = "F4",
-    Callback = function(value)
-        print("Example hotkey set to:", value)
-        -- Contoh simpan atau bind hotkey
-    end
+Chloex:Dialog({
+    Title = "Confirmation",
+    Content = "Are you sure you want to continue?",
+    Buttons = {
+        {
+            Name = "Yes",
+            Callback = function()
+                print("User selected Yes")
+                -- put the action here
+            end
+        },
+        {
+            Name = "No",
+            Callback = function()
+                print("User selected No")
+            end
+        }
+    }
 })
 ```
 
