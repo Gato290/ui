@@ -2078,7 +2078,11 @@ function Chloex:Window(GuiConfig)
                 end
             end
 
-            if OpenSection then UpdateSizeSection() end
+            -- ✅ FIX: Tunggu 1 detik sebelum auto-open section
+            if OpenSection then
+                task.wait(1)
+                UpdateSizeSection()
+            end
 
             SectionButton.Activated:Connect(function()
                 CircleClick(SectionButton, Mouse.X, Mouse.Y)
