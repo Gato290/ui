@@ -2093,10 +2093,37 @@ function Chloex:Window(GuiConfig)
                 end
             end
 
-            -- ✅ FIX: Tunggu 1 detik sebelum auto-open section
+            -- ✅ FIX: Buka section setelah semua item selesai di-add
+            -- Caranya: tunggu di akhir frame dengan RunService.Heartbeat
             if OpenSection then
-                task.wait(1)
-                UpdateSizeSection()
+                task.spawn(function()
+                    -- Tunggu sampai tidak ada lagi ChildAdded dalam 0.1 detik
+                    local lastChildTime = tick()
+                    local conn
+                    conn = SectionAdd.ChildAdded:Connect(function()
+                        lastChildTime = tick()
+                    end)
+                    -- Tunggu sampai 0.15 detik tidak ada child baru (semua element sudah di-add)
+                    repeat
+                        task.wait(0.05)
+                    until tick() - lastChildTime >= 0.15
+                    conn:Disconnect()
+
+                    -- Sekarang hitung size yang benar
+                    local SectionSizeYWitdh = 38
+                    for _, v in SectionAdd:GetChildren() do
+                        if v.Name ~= "UIListLayout" and v.Name ~= "UICorner" then
+                            SectionSizeYWitdh = SectionSizeYWitdh + v.Size.Y.Offset + 3
+                        end
+                    end
+                    -- Set langsung tanpa tween supaya akurat dari awal
+                    FeatureFrame.Rotation = 90
+                    Section.Size = UDim2.new(1, 1, 0, SectionSizeYWitdh)
+                    SectionAdd.Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38)
+                    SectionDecideFrame.Size = UDim2.new(1, 0, 0, 2)
+                    task.wait(0.05)
+                    UpdateSizeScroll()
+                end)
             end
 
             SectionButton.Activated:Connect(function()
