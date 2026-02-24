@@ -1,4 +1,5 @@
-local HttpService = game:GetService("HttpService") -- V0.0.1
+
+local HttpService = game:GetService("HttpService") -- V0.0.6
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -372,45 +373,26 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.Parent = NotifyFrameReal
 
         local hasIcon = NotifyConfig.Icon and NotifyConfig.Icon ~= ""
-        -- Icon besar di sisi kiri (seperti avatar di screenshot)
-        local avatarSize = 44
-        local avatarPadding = 8
-        local contentLeft = hasIcon and (avatarPadding + avatarSize + 8) or 10
+        local iconSize = 20
+        local iconPadding = 8
+        local titleOffsetX = hasIcon and (iconPadding + iconSize + 6) or 10
 
         if hasIcon then
-            local AvatarBg = Instance.new("Frame")
-            AvatarBg.AnchorPoint = Vector2.new(0, 0.5)
-            AvatarBg.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-            AvatarBg.BackgroundTransparency = 0.3
-            AvatarBg.BorderSizePixel = 0
-            AvatarBg.Position = UDim2.new(0, avatarPadding, 0.5, 0)
-            AvatarBg.Size = UDim2.new(0, avatarSize, 0, avatarSize)
-            AvatarBg.Name = "AvatarBg"
-            AvatarBg.Parent = NotifyFrameReal
-            local AvatarCorner = Instance.new("UICorner")
-            AvatarCorner.CornerRadius = UDim.new(0, 8)
-            AvatarCorner.Parent = AvatarBg
-
             local NotifyIcon = Instance.new("ImageLabel")
-            NotifyIcon.AnchorPoint = Vector2.new(0.5, 0.5)
+            NotifyIcon.AnchorPoint = Vector2.new(0, 0.5)
             NotifyIcon.BackgroundTransparency = 1
             NotifyIcon.BorderSizePixel = 0
-            NotifyIcon.Position = UDim2.new(0.5, 0, 0.5, 0)
-            NotifyIcon.Size = UDim2.new(1, -8, 1, -8)
-            NotifyIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
-            NotifyIcon.ScaleType = Enum.ScaleType.Fit
+            NotifyIcon.Position = UDim2.new(0, iconPadding, 0.5, 0)
+            NotifyIcon.Size = UDim2.new(0, iconSize, 0, iconSize)
+            NotifyIcon.ImageColor3 = NotifyConfig.Color
             NotifyIcon.Name = "NotifyIcon"
-            NotifyIcon.Parent = AvatarBg
+            NotifyIcon.Parent = Top
 
             local iconId = getIconId(NotifyConfig.Icon)
             if iconId and iconId ~= "" then
                 NotifyIcon.Image = iconId
             end
         end
-
-        -- Top bar hanya untuk title + description + close, konten digeser ke kanan
-        UICorner1.Parent = Top
-        UICorner1.CornerRadius = UDim.new(0, 5)
 
         TextLabel.Font = Enum.Font.GothamBold
         TextLabel.Text = NotifyConfig.Title
@@ -421,9 +403,12 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel.BackgroundTransparency = 0.9990000128746033
         TextLabel.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel.BorderSizePixel = 0
-        TextLabel.Size = UDim2.new(1, -(contentLeft + 60), 1, 0)
+        TextLabel.Size = UDim2.new(1, -(titleOffsetX + 60), 1, 0)
         TextLabel.Parent = Top
-        TextLabel.Position = UDim2.new(0, contentLeft, 0, 0)
+        TextLabel.Position = UDim2.new(0, titleOffsetX, 0, 0)
+
+        UICorner1.Parent = Top
+        UICorner1.CornerRadius = UDim.new(0, 5)
 
         TextLabel1.Font = Enum.Font.GothamBold
         TextLabel1.Text = NotifyConfig.Description
@@ -435,7 +420,7 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel1.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel1.BorderSizePixel = 0
         TextLabel1.Size = UDim2.new(1, 0, 1, 0)
-        TextLabel1.Position = UDim2.new(0, contentLeft + TextLabel.TextBounds.X + 5, 0, 0)
+        TextLabel1.Position = UDim2.new(0, titleOffsetX + TextLabel.TextBounds.X + 5, 0, 0)
         TextLabel1.Parent = Top
 
         Close.Font = Enum.Font.SourceSans
@@ -462,6 +447,7 @@ function Chloex:MakeNotify(NotifyConfig)
         ImageLabel.Size = UDim2.new(1, -8, 1, -8)
         ImageLabel.Parent = Close
 
+        local contentOffsetX = hasIcon and titleOffsetX or 10
         TextLabel2.Font = Enum.Font.GothamBold
         TextLabel2.TextColor3 = Color3.fromRGB(150, 150, 150)
         TextLabel2.TextSize = 13
@@ -472,10 +458,10 @@ function Chloex:MakeNotify(NotifyConfig)
         TextLabel2.BackgroundTransparency = 0.9990000128746033
         TextLabel2.BorderColor3 = Color3.fromRGB(0, 0, 0)
         TextLabel2.BorderSizePixel = 0
-        TextLabel2.Position = UDim2.new(0, contentLeft, 0, 27)
+        TextLabel2.Position = UDim2.new(0, contentOffsetX, 0, 27)
         TextLabel2.Parent = NotifyFrameReal
-        TextLabel2.Size = UDim2.new(1, -(contentLeft + 10), 0, 13)
-        TextLabel2.Size = UDim2.new(1, -(contentLeft + 10), 0, 13 + (13 * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
+        TextLabel2.Size = UDim2.new(1, -(contentOffsetX + 10), 0, 13)
+        TextLabel2.Size = UDim2.new(1, -(contentOffsetX + 10), 0, 13 + (13 * (TextLabel2.TextBounds.X // TextLabel2.AbsoluteSize.X)))
         TextLabel2.TextWrapped = true
 
         if TextLabel2.AbsoluteSize.Y < 27 then
@@ -2093,39 +2079,7 @@ function Chloex:Window(GuiConfig)
                 end
             end
 
-            -- ✅ FIX: Pakai AbsoluteContentSize dari UIListLayout (dihitung otomatis Roblox)
-            if OpenSection then
-                task.spawn(function()
-                    -- Tunggu semua child selesai di-add
-                    local lastChildTime = tick()
-                    local conn = SectionAdd.ChildAdded:Connect(function()
-                        lastChildTime = tick()
-                    end)
-                    repeat task.wait(0.05) until tick() - lastChildTime >= 0.15
-                    conn:Disconnect()
-
-                    -- Tunggu Roblox selesai hitung AbsoluteContentSize
-                    -- dengan cara nunggu sampai nilainya stabil
-                    local lastSize = -1
-                    repeat
-                        task.wait(0.05)
-                        local currentSize = UIListLayout2.AbsoluteContentSize.Y
-                        if currentSize == lastSize then break end
-                        lastSize = currentSize
-                    until false
-
-                    -- Pakai AbsoluteContentSize yang sudah dihitung Roblox
-                    local contentHeight = UIListLayout2.AbsoluteContentSize.Y
-                    local totalHeight = 38 + contentHeight
-
-                    FeatureFrame.Rotation = 90
-                    Section.Size = UDim2.new(1, 1, 0, totalHeight)
-                    SectionAdd.Size = UDim2.new(1, 0, 0, contentHeight)
-                    SectionDecideFrame.Size = UDim2.new(1, 0, 0, 2)
-                    task.wait(0.05)
-                    UpdateSizeScroll()
-                end)
-            end
+            if OpenSection then UpdateSizeSection() end
 
             SectionButton.Activated:Connect(function()
                 CircleClick(SectionButton, Mouse.X, Mouse.Y)
