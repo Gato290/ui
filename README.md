@@ -87,6 +87,8 @@ local Tabs = {
 ```
 # 📦 Section
 Section adalah container untuk button/toggle dll.
+
+## frugal local
 ```lua
 local Sec = {}
 Sec.Player = Tabs.Main:AddSection({
@@ -102,7 +104,21 @@ Sec.Weapon = Tabs.Main:AddSection({
     Open = false
 })
 ```
+## Basic
+```lua
+Tabs.Main:AddSection({
+    Title = "Player",
+    Icon = "lucide:user",
+    Open = true
+})
 
+-- Section dengan icon Solar
+Tabs.Main:AddSection({
+    Title = "Weapons",
+    Icon = "solar:home",
+    Open = false
+})
+```
 # 🔘 Button
 ```lua
 Sec.Botton = Tabs.Main:AddSection("Botton")
