@@ -127,7 +127,7 @@ Tabs.Main:AddSection({
     Icon = "lucide:user",
     Open = true
 })
-``
+```
 # 🔘 Button
 ```lua
 Sec.Botton = Tabs.Main:AddSection("Botton")
