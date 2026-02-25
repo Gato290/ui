@@ -1,5 +1,4 @@
-
-local HttpService = game:GetService("HttpService") -- V0.0.6
+local HttpService = game:GetService("HttpService") -- V0.0.7
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -1989,11 +1988,19 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
+            -- ==================== TextXAlignment support ====================
+            local alignMap = {
+                Left   = Enum.TextXAlignment.Left,
+                Center = Enum.TextXAlignment.Center,
+                Right  = Enum.TextXAlignment.Right,
+            }
+
             SectionTitle.Font = Enum.Font.GothamBold
             SectionTitle.Text = Title
             SectionTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
             SectionTitle.TextSize = 13
-            SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+            SectionTitle.TextXAlignment = (type(SectionConfig) == "table" and alignMap[SectionConfig.TextXAlignment]) or Enum.TextXAlignment.Left
+            -- ================================================================
             SectionTitle.TextYAlignment = Enum.TextYAlignment.Top
             SectionTitle.AnchorPoint = Vector2.new(0, 0.5)
             SectionTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
