@@ -119,6 +119,15 @@ Tabs.Main:AddSection({
     Open = false
 })
 ```
+## Full
+```lua
+Tabs.Main:AddSection({
+    Title = "Player",
+	TextXAlignment = "Left", -- "Left", "Center", "Right". optional
+    Icon = "lucide:user",
+    Open = true
+})
+``
 # 🔘 Button
 ```lua
 Sec.Botton = Tabs.Main:AddSection("Botton")
