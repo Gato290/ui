@@ -1,5 +1,3 @@
-![VelarisUI](https://i.imgur.com/8KqTL0X.jpeg)
-
 # VelarisUI — Documentation (GitHub README)
 
 UI library Roblox **VelarisUI**
@@ -9,6 +7,10 @@ Dibuat untuk memudahkan pembuatan UI hub dengan sistem tab, section, toggle, dro
 > **Catatan:** Dokumentasi ini hanya menjelaskan cara pakai.
 > **Tidak ada satu pun kode yang dihapus atau diubah** dari source contoh.
 
+# Update
+```yml
+Added TextXAlignment = "Left", In AddSection
+```
 # 📥 Load UI
 
 # loadstring (Recomend)
