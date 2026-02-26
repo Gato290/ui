@@ -1,4 +1,5 @@
--- Elements.lua V0.0.9
+-- Elements.lua V0.4.0
+
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
 local LocalPlayer = game:GetService("Players").LocalPlayer
@@ -248,87 +249,20 @@ local function RoundToFactor(value, factor)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  Helper: ApplyCommonAPI
---  Menyuntikkan :Destroy(), :SetVisible(), :NewElement() ke semua func table
+--  CreateParagraph  (V0.4.0 — Image / Video Thumbnail Support)
 --
---  Parameters:
---    funcTable   — table API yang dikembalikan element
---    mainFrame   — Frame utama element
---    parentRef   — parent Frame tempat element dibuat
---    countRef    — layoutOrder / countItem saat dibuat
---    createFn    — function(parent, config, countItem) untuk NewElement
---    cfg         — config asli element (untuk di-copy ke NewElement)
--- ─────────────────────────────────────────────────────────────────────────────
-local function ApplyCommonAPI(funcTable, mainFrame, parentRef, countRef, createFn, cfg)
-
-    --[[
-        :Destroy()
-        Menghapus element GUI sepenuhnya dari game.
-        Setelah dipanggil, semua referensi ke element ini tidak valid.
-    ]]
-    function funcTable:Destroy()
-        if mainFrame and mainFrame.Parent then
-            mainFrame:Destroy()
-        end
-    end
-
-    --[[
-        :SetVisible(state: boolean)
-        Menampilkan (true) atau menyembunyikan (false) element.
-        Element tetap ada di dalam parent, hanya tidak terlihat.
-
-        Contoh:
-            myElement:SetVisible(false)  -- sembunyikan
-            myElement:SetVisible(true)   -- tampilkan lagi
-    ]]
-    function funcTable:SetVisible(state)
-        if mainFrame then
-            mainFrame.Visible = (state == true)
-        end
-    end
-
-    --[[
-        :GetVisible() → boolean
-        Mengembalikan status visible element saat ini.
-    ]]
-    function funcTable:GetVisible()
-        return mainFrame and mainFrame.Visible or false
-    end
-
-    --[[
-        :NewElement(newConfig?) → funcTable
-        Membuat element baru dengan tipe yang sama di parent yang sama.
-        newConfig (opsional) akan di-merge ke config asli — hanya key yang
-        disediakan di newConfig yang akan di-override, sisanya tetap pakai
-        config lama.
-
-        Contoh:
-            -- Buat duplikat paragraph dengan Title berbeda
-            local para2 = myParagraph:NewElement({ Title = "Judul Baru" })
-
-        Catatan: Element lama TIDAK dihapus otomatis.
-                 Panggil :Destroy() terlebih dahulu jika ingin mengganti.
-    ]]
-    function funcTable:NewElement(newConfig)
-        local merged = {}
-        -- Copy config asli
-        if type(cfg) == "table" then
-            for k, v in pairs(cfg) do
-                merged[k] = v
-            end
-        end
-        -- Override dengan newConfig jika ada
-        if type(newConfig) == "table" then
-            for k, v in pairs(newConfig) do
-                merged[k] = v
-            end
-        end
-        return createFn(parentRef, merged, countRef)
-    end
-end
-
--- ─────────────────────────────────────────────────────────────────────────────
---  CreateParagraph  (V0.5.0)
+--  New config fields:
+--    cfg.MediaType   = "Image" | "Video"   (nil = no media)
+--    cfg.MediaId     = "rbxassetid://..."   asset id gambar atau thumbnail video
+--    cfg.VideoId     = "rbxassetid://..."   asset id video (hanya untuk MediaType="Video")
+--    cfg.MediaWidth  = number (default 80)  lebar thumbnail dalam px
+--    cfg.MediaHeight = number (default 60)  tinggi thumbnail dalam px
+--    cfg.AutoPlay    = boolean (default false) langsung putar saat dibuat
+--
+--  Returned API tambahan:
+--    ParagraphFunc:StartVideo()   — mulai putar video
+--    ParagraphFunc:StopVideo()    — hentikan video
+--    ParagraphFunc:SetMedia(mediaType, mediaId, videoId)  — ganti media
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateParagraph(parent, config, countItem)
     local cfg = config or {}
@@ -337,15 +271,16 @@ function Elements:CreateParagraph(parent, config, countItem)
     cfg.Badge      = cfg.Badge      or nil
     cfg.Color      = cfg.Color      or nil
     cfg.Locked     = cfg.Locked     or false
-    cfg.MediaType  = cfg.MediaType  or nil
-    cfg.MediaId    = cfg.MediaId    or nil
-    cfg.VideoId    = cfg.VideoId    or nil
+    cfg.MediaType  = cfg.MediaType  or nil   -- "Image" | "Video" | nil
+    cfg.MediaId    = cfg.MediaId    or nil   -- thumbnail asset id
+    cfg.VideoId    = cfg.VideoId    or nil   -- video asset id
     cfg.MediaWidth  = cfg.MediaWidth  or 80
     cfg.MediaHeight = cfg.MediaHeight or 60
     cfg.AutoPlay   = cfg.AutoPlay   or false
 
     local ParagraphFunc = {}
 
+    -- ── Main Frame ────────────────────────────────────────────────────────────
     local Paragraph = Instance.new("Frame")
     Paragraph.Name = "Paragraph"
     Paragraph.BorderSizePixel = 0
@@ -365,17 +300,19 @@ function Elements:CreateParagraph(parent, config, countItem)
     Instance.new("UICorner", Paragraph).CornerRadius = UDim.new(0, 8)
     if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
+    -- ── Media Area (kiri) ─────────────────────────────────────────────────────
     local mediaW = 0
     local mediaPadL = 0
-    local VideoObject = nil
-    local ThumbnailImg = nil
-    local PlayOverlay = nil
+    local VideoObject = nil        -- VideoFrame jika MediaType == "Video"
+    local ThumbnailImg = nil       -- ImageLabel thumbnail
+    local PlayOverlay = nil        -- tombol play di atas thumbnail
     local IsPlaying = false
 
     if cfg.MediaType == "Image" or cfg.MediaType == "Video" then
         mediaW   = cfg.MediaWidth
         mediaPadL = 10
 
+        -- Container thumbnail
         local MediaContainer = Instance.new("Frame")
         MediaContainer.Name = "MediaContainer"
         MediaContainer.Position = UDim2.new(0, mediaPadL, 0, 8)
@@ -387,6 +324,8 @@ function Elements:CreateParagraph(parent, config, countItem)
         MediaContainer.Parent = Paragraph
         Instance.new("UICorner", MediaContainer).CornerRadius = UDim.new(0, 6)
 
+        -- Thumbnail image (untuk Image & sebagai poster Video)
+        -- Jika MediaType == "Video" dan tidak ada MediaId, thumbnail disembunyikan
         ThumbnailImg = Instance.new("ImageLabel")
         ThumbnailImg.Name = "ThumbnailImg"
         ThumbnailImg.Size = UDim2.new(1, 0, 1, 0)
@@ -397,6 +336,7 @@ function Elements:CreateParagraph(parent, config, countItem)
         ThumbnailImg.Parent = MediaContainer
 
         if cfg.MediaType == "Video" then
+            -- VideoFrame (tersembunyi sampai play)
             VideoObject = Instance.new("VideoFrame")
             VideoObject.Name = "VideoFrame"
             VideoObject.Size = UDim2.new(1, 0, 1, 0)
@@ -406,6 +346,7 @@ function Elements:CreateParagraph(parent, config, countItem)
             VideoObject.Visible = false
             VideoObject.Parent = MediaContainer
 
+            -- Overlay tombol Play / Pause
             PlayOverlay = Instance.new("TextButton")
             PlayOverlay.Name = "PlayOverlay"
             PlayOverlay.Size = UDim2.new(1, 0, 1, 0)
@@ -415,6 +356,7 @@ function Elements:CreateParagraph(parent, config, countItem)
             PlayOverlay.ZIndex = 5
             PlayOverlay.Parent = MediaContainer
 
+            -- Ikon Play
             local PlayIcon = Instance.new("ImageLabel")
             PlayIcon.Name = "PlayIcon"
             PlayIcon.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -422,11 +364,13 @@ function Elements:CreateParagraph(parent, config, countItem)
             PlayIcon.Size = UDim2.new(0, 24, 0, 24)
             PlayIcon.BackgroundTransparency = 1
             PlayIcon.ScaleType = Enum.ScaleType.Fit
+            -- Pakai built-in Roblox play icon (bisa diganti asset sendiri)
             PlayIcon.Image = "rbxassetid://7743870813"
             PlayIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
             PlayIcon.ZIndex = 6
             PlayIcon.Parent = PlayOverlay
 
+            -- Tombol play/pause klik
             PlayOverlay.MouseButton1Click:Connect(function()
                 if IsPlaying then
                     ParagraphFunc:StopVideo()
@@ -435,12 +379,17 @@ function Elements:CreateParagraph(parent, config, countItem)
                 end
             end)
 
+            -- Auto-hide overlay saat video selesai
+            VideoObject.DidLoop:Connect(function()
+                -- optional: bisa tambahkan logika di sini
+            end)
             VideoObject.Ended:Connect(function()
                 ParagraphFunc:StopVideo()
             end)
         end
     end
 
+    -- ── Icon (non-media) di sebelah kiri ──────────────────────────────────────
     local iconSize = 0
     local iconPadL = 0
     if cfg.Icon and not cfg.MediaType then
@@ -462,6 +411,7 @@ function Elements:CreateParagraph(parent, config, countItem)
         IconImg.Parent = IconContainer
     end
 
+    -- Hitung offset teks kiri
     local textLeft
     if cfg.MediaType then
         textLeft = mediaPadL + mediaW + 10
@@ -469,6 +419,7 @@ function Elements:CreateParagraph(parent, config, countItem)
         textLeft = iconPadL + iconSize + 10
     end
 
+    -- ── Title & Content labels ────────────────────────────────────────────────
     local ParagraphTitle = Instance.new("TextLabel")
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Font = Enum.Font.GothamBold
@@ -499,6 +450,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
+    -- ── Optional Buttons ──────────────────────────────────────────────────────
     local btnBgColor = cfg.ButtonColor    or Color3.fromRGB(255, 255, 255)
     local subBgColor = cfg.SubButtonColor or Color3.fromRGB(255, 255, 255)
     local btnBgTrans = cfg.ButtonColor    and 0.15 or 0.85
@@ -552,12 +504,15 @@ function Elements:CreateParagraph(parent, config, countItem)
         end
     end
 
+    -- ── UpdateSize ────────────────────────────────────────────────────────────
     local function UpdateSize()
         task.wait()
         local contentH = math.max(12, ParagraphContent.TextBounds.Y)
         ParagraphContent.Size = UDim2.new(1, -(textLeft + 10), 0, contentH)
 
         local textBottom = 10 + 15 + 2 + contentH + 8
+
+        -- Jika ada media, pastikan frame minimal setinggi media
         local mediaMinH = (cfg.MediaType and cfg.MediaHeight > 0) and (cfg.MediaHeight + 16) or 0
         local headerBottom = math.max(textBottom, mediaMinH)
 
@@ -579,9 +534,20 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
+    -- ── Lock ──────────────────────────────────────────────────────────────────
     local LockFunc = ApplyLock(Paragraph, cfg.Locked)
 
-    -- Video API
+    -- ─────────────────────────────────────────────────────────────────────────
+    --  Video API
+    -- ─────────────────────────────────────────────────────────────────────────
+
+    --[[
+        ParagraphFunc:StartVideo()
+        Memutar video yang sudah diset via cfg.VideoId atau SetMedia().
+        - Menyembunyikan thumbnail dan menampilkan VideoFrame.
+        - Mengubah ikon overlay menjadi tombol Pause.
+        - Tidak melakukan apa-apa jika MediaType bukan "Video".
+    ]]
     function ParagraphFunc:StartVideo()
         if not VideoObject then
             warn("[Elements] StartVideo: bukan tipe Video atau VideoId tidak diset.")
@@ -589,48 +555,88 @@ function Elements:CreateParagraph(parent, config, countItem)
         end
         if IsPlaying then return end
         IsPlaying = true
+
+        -- Sembunyikan thumbnail, tampilkan video
         if ThumbnailImg then ThumbnailImg.Visible = false end
         VideoObject.Visible = true
         VideoObject:Play()
+
+        -- Ganti ikon play → pause
         if PlayOverlay and PlayOverlay:FindFirstChild("PlayIcon") then
-            PlayOverlay.PlayIcon.Image = "rbxassetid://7743871507"
+            PlayOverlay.PlayIcon.Image = "rbxassetid://7743871507" -- pause icon
         end
     end
 
+    --[[
+        ParagraphFunc:StopVideo()
+        Menghentikan pemutaran video.
+        - Menampilkan kembali thumbnail.
+        - Mengubah ikon overlay menjadi tombol Play.
+        - Tidak melakukan apa-apa jika MediaType bukan "Video".
+    ]]
     function ParagraphFunc:StopVideo()
         if not VideoObject then return end
         if not IsPlaying then return end
         IsPlaying = false
+
         VideoObject:Pause()
         VideoObject.Visible = false
+
+        -- Tampilkan kembali thumbnail hanya jika ada MediaId
         if ThumbnailImg and cfg.MediaId and cfg.MediaId ~= "" then
             ThumbnailImg.Visible = true
         end
+
+        -- Ganti ikon pause → play
         if PlayOverlay and PlayOverlay:FindFirstChild("PlayIcon") then
-            PlayOverlay.PlayIcon.Image = "rbxassetid://7743870813"
+            PlayOverlay.PlayIcon.Image = "rbxassetid://7743870813" -- play icon
         end
     end
 
+    --[[
+        ParagraphFunc:SetMedia(mediaType, mediaId, videoId?)
+        Mengganti media secara runtime.
+          mediaType : "Image" | "Video"
+          mediaId   : asset id gambar / thumbnail
+          videoId   : asset id video (wajib jika mediaType == "Video")
+
+        Catatan: fungsi ini hanya bekerja jika Paragraph sudah dibuat dengan
+        cfg.MediaType (media container harus sudah ada di frame).
+    ]]
     function ParagraphFunc:SetMedia(mediaType, mediaId, videoId)
         if not ThumbnailImg then
-            warn("[Elements] SetMedia: Paragraph tidak dibuat dengan MediaType.")
+            warn("[Elements] SetMedia: Paragraph tidak dibuat dengan MediaType. Buat ulang dengan cfg.MediaType.")
             return
         end
+
+        -- Stop dulu kalau lagi play
         if IsPlaying then ParagraphFunc:StopVideo() end
+
+        -- Update thumbnail
         ThumbnailImg.Image = mediaId or ""
+
+        -- Update VideoFrame jika ada
         if VideoObject then
             VideoObject.Video = videoId or ""
         end
+
+        -- Update local config
         cfg.MediaType = mediaType
         cfg.MediaId   = mediaId
         cfg.VideoId   = videoId
     end
 
+    --[[
+        ParagraphFunc:IsVideoPlaying()
+        Mengembalikan true jika video sedang diputar.
+    ]]
     function ParagraphFunc:IsVideoPlaying()
         return IsPlaying
     end
 
-    -- Standard API
+    -- ─────────────────────────────────────────────────────────────────────────
+    --  Standard API
+    -- ─────────────────────────────────────────────────────────────────────────
     function ParagraphFunc:SetContent(content)
         ParagraphContent.Text = tostring(content or "Content")
         UpdateSize()
@@ -656,13 +662,10 @@ function Elements:CreateParagraph(parent, config, countItem)
         return LockFunc:GetLocked()
     end
 
+    -- AutoPlay jika diminta
     if cfg.AutoPlay and cfg.MediaType == "Video" then
         task.defer(function() ParagraphFunc:StartVideo() end)
     end
-
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(ParagraphFunc, Paragraph, parent, countItem,
-        function(p, c, i) return Elements:CreateParagraph(p, c, i) end, cfg)
 
     return ParagraphFunc
 end
@@ -834,10 +837,6 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         return LockFunc:GetLocked()
     end
 
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(ParagraphFunc, Paragraph, parent, countItem,
-        function(p, c, i) return Elements:CreateEditableParagraph(p, c, i) end, cfg)
-
     return ParagraphFunc
 end
 
@@ -1006,15 +1005,11 @@ function Elements:CreatePanel(parent, config, countItem)
         return LockFunc:GetLocked()
     end
 
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(PanelFunc, Panel, parent, countItem,
-        function(p, c, i) return Elements:CreatePanel(p, c, i) end, cfg)
-
     return PanelFunc
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateButton
+--  CreateButton  (V1 = default, V2 = Title+Content kiri, icon circle kanan)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateButton(parent, config, countItem)
     local cfg = config or {}
@@ -1161,10 +1156,6 @@ function Elements:CreateButton(parent, config, countItem)
             return LockFunc:GetLocked()
         end
 
-        -- ── V0.5.0: Common API ────────────────────────────────────────────────
-        ApplyCommonAPI(ButtonFunc, Button, parent, countItem,
-            function(p, c, i) return Elements:CreateButton(p, c, i) end, cfg)
-
         return ButtonFunc
     end
 
@@ -1261,10 +1252,6 @@ function Elements:CreateButton(parent, config, countItem)
     function ButtonFunc:GetLocked()
         return LockFunc:GetLocked()
     end
-
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(ButtonFunc, Button, parent, countItem,
-        function(p, c, i) return Elements:CreateButton(p, c, i) end, cfg)
 
     return ButtonFunc
 end
@@ -1455,16 +1442,11 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 
     ToggleFunc:Set(ToggleFunc.Value)
     Elements_Table[configKey] = ToggleFunc
-
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(ToggleFunc, Toggle, parent, countItem,
-        function(p, c, i) return Elements:CreateToggle(p, c, i, updateSectionSize, Elements_Table) end, cfg)
-
     return ToggleFunc
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateSlider  (V0.5.0)
+--  CreateSlider  (V0.3.2)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -1725,11 +1707,6 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
 
     SliderFunc:Set(cfg.Default)
     Elements_Table[configKey] = SliderFunc
-
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(SliderFunc, Slider, parent, countItem,
-        function(p, c, i) return Elements:CreateSlider(p, c, i, updateSectionSize, Elements_Table) end, cfg)
-
     return SliderFunc
 end
 
@@ -1874,11 +1851,6 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
 
     InputFunc:Set(InputFunc.Value)
     Elements_Table[configKey] = InputFunc
-
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(InputFunc, Input, parent, countItem,
-        function(p, c, i) return Elements:CreateInput(p, c, i, updateSectionSize, Elements_Table) end, cfg)
-
     return InputFunc
 end
 
@@ -2214,14 +2186,6 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
     DropdownFunc:SetValues(cfg.Options, cfg.Default)
     Elements_Table[configKey] = DropdownFunc
-
-    -- ── V0.5.0: Common API ────────────────────────────────────────────────────
-    ApplyCommonAPI(DropdownFunc, Dropdown, parent, countItem,
-        function(p, c, i)
-            return Elements:CreateDropdown(p, c, i, countDropdown, DropdownFolder,
-                MoreBlur, DropdownSelect, DropPageLayout, Elements_Table)
-        end, cfg)
-
     return DropdownFunc
 end
 
@@ -2248,32 +2212,6 @@ function Elements:CreateDivider(parent, countItem)
     }
     UIGradient.Parent = Divider
     Instance.new("UICorner", Divider).CornerRadius = UDim.new(0, 2)
-
-    -- ── V0.5.0: Divider mini-API ──────────────────────────────────────────────
-    local DividerFunc = {}
-
-    function DividerFunc:Destroy()
-        Divider:Destroy()
-    end
-
-    function DividerFunc:SetVisible(state)
-        Divider.Visible = (state == true)
-    end
-
-    function DividerFunc:GetVisible()
-        return Divider.Visible
-    end
-
-    function DividerFunc:NewElement()
-        return Elements:CreateDivider(parent, countItem)
-    end
-
-    -- Tetap kembalikan Divider frame agar backward-compatible,
-    -- tapi tambahkan shortcut methods langsung ke frame juga
-    Divider.Destroy      = function() Divider:Destroy() end
-    Divider.SetVisible   = function(_, s) Divider.Visible = (s == true) end
-    Divider.GetVisible   = function() return Divider.Visible end
-    Divider.NewElement   = function() return Elements:CreateDivider(parent, countItem) end
 
     return Divider
 end
@@ -2310,27 +2248,6 @@ function Elements:CreateSubSection(parent, title, countItem)
     Label.TextSize = 12
     Label.TextXAlignment = Enum.TextXAlignment.Left
     Label.Parent = SubSection
-
-    -- ── V0.5.0: SubSection mini-API ───────────────────────────────────────────
-    function SubSection:Destroy()
-        SubSection:Destroy()
-    end
-
-    function SubSection:SetVisible(state)
-        SubSection.Visible = (state == true)
-    end
-
-    function SubSection:GetVisible()
-        return SubSection.Visible
-    end
-
-    function SubSection:SetTitle(newTitle)
-        Label.Text = "── [ " .. tostring(newTitle or "Sub Section") .. " ] ──"
-    end
-
-    function SubSection:NewElement(newTitle)
-        return Elements:CreateSubSection(parent, newTitle or title, countItem)
-    end
 
     return SubSection
 end
