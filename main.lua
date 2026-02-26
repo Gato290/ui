@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.8
+local HttpService = game:GetService("HttpService") -- V0.0.9
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
