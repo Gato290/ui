@@ -209,9 +209,9 @@ Sec.Toggle:AddToggle({
         print("Example toggle:", value)
 
         if value then
-            Notify("Example enabled!", 2)
+            -- Code saat ON di sini
         else
-            Notify("Example disabled!", 2)
+            -- Code saat OFF di sini
         end
     end
 })
