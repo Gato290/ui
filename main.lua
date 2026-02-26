@@ -1,4 +1,4 @@
-local HttpService = game:GetService("HttpService") -- V0.0.9
+local HttpService = game:GetService("HttpService") -- V0.0.7
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -497,6 +497,7 @@ function Chloex:MakeNotify(NotifyConfig)
     return NotifyFunction
 end
 
+-- ✅ FIX: Title sekarang pakai ConfigFolder (dari Configname) bukan hardcoded "Velaris UI"
 function Nt(msg, delay, color, title, desc, icon)
     return Chloex:MakeNotify({
         Title = title or ConfigFolder,
@@ -787,6 +788,7 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
 
+    -- ==================== FIX: Footer posisi ngikut Title ====================
     local function UpdateFooterPosition()
         local titleWidth = TextLabel.TextBounds.X
         TextLabel1.Position = UDim2.new(0, titleWidth + 15, 0, 0)
@@ -795,6 +797,7 @@ function Chloex:Window(GuiConfig)
 
     TextLabel:GetPropertyChangedSignal("TextBounds"):Connect(UpdateFooterPosition)
     UpdateFooterPosition()
+    -- ==================== END FIX ====================
 
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
@@ -1915,7 +1918,7 @@ function Chloex:Window(GuiConfig)
 
             local SectionReal   = Instance.new("Frame")
             local UICorner      = Instance.new("UICorner")
-            local UIStroke      = Instance.new("UIStroke")  -- stroke untuk glow efek
+            local UIStroke      = Instance.new("UIStroke")
             local SectionButton = Instance.new("TextButton")
             local FeatureFrame  = Instance.new("Frame")
             local FeatureImg    = Instance.new("ImageLabel")
@@ -1935,13 +1938,6 @@ function Chloex:Window(GuiConfig)
 
             UICorner.CornerRadius = UDim.new(0, 4)
             UICorner.Parent = SectionReal
-
-            -- ==================== GLOW STROKE (awalnya transparan) ====================
-            UIStroke.Color = GuiConfig.Color
-            UIStroke.Thickness = 1.2
-            UIStroke.Transparency = 1
-            UIStroke.Parent = SectionReal
-            -- =========================================================================
 
             if Icon and Icon ~= "" then
                 SectionIcon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -1992,6 +1988,7 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
+            -- ==================== TextXAlignment support ====================
             local alignMap = {
                 Left   = Enum.TextXAlignment.Left,
                 Center = Enum.TextXAlignment.Center,
@@ -2003,6 +2000,7 @@ function Chloex:Window(GuiConfig)
             SectionTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
             SectionTitle.TextSize = 13
             SectionTitle.TextXAlignment = (type(SectionConfig) == "table" and alignMap[SectionConfig.TextXAlignment]) or Enum.TextXAlignment.Left
+            -- ================================================================
             SectionTitle.TextYAlignment = Enum.TextYAlignment.Top
             SectionTitle.AnchorPoint = Vector2.new(0, 0.5)
             SectionTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -2071,7 +2069,6 @@ function Chloex:Window(GuiConfig)
                 ScrolLayers.CanvasSize = UDim2.new(0, 0, 0, OffsetY)
             end
 
-            -- ==================== ANIMASI SECTION OPEN/CLOSE ====================
             local function UpdateSizeSection()
                 if OpenSection then
                     local SectionSizeYWitdh = 38
@@ -2080,45 +2077,10 @@ function Chloex:Window(GuiConfig)
                             SectionSizeYWitdh = SectionSizeYWitdh + v.Size.Y.Offset + 3
                         end
                     end
-
-                    -- Panah rotate dengan bounce Out
-                    TweenService:Create(FeatureFrame, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Rotation = 90 }):Play()
-
-                    -- Glow stroke muncul
-                    TweenService:Create(UIStroke, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Transparency = 0.35 }):Play()
-
-                    -- Warna title berubah ke accent color
-                    TweenService:Create(SectionTitle, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { TextColor3 = GuiConfig.Color }):Play()
-
-                    -- Background header sedikit lebih terang
-                    TweenService:Create(SectionReal, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { BackgroundTransparency = 0.82 }):Play()
-
-                    -- Expand section dengan Quint smooth
-                    TweenService:Create(Section, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(1, 1, 0, SectionSizeYWitdh) }):Play()
-                    TweenService:Create(SectionAdd, TweenInfo.new(0.5, Enum.EasingStyle.Quint, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38) }):Play()
-                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.4, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), { Size = UDim2.new(1, 0, 0, 2) }):Play()
-
-                    -- Fade-in staggered tiap item (cascade)
-                    task.spawn(function()
-                        task.wait(0.1)
-                        local itemDelay = 0
-                        for _, v in SectionAdd:GetChildren() do
-                            if v:IsA("Frame") and v.Name ~= "UICorner" then
-                                local origTrans = v.BackgroundTransparency
-                                v.BackgroundTransparency = 1
-                                local capturedV = v
-                                local capturedOrig = origTrans
-                                task.spawn(function()
-                                    task.wait(itemDelay)
-                                    TweenService:Create(capturedV, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
-                                        BackgroundTransparency = capturedOrig
-                                    }):Play()
-                                end)
-                                itemDelay = itemDelay + 0.04
-                            end
-                        end
-                    end)
-
+                    TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 90 }):Play()
+                    TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, SectionSizeYWitdh) }):Play()
+                    TweenService:Create(SectionAdd, TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, SectionSizeYWitdh - 38) }):Play()
+                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(1, 0, 0, 2) }):Play()
                     task.wait(0.5)
                     UpdateSizeScroll()
                 end
@@ -2129,33 +2091,17 @@ function Chloex:Window(GuiConfig)
             SectionButton.Activated:Connect(function()
                 CircleClick(SectionButton, Mouse.X, Mouse.Y)
                 if OpenSection then
-                    -- Tutup section
-                    -- Panah balik rotate dengan bounce Out
-                    TweenService:Create(FeatureFrame, TweenInfo.new(0.45, Enum.EasingStyle.Back, Enum.EasingDirection.Out), { Rotation = 0 }):Play()
-
-                    -- Glow stroke hilang
-                    TweenService:Create(UIStroke, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Transparency = 1 }):Play()
-
-                    -- Title warna balik putih
-                    TweenService:Create(SectionTitle, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { TextColor3 = Color3.fromRGB(231, 231, 231) }):Play()
-
-                    -- Background header balik normal
-                    TweenService:Create(SectionReal, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { BackgroundTransparency = 0.935 }):Play()
-
-                    -- Collapse section dengan Quint
-                    TweenService:Create(Section, TweenInfo.new(0.4, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(1, 1, 0, 30) }):Play()
-                    TweenService:Create(SectionAdd, TweenInfo.new(0.35, Enum.EasingStyle.Quint, Enum.EasingDirection.In), { Size = UDim2.new(1, 0, 0, 0) }):Play()
-                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.In), { Size = UDim2.new(0, 0, 0, 2) }):Play()
-
+                    TweenService:Create(FeatureFrame, TweenInfo.new(0.5), { Rotation = 0 }):Play()
+                    TweenService:Create(Section, TweenInfo.new(0.5), { Size = UDim2.new(1, 1, 0, 30) }):Play()
+                    TweenService:Create(SectionDecideFrame, TweenInfo.new(0.5), { Size = UDim2.new(0, 0, 0, 2) }):Play()
                     OpenSection = false
-                    task.wait(0.4)
+                    task.wait(0.5)
                     UpdateSizeScroll()
                 else
                     OpenSection = true
                     UpdateSizeSection()
                 end
             end)
-            -- ==================== END ANIMASI SECTION ====================
 
             SectionAdd.ChildAdded:Connect(UpdateSizeSection)
             SectionAdd.ChildRemoved:Connect(UpdateSizeSection)
