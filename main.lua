@@ -1,6 +1,6 @@
--- Main.lua | Version : V0.0.9
+-- MAin.lua | Version : V0.1.0
 
-local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService") -- V0.0.7
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -131,8 +131,6 @@ local function safeSize(pxWidth, pxHeight)
     return UDim2.new(scaleX, 0, scaleY, 0)
 end
 
--- ✅ FIX: Replaced TweenService in MakeDraggable with direct assignment
--- CoreGui objects cannot be tweened, so we assign Position/Size directly
 local function MakeDraggable(topbarobject, object, GuiConfig)
     local function CustomPos(topbarobject, object)
         local Dragging, DragInput, DragStart, StartPosition
@@ -145,8 +143,8 @@ local function MakeDraggable(topbarobject, object, GuiConfig)
                 StartPosition.Y.Scale,
                 StartPosition.Y.Offset + Delta.Y
             )
-            -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
-            object.Position = pos
+            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Position = pos })
+            Tween:Play()
         end
 
         topbarobject.InputBegan:Connect(function(input)
@@ -205,10 +203,12 @@ local function MakeDraggable(topbarobject, object, GuiConfig)
 
         local function UpdateSize(input)
             local Delta = input.Position - DragStart
-            local newWidth = math.max(StartSize.X.Offset + Delta.X, minSizeX)
-            local newHeight = math.max(StartSize.Y.Offset + Delta.Y, minSizeY)
-            -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
-            object.Size = UDim2.new(0, newWidth, 0, newHeight)
+            local newWidth = StartSize.X.Offset + Delta.X
+            local newHeight = StartSize.Y.Offset + Delta.Y
+            newWidth = math.max(newWidth, minSizeX)
+            newHeight = math.max(newHeight, minSizeY)
+            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Size = UDim2.new(0, newWidth, 0, newHeight) })
+            Tween:Play()
         end
 
         changesizeobject.InputBegan:Connect(function(input)
@@ -266,16 +266,12 @@ function CircleClick(Button, X, Y)
             Size = Button.AbsoluteSize.X * 1.5
         end
 
-        -- FIX: TweenSizeAndPosition tidak bisa dipakai di CoreGui
-        -- Ganti dengan loop manual langsung assign Size dan transparency
-        local steps = 20
-        local stepTime = 0.5 / steps
-        for i = 1, steps do
-            local t = i / steps
-            Circle.Size = UDim2.new(0, Size * t, 0, Size * t)
-            Circle.Position = UDim2.new(0.5, -Size * t / 2, 0.5, -Size * t / 2)
-            Circle.ImageTransparency = 0.9 + (0.1 * t)
-            wait(stepTime)
+        local Time = 0.5
+        Circle:TweenSizeAndPosition(UDim2.new(0, Size, 0, Size), UDim2.new(0.5, -Size / 2, 0.5, -Size / 2), "Out", "Quad",
+            Time, false, nil)
+        for i = 1, 10 do
+            Circle.ImageTransparency = Circle.ImageTransparency + 0.01
+            wait(Time / 10)
         end
         Circle:Destroy()
     end)
@@ -315,8 +311,11 @@ function Chloex:MakeNotify(NotifyConfig)
             CoreGui.NotifyGui.NotifyLayout.ChildRemoved:Connect(function()
                 Count = 0
                 for i, v in CoreGui.NotifyGui.NotifyLayout:GetChildren() do
-                    -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
-                    v.Position = UDim2.new(0, 0, 1, -((v.Size.Y.Offset + 12) * Count))
+                    TweenService:Create(
+                        v,
+                        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
+                        { Position = UDim2.new(0, 0, 1, -((v.Size.Y.Offset + 12) * Count)) }
+                    ):Play()
                     Count = Count + 1
                 end
             end)
@@ -476,8 +475,11 @@ function Chloex:MakeNotify(NotifyConfig)
         function NotifyFunction:Close()
             if waitbruh then return false end
             waitbruh = true
-            -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
-            NotifyFrameReal.Position = UDim2.new(0, 400, 0, 0)
+            TweenService:Create(
+                NotifyFrameReal,
+                TweenInfo.new(tonumber(NotifyConfig.Time), Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
+                { Position = UDim2.new(0, 400, 0, 0) }
+            ):Play()
             task.wait(tonumber(NotifyConfig.Time) / 1.2)
             NotifyFrame:Destroy()
         end
@@ -486,8 +488,11 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyFunction:Close()
         end)
 
-        -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
-        NotifyFrameReal.Position = UDim2.new(0, 0, 0, 0)
+        TweenService:Create(
+            NotifyFrameReal,
+            TweenInfo.new(tonumber(NotifyConfig.Time), Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
+            { Position = UDim2.new(0, 0, 0, 0) }
+        ):Play()
         task.wait(tonumber(NotifyConfig.Delay))
         NotifyFunction:Close()
     end)
@@ -508,7 +513,7 @@ end
 
 Notify = Nt
 
--- ==================== DIALOG ====================
+-- ==================== DIALOG (NO TWEEN FIX) ====================
 local ActiveDialog = nil
 
 function Chloex:Dialog(DialogConfig)
@@ -533,11 +538,10 @@ function Chloex:Dialog(DialogConfig)
     Overlay.Name = "Overlay"
     Overlay.Parent = DialogGui
 
-    local Dialog = Instance.new("ImageLabel")
+    local Dialog = Instance.new("Frame")
     Dialog.Size = UDim2.new(0, 300, 0, 150)
     Dialog.Position = UDim2.new(0.5, -150, 0.5, -75)
-    Dialog.Image = "rbxassetid://9542022979"
-    Dialog.ImageTransparency = 0
+    Dialog.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
     Dialog.BorderSizePixel = 0
     Dialog.ZIndex = 51
     Dialog.Parent = Overlay
@@ -546,29 +550,11 @@ function Chloex:Dialog(DialogConfig)
     UICorner.CornerRadius = UDim.new(0, 8)
     UICorner.Parent = Dialog
 
-    local DialogGlow = Instance.new("Frame")
-    DialogGlow.Size = UDim2.new(0, 310, 0, 160)
-    DialogGlow.Position = UDim2.new(0.5, -155, 0.5, -80)
-    DialogGlow.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    DialogGlow.BackgroundTransparency = 0.75
-    DialogGlow.BorderSizePixel = 0
-    DialogGlow.ZIndex = 50
-    DialogGlow.Parent = Overlay
-
-    local GlowCorner = Instance.new("UICorner")
-    GlowCorner.CornerRadius = UDim.new(0, 10)
-    GlowCorner.Parent = DialogGlow
-
-    local Gradient = Instance.new("UIGradient")
-    Gradient.Color = ColorSequence.new({
-        ColorSequenceKeypoint.new(0.0, Color3.fromRGB(0, 191, 255)),
-        ColorSequenceKeypoint.new(0.25, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(0.5, Color3.fromRGB(0, 140, 255)),
-        ColorSequenceKeypoint.new(0.75, Color3.fromRGB(255, 255, 255)),
-        ColorSequenceKeypoint.new(1.0, Color3.fromRGB(0, 191, 255))
-    })
-    Gradient.Rotation = 90
-    Gradient.Parent = DialogGlow
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Color = Color3.fromRGB(12, 159, 255)
+    UIStroke.Thickness = 1.5
+    UIStroke.Transparency = 0.5
+    UIStroke.Parent = Dialog
 
     local Title = Instance.new("TextLabel")
     Title.Size = UDim2.new(1, 0, 0, 40)
@@ -617,7 +603,6 @@ function Chloex:Dialog(DialogConfig)
         ButtonCorner.Parent = Button
 
         Button.MouseButton1Click:Connect(function()
-            pcall(function() CircleClick(Button, Mouse.X, Mouse.Y) end)
             if buttonConfig.Callback and type(buttonConfig.Callback) == "function" then
                 pcall(function() buttonConfig.Callback() end)
             end
@@ -785,7 +770,6 @@ function Chloex:Window(GuiConfig)
     TextLabel1.Position = UDim2.new(0, TextLabel.TextBounds.X + 15, 0, 0)
     TextLabel1.Parent = Top
 
-    -- ==================== FIX: Footer posisi ngikut Title ====================
     local function UpdateFooterPosition()
         local titleWidth = TextLabel.TextBounds.X
         TextLabel1.Position = UDim2.new(0, titleWidth + 15, 0, 0)
@@ -794,7 +778,6 @@ function Chloex:Window(GuiConfig)
 
     TextLabel:GetPropertyChangedSignal("TextBounds"):Connect(UpdateFooterPosition)
     UpdateFooterPosition()
-    -- ==================== END FIX ====================
 
     Close.Font = Enum.Font.SourceSans
     Close.Text = ""
@@ -845,7 +828,6 @@ function Chloex:Window(GuiConfig)
     ImageLabel2.Size = UDim2.new(1, -9, 1, -9)
     ImageLabel2.Parent = Min
 
-    -- ==================== CONTENT DI BAWAH TITLE ====================
     if GuiConfig.Content and GuiConfig.Content ~= "" then
         local ContentFrame = Instance.new("Frame")
         ContentFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
@@ -881,7 +863,6 @@ function Chloex:Window(GuiConfig)
         Divider.Position = UDim2.new(0, 10, 1, -1)
         Divider.Parent = ContentFrame
     end
-    -- ==================== END CONTENT ====================
 
     local LayersTab        = Instance.new("Frame")
     local UICorner2        = Instance.new("UICorner")
@@ -1057,9 +1038,7 @@ function Chloex:Window(GuiConfig)
         local function ResizeDropdown(count)
             local h = math.min(count, MAX_VISIBLE) * ITEM_H
             if count == 0 then h = ITEM_H end
-            TweenService:Create(MiniDropdown, TweenInfo.new(0.15, Enum.EasingStyle.Quad), {
-                Size = UDim2.new(1, 0, 0, h)
-            }):Play()
+            MiniDropdown.Size = UDim2.new(1, 0, 0, h)
         end
 
         local SearchOverlay = MiniDropdown
@@ -1699,8 +1678,8 @@ function Chloex:Window(GuiConfig)
 
     ConnectButton.Activated:Connect(function()
         if MoreBlur.Visible then
-            TweenService:Create(MoreBlur, TweenInfo.new(0.3), { BackgroundTransparency = 0.999 }):Play()
-            TweenService:Create(DropdownSelect, TweenInfo.new(0.3), { Position = UDim2.new(1, 172, 0.5, 0) }):Play()
+            MoreBlur.BackgroundTransparency = 0.999
+            DropdownSelect.Position = UDim2.new(1, 172, 0.5, 0)
             task.wait(0.3)
             MoreBlur.Visible = false
         end
