@@ -1,4 +1,4 @@
--- Elements.lua V0.4.0
+-- Elements.lua V0.4.1
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -184,7 +184,7 @@ function Elements:CreateBadge(parent, badgeType)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  AnimateButtonClick — V0.3.1 fix
+--  AnimateButtonClick
 -- ─────────────────────────────────────────────────────────────────────────────
 local _activeTweens = {}
 
@@ -250,19 +250,6 @@ end
 
 -- ─────────────────────────────────────────────────────────────────────────────
 --  CreateParagraph  (V0.4.0 — Image / Video Thumbnail Support)
---
---  New config fields:
---    cfg.MediaType   = "Image" | "Video"   (nil = no media)
---    cfg.MediaId     = "rbxassetid://..."   asset id gambar atau thumbnail video
---    cfg.VideoId     = "rbxassetid://..."   asset id video (hanya untuk MediaType="Video")
---    cfg.MediaWidth  = number (default 80)  lebar thumbnail dalam px
---    cfg.MediaHeight = number (default 60)  tinggi thumbnail dalam px
---    cfg.AutoPlay    = boolean (default false) langsung putar saat dibuat
---
---  Returned API tambahan:
---    ParagraphFunc:StartVideo()   — mulai putar video
---    ParagraphFunc:StopVideo()    — hentikan video
---    ParagraphFunc:SetMedia(mediaType, mediaId, videoId)  — ganti media
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateParagraph(parent, config, countItem)
     local cfg = config or {}
@@ -271,16 +258,15 @@ function Elements:CreateParagraph(parent, config, countItem)
     cfg.Badge      = cfg.Badge      or nil
     cfg.Color      = cfg.Color      or nil
     cfg.Locked     = cfg.Locked     or false
-    cfg.MediaType  = cfg.MediaType  or nil   -- "Image" | "Video" | nil
-    cfg.MediaId    = cfg.MediaId    or nil   -- thumbnail asset id
-    cfg.VideoId    = cfg.VideoId    or nil   -- video asset id
+    cfg.MediaType  = cfg.MediaType  or nil
+    cfg.MediaId    = cfg.MediaId    or nil
+    cfg.VideoId    = cfg.VideoId    or nil
     cfg.MediaWidth  = cfg.MediaWidth  or 80
     cfg.MediaHeight = cfg.MediaHeight or 60
     cfg.AutoPlay   = cfg.AutoPlay   or false
 
     local ParagraphFunc = {}
 
-    -- ── Main Frame ────────────────────────────────────────────────────────────
     local Paragraph = Instance.new("Frame")
     Paragraph.Name = "Paragraph"
     Paragraph.BorderSizePixel = 0
@@ -300,19 +286,17 @@ function Elements:CreateParagraph(parent, config, countItem)
     Instance.new("UICorner", Paragraph).CornerRadius = UDim.new(0, 8)
     if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
-    -- ── Media Area (kiri) ─────────────────────────────────────────────────────
     local mediaW = 0
     local mediaPadL = 0
-    local VideoObject = nil        -- VideoFrame jika MediaType == "Video"
-    local ThumbnailImg = nil       -- ImageLabel thumbnail
-    local PlayOverlay = nil        -- tombol play di atas thumbnail
+    local VideoObject = nil
+    local ThumbnailImg = nil
+    local PlayOverlay = nil
     local IsPlaying = false
 
     if cfg.MediaType == "Image" or cfg.MediaType == "Video" then
         mediaW   = cfg.MediaWidth
         mediaPadL = 10
 
-        -- Container thumbnail
         local MediaContainer = Instance.new("Frame")
         MediaContainer.Name = "MediaContainer"
         MediaContainer.Position = UDim2.new(0, mediaPadL, 0, 8)
@@ -324,8 +308,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         MediaContainer.Parent = Paragraph
         Instance.new("UICorner", MediaContainer).CornerRadius = UDim.new(0, 6)
 
-        -- Thumbnail image (untuk Image & sebagai poster Video)
-        -- Jika MediaType == "Video" dan tidak ada MediaId, thumbnail disembunyikan
         ThumbnailImg = Instance.new("ImageLabel")
         ThumbnailImg.Name = "ThumbnailImg"
         ThumbnailImg.Size = UDim2.new(1, 0, 1, 0)
@@ -336,7 +318,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         ThumbnailImg.Parent = MediaContainer
 
         if cfg.MediaType == "Video" then
-            -- VideoFrame (tersembunyi sampai play)
             VideoObject = Instance.new("VideoFrame")
             VideoObject.Name = "VideoFrame"
             VideoObject.Size = UDim2.new(1, 0, 1, 0)
@@ -346,7 +327,6 @@ function Elements:CreateParagraph(parent, config, countItem)
             VideoObject.Visible = false
             VideoObject.Parent = MediaContainer
 
-            -- Overlay tombol Play / Pause
             PlayOverlay = Instance.new("TextButton")
             PlayOverlay.Name = "PlayOverlay"
             PlayOverlay.Size = UDim2.new(1, 0, 1, 0)
@@ -356,7 +336,6 @@ function Elements:CreateParagraph(parent, config, countItem)
             PlayOverlay.ZIndex = 5
             PlayOverlay.Parent = MediaContainer
 
-            -- Ikon Play
             local PlayIcon = Instance.new("ImageLabel")
             PlayIcon.Name = "PlayIcon"
             PlayIcon.AnchorPoint = Vector2.new(0.5, 0.5)
@@ -364,13 +343,11 @@ function Elements:CreateParagraph(parent, config, countItem)
             PlayIcon.Size = UDim2.new(0, 24, 0, 24)
             PlayIcon.BackgroundTransparency = 1
             PlayIcon.ScaleType = Enum.ScaleType.Fit
-            -- Pakai built-in Roblox play icon (bisa diganti asset sendiri)
             PlayIcon.Image = "rbxassetid://7743870813"
             PlayIcon.ImageColor3 = Color3.fromRGB(255, 255, 255)
             PlayIcon.ZIndex = 6
             PlayIcon.Parent = PlayOverlay
 
-            -- Tombol play/pause klik
             PlayOverlay.MouseButton1Click:Connect(function()
                 if IsPlaying then
                     ParagraphFunc:StopVideo()
@@ -379,17 +356,12 @@ function Elements:CreateParagraph(parent, config, countItem)
                 end
             end)
 
-            -- Auto-hide overlay saat video selesai
-            VideoObject.DidLoop:Connect(function()
-                -- optional: bisa tambahkan logika di sini
-            end)
             VideoObject.Ended:Connect(function()
                 ParagraphFunc:StopVideo()
             end)
         end
     end
 
-    -- ── Icon (non-media) di sebelah kiri ──────────────────────────────────────
     local iconSize = 0
     local iconPadL = 0
     if cfg.Icon and not cfg.MediaType then
@@ -411,7 +383,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         IconImg.Parent = IconContainer
     end
 
-    -- Hitung offset teks kiri
     local textLeft
     if cfg.MediaType then
         textLeft = mediaPadL + mediaW + 10
@@ -419,7 +390,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         textLeft = iconPadL + iconSize + 10
     end
 
-    -- ── Title & Content labels ────────────────────────────────────────────────
     local ParagraphTitle = Instance.new("TextLabel")
     ParagraphTitle.Name = "ParagraphTitle"
     ParagraphTitle.Font = Enum.Font.GothamBold
@@ -450,7 +420,6 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent.RichText = true
     ParagraphContent.Parent = Paragraph
 
-    -- ── Optional Buttons ──────────────────────────────────────────────────────
     local btnBgColor = cfg.ButtonColor    or Color3.fromRGB(255, 255, 255)
     local subBgColor = cfg.SubButtonColor or Color3.fromRGB(255, 255, 255)
     local btnBgTrans = cfg.ButtonColor    and 0.15 or 0.85
@@ -504,18 +473,14 @@ function Elements:CreateParagraph(parent, config, countItem)
         end
     end
 
-    -- ── UpdateSize ────────────────────────────────────────────────────────────
     local function UpdateSize()
         task.wait()
         local contentH = math.max(12, ParagraphContent.TextBounds.Y)
         ParagraphContent.Size = UDim2.new(1, -(textLeft + 10), 0, contentH)
 
         local textBottom = 10 + 15 + 2 + contentH + 8
-
-        -- Jika ada media, pastikan frame minimal setinggi media
         local mediaMinH = (cfg.MediaType and cfg.MediaHeight > 0) and (cfg.MediaHeight + 16) or 0
         local headerBottom = math.max(textBottom, mediaMinH)
-
         local totalH = headerBottom
 
         if ParagraphButton then
@@ -534,20 +499,8 @@ function Elements:CreateParagraph(parent, config, countItem)
     ParagraphContent:GetPropertyChangedSignal("TextBounds"):Connect(UpdateSize)
     Paragraph:GetPropertyChangedSignal("AbsoluteSize"):Connect(UpdateSize)
 
-    -- ── Lock ──────────────────────────────────────────────────────────────────
     local LockFunc = ApplyLock(Paragraph, cfg.Locked)
 
-    -- ─────────────────────────────────────────────────────────────────────────
-    --  Video API
-    -- ─────────────────────────────────────────────────────────────────────────
-
-    --[[
-        ParagraphFunc:StartVideo()
-        Memutar video yang sudah diset via cfg.VideoId atau SetMedia().
-        - Menyembunyikan thumbnail dan menampilkan VideoFrame.
-        - Mengubah ikon overlay menjadi tombol Pause.
-        - Tidak melakukan apa-apa jika MediaType bukan "Video".
-    ]]
     function ParagraphFunc:StartVideo()
         if not VideoObject then
             warn("[Elements] StartVideo: bukan tipe Video atau VideoId tidak diset.")
@@ -555,88 +508,47 @@ function Elements:CreateParagraph(parent, config, countItem)
         end
         if IsPlaying then return end
         IsPlaying = true
-
-        -- Sembunyikan thumbnail, tampilkan video
         if ThumbnailImg then ThumbnailImg.Visible = false end
         VideoObject.Visible = true
         VideoObject:Play()
-
-        -- Ganti ikon play → pause
         if PlayOverlay and PlayOverlay:FindFirstChild("PlayIcon") then
-            PlayOverlay.PlayIcon.Image = "rbxassetid://7743871507" -- pause icon
+            PlayOverlay.PlayIcon.Image = "rbxassetid://7743871507"
         end
     end
 
-    --[[
-        ParagraphFunc:StopVideo()
-        Menghentikan pemutaran video.
-        - Menampilkan kembali thumbnail.
-        - Mengubah ikon overlay menjadi tombol Play.
-        - Tidak melakukan apa-apa jika MediaType bukan "Video".
-    ]]
     function ParagraphFunc:StopVideo()
         if not VideoObject then return end
         if not IsPlaying then return end
         IsPlaying = false
-
         VideoObject:Pause()
         VideoObject.Visible = false
-
-        -- Tampilkan kembali thumbnail hanya jika ada MediaId
         if ThumbnailImg and cfg.MediaId and cfg.MediaId ~= "" then
             ThumbnailImg.Visible = true
         end
-
-        -- Ganti ikon pause → play
         if PlayOverlay and PlayOverlay:FindFirstChild("PlayIcon") then
-            PlayOverlay.PlayIcon.Image = "rbxassetid://7743870813" -- play icon
+            PlayOverlay.PlayIcon.Image = "rbxassetid://7743870813"
         end
     end
 
-    --[[
-        ParagraphFunc:SetMedia(mediaType, mediaId, videoId?)
-        Mengganti media secara runtime.
-          mediaType : "Image" | "Video"
-          mediaId   : asset id gambar / thumbnail
-          videoId   : asset id video (wajib jika mediaType == "Video")
-
-        Catatan: fungsi ini hanya bekerja jika Paragraph sudah dibuat dengan
-        cfg.MediaType (media container harus sudah ada di frame).
-    ]]
     function ParagraphFunc:SetMedia(mediaType, mediaId, videoId)
         if not ThumbnailImg then
-            warn("[Elements] SetMedia: Paragraph tidak dibuat dengan MediaType. Buat ulang dengan cfg.MediaType.")
+            warn("[Elements] SetMedia: Paragraph tidak dibuat dengan MediaType.")
             return
         end
-
-        -- Stop dulu kalau lagi play
         if IsPlaying then ParagraphFunc:StopVideo() end
-
-        -- Update thumbnail
         ThumbnailImg.Image = mediaId or ""
-
-        -- Update VideoFrame jika ada
         if VideoObject then
             VideoObject.Video = videoId or ""
         end
-
-        -- Update local config
         cfg.MediaType = mediaType
         cfg.MediaId   = mediaId
         cfg.VideoId   = videoId
     end
 
-    --[[
-        ParagraphFunc:IsVideoPlaying()
-        Mengembalikan true jika video sedang diputar.
-    ]]
     function ParagraphFunc:IsVideoPlaying()
         return IsPlaying
     end
 
-    -- ─────────────────────────────────────────────────────────────────────────
-    --  Standard API
-    -- ─────────────────────────────────────────────────────────────────────────
     function ParagraphFunc:SetContent(content)
         ParagraphContent.Text = tostring(content or "Content")
         UpdateSize()
@@ -662,7 +574,6 @@ function Elements:CreateParagraph(parent, config, countItem)
         return LockFunc:GetLocked()
     end
 
-    -- AutoPlay jika diminta
     if cfg.AutoPlay and cfg.MediaType == "Video" then
         task.defer(function() ParagraphFunc:StartVideo() end)
     end
@@ -1257,7 +1168,7 @@ function Elements:CreateButton(parent, config, countItem)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateToggle
+--  CreateToggle  (V0.4.1 — Checkbox Support)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -1268,6 +1179,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     cfg.Callback = cfg.Callback or function() end
     cfg.Badge    = cfg.Badge    or nil
     cfg.Locked   = cfg.Locked   or false
+    cfg.Type     = cfg.Type     or "Toggle"   -- "Toggle" | "Checkbox"
 
     local configKey = "Toggle_" .. cfg.Title
     if ConfigData[configKey] ~= nil then
@@ -1286,11 +1198,6 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     local ToggleTitle2  = Instance.new("TextLabel")
     local ToggleContent = Instance.new("TextLabel")
     local ToggleButton  = Instance.new("TextButton")
-    local FeatureFrame  = Instance.new("Frame")
-    local UICorner22    = Instance.new("UICorner")
-    local UIStroke8     = Instance.new("UIStroke")
-    local ToggleCircle  = Instance.new("Frame")
-    local UICorner23    = Instance.new("UICorner")
 
     Toggle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Toggle.BackgroundTransparency = 0.935
@@ -1378,30 +1285,70 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleButton.Name = "ToggleButton"
     ToggleButton.Parent = Toggle
 
-    FeatureFrame.AnchorPoint = Vector2.new(1, 0.5)
-    FeatureFrame.BackgroundTransparency = 0.92
-    FeatureFrame.BorderSizePixel = 0
-    FeatureFrame.Position = UDim2.new(1, -15, 0.5, 0)
-    FeatureFrame.Size = UDim2.new(0, 30, 0, 15)
-    FeatureFrame.Name = "FeatureFrame"
-    FeatureFrame.Parent = Toggle
+    -- ── Indicator: Toggle (pill) vs Checkbox ─────────────────────────────────
+    local FeatureFrame, ToggleCircle, UIStroke8
+    local CheckboxFrame, CheckMark
 
-    UICorner22.Parent = FeatureFrame
+    if cfg.Type == "Checkbox" then
+        CheckboxFrame = Instance.new("Frame")
+        CheckboxFrame.AnchorPoint = Vector2.new(1, 0.5)
+        CheckboxFrame.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+        CheckboxFrame.BackgroundTransparency = 0.92
+        CheckboxFrame.BorderSizePixel = 0
+        CheckboxFrame.Position = UDim2.new(1, -15, 0.5, 0)
+        CheckboxFrame.Size = UDim2.new(0, 18, 0, 18)
+        CheckboxFrame.Name = "CheckboxFrame"
+        CheckboxFrame.Parent = Toggle
+        Instance.new("UICorner", CheckboxFrame).CornerRadius = UDim.new(0, 4)
 
-    UIStroke8.Color = Color3.fromRGB(255, 255, 255)
-    UIStroke8.Thickness = 2
-    UIStroke8.Transparency = 0.9
-    UIStroke8.Parent = FeatureFrame
+        local CBStroke = Instance.new("UIStroke")
+        CBStroke.Color = Color3.fromRGB(255, 255, 255)
+        CBStroke.Thickness = 1.5
+        CBStroke.Transparency = 0.7
+        CBStroke.Name = "CBStroke"
+        CBStroke.Parent = CheckboxFrame
 
-    ToggleCircle.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
-    ToggleCircle.BorderSizePixel = 0
-    ToggleCircle.Size = UDim2.new(0, 14, 0, 14)
-    ToggleCircle.Name = "ToggleCircle"
-    ToggleCircle.Parent = FeatureFrame
+        CheckMark = Instance.new("ImageLabel")
+        CheckMark.Name = "CheckMark"
+        CheckMark.AnchorPoint = Vector2.new(0.5, 0.5)
+        CheckMark.Position = UDim2.new(0.5, 0, 0.5, 0)
+        CheckMark.Size = UDim2.new(0, 12, 0, 12)
+        CheckMark.BackgroundTransparency = 1
+        CheckMark.ScaleType = Enum.ScaleType.Fit
+        CheckMark.Image = "rbxassetid://6031094667"
+        CheckMark.ImageColor3 = Color3.fromRGB(255, 255, 255)
+        CheckMark.ImageTransparency = 1
+        CheckMark.ZIndex = 2
+        CheckMark.Parent = CheckboxFrame
 
-    UICorner23.CornerRadius = UDim.new(0, 15)
-    UICorner23.Parent = ToggleCircle
+    else
+        -- Pill toggle (perilaku asli)
+        FeatureFrame = Instance.new("Frame")
+        FeatureFrame.AnchorPoint = Vector2.new(1, 0.5)
+        FeatureFrame.BackgroundTransparency = 0.92
+        FeatureFrame.BorderSizePixel = 0
+        FeatureFrame.Position = UDim2.new(1, -15, 0.5, 0)
+        FeatureFrame.Size = UDim2.new(0, 30, 0, 15)
+        FeatureFrame.Name = "FeatureFrame"
+        FeatureFrame.Parent = Toggle
+        Instance.new("UICorner", FeatureFrame)
 
+        UIStroke8 = Instance.new("UIStroke")
+        UIStroke8.Color = Color3.fromRGB(255, 255, 255)
+        UIStroke8.Thickness = 2
+        UIStroke8.Transparency = 0.9
+        UIStroke8.Parent = FeatureFrame
+
+        ToggleCircle = Instance.new("Frame")
+        ToggleCircle.BackgroundColor3 = Color3.fromRGB(230, 230, 230)
+        ToggleCircle.BorderSizePixel = 0
+        ToggleCircle.Size = UDim2.new(0, 14, 0, 14)
+        ToggleCircle.Name = "ToggleCircle"
+        ToggleCircle.Parent = FeatureFrame
+        Instance.new("UICorner", ToggleCircle).CornerRadius = UDim.new(0, 15)
+    end
+
+    -- ── Set ───────────────────────────────────────────────────────────────────
     ToggleButton.Activated:Connect(function()
         ToggleFunc:Set(not ToggleFunc.Value)
     end)
@@ -1413,16 +1360,31 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         SaveConfig()
         SafeCall(cfg.Callback, Value)
 
-        if Value then
-            TweenService:Create(ToggleTitle, TweenInfo.new(0.2), { TextColor3 = GuiConfig.Color }):Play()
-            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 15, 0, 0) }):Play()
-            TweenService:Create(UIStroke8, TweenInfo.new(0.2), { Color = GuiConfig.Color, Transparency = 0 }):Play()
-            TweenService:Create(FeatureFrame, TweenInfo.new(0.2), { BackgroundColor3 = GuiConfig.Color, BackgroundTransparency = 0 }):Play()
+        if cfg.Type == "Checkbox" then
+            local cbStroke = CheckboxFrame:FindFirstChild("CBStroke")
+            if Value then
+                TweenService:Create(ToggleTitle,   TweenInfo.new(0.2), { TextColor3 = GuiConfig.Color }):Play()
+                TweenService:Create(CheckboxFrame, TweenInfo.new(0.2), { BackgroundColor3 = GuiConfig.Color, BackgroundTransparency = 0 }):Play()
+                if cbStroke then TweenService:Create(cbStroke, TweenInfo.new(0.2), { Color = GuiConfig.Color, Transparency = 0 }):Play() end
+                TweenService:Create(CheckMark,     TweenInfo.new(0.15), { ImageTransparency = 0 }):Play()
+            else
+                TweenService:Create(ToggleTitle,   TweenInfo.new(0.2), { TextColor3 = Color3.fromRGB(230, 230, 230) }):Play()
+                TweenService:Create(CheckboxFrame, TweenInfo.new(0.2), { BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92 }):Play()
+                if cbStroke then TweenService:Create(cbStroke, TweenInfo.new(0.2), { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.7 }):Play() end
+                TweenService:Create(CheckMark,     TweenInfo.new(0.1), { ImageTransparency = 1 }):Play()
+            end
         else
-            TweenService:Create(ToggleTitle, TweenInfo.new(0.2), { TextColor3 = Color3.fromRGB(230, 230, 230) }):Play()
-            TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 0, 0, 0) }):Play()
-            TweenService:Create(UIStroke8, TweenInfo.new(0.2), { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 }):Play()
-            TweenService:Create(FeatureFrame, TweenInfo.new(0.2), { BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92 }):Play()
+            if Value then
+                TweenService:Create(ToggleTitle,  TweenInfo.new(0.2), { TextColor3 = GuiConfig.Color }):Play()
+                TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 15, 0, 0) }):Play()
+                TweenService:Create(UIStroke8,    TweenInfo.new(0.2), { Color = GuiConfig.Color, Transparency = 0 }):Play()
+                TweenService:Create(FeatureFrame, TweenInfo.new(0.2), { BackgroundColor3 = GuiConfig.Color, BackgroundTransparency = 0 }):Play()
+            else
+                TweenService:Create(ToggleTitle,  TweenInfo.new(0.2), { TextColor3 = Color3.fromRGB(230, 230, 230) }):Play()
+                TweenService:Create(ToggleCircle, TweenInfo.new(0.2), { Position = UDim2.new(0, 0, 0, 0) }):Play()
+                TweenService:Create(UIStroke8,    TweenInfo.new(0.2), { Color = Color3.fromRGB(255, 255, 255), Transparency = 0.9 }):Play()
+                TweenService:Create(FeatureFrame, TweenInfo.new(0.2), { BackgroundColor3 = Color3.fromRGB(255, 255, 255), BackgroundTransparency = 0.92 }):Play()
+            end
         end
     end
 
