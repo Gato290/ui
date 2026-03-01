@@ -1,4 +1,6 @@
-local HttpService = game:GetService("HttpService") -- V0.0.7
+-- Main.lua | Version : V0.0.7
+
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -129,6 +131,8 @@ local function safeSize(pxWidth, pxHeight)
     return UDim2.new(scaleX, 0, scaleY, 0)
 end
 
+-- ✅ FIX: Replaced TweenService in MakeDraggable with direct assignment
+-- CoreGui objects cannot be tweened, so we assign Position/Size directly
 local function MakeDraggable(topbarobject, object, GuiConfig)
     local function CustomPos(topbarobject, object)
         local Dragging, DragInput, DragStart, StartPosition
@@ -141,8 +145,8 @@ local function MakeDraggable(topbarobject, object, GuiConfig)
                 StartPosition.Y.Scale,
                 StartPosition.Y.Offset + Delta.Y
             )
-            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Position = pos })
-            Tween:Play()
+            -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
+            object.Position = pos
         end
 
         topbarobject.InputBegan:Connect(function(input)
@@ -201,12 +205,10 @@ local function MakeDraggable(topbarobject, object, GuiConfig)
 
         local function UpdateSize(input)
             local Delta = input.Position - DragStart
-            local newWidth = StartSize.X.Offset + Delta.X
-            local newHeight = StartSize.Y.Offset + Delta.Y
-            newWidth = math.max(newWidth, minSizeX)
-            newHeight = math.max(newHeight, minSizeY)
-            local Tween = TweenService:Create(object, TweenInfo.new(0.2), { Size = UDim2.new(0, newWidth, 0, newHeight) })
-            Tween:Play()
+            local newWidth = math.max(StartSize.X.Offset + Delta.X, minSizeX)
+            local newHeight = math.max(StartSize.Y.Offset + Delta.Y, minSizeY)
+            -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
+            object.Size = UDim2.new(0, newWidth, 0, newHeight)
         end
 
         changesizeobject.InputBegan:Connect(function(input)
@@ -1988,7 +1990,6 @@ function Chloex:Window(GuiConfig)
             FeatureImg.Name = "FeatureImg"
             FeatureImg.Parent = FeatureFrame
 
-            -- ==================== TextXAlignment support ====================
             local alignMap = {
                 Left   = Enum.TextXAlignment.Left,
                 Center = Enum.TextXAlignment.Center,
@@ -2000,7 +2001,6 @@ function Chloex:Window(GuiConfig)
             SectionTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
             SectionTitle.TextSize = 13
             SectionTitle.TextXAlignment = (type(SectionConfig) == "table" and alignMap[SectionConfig.TextXAlignment]) or Enum.TextXAlignment.Left
-            -- ================================================================
             SectionTitle.TextYAlignment = Enum.TextYAlignment.Top
             SectionTitle.AnchorPoint = Vector2.new(0, 0.5)
             SectionTitle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
