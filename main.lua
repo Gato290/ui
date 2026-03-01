@@ -1,6 +1,6 @@
--- MAin.lua | Version : V0.1.0
+-- // Version : 0.1.1
 
-local HttpService = game:GetService("HttpService") -- V0.0.7
+local HttpService = game:GetService("HttpService") 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -513,7 +513,7 @@ end
 
 Notify = Nt
 
--- ==================== DIALOG (NO TWEEN FIX) ====================
+-- ==================== DIALOG ====================
 local ActiveDialog = nil
 
 function Chloex:Dialog(DialogConfig)
@@ -526,83 +526,171 @@ function Chloex:Dialog(DialogConfig)
         pcall(function() ActiveDialog:Destroy() end)
     end
 
+    -- blur + gelap saat dialog muncul
+    local Lighting = game:GetService("Lighting")
+    local existingBlur = Lighting:FindFirstChildOfClass("BlurEffect")
+    local blurCreated = false
+    local blur = existingBlur
+
+    if not blur then
+        blur = Instance.new("BlurEffect")
+        blur.Size = 0
+        blur.Parent = Lighting
+        blurCreated = true
+    end
+
+    local prevBlurSize = blur.Size
+    TweenService:Create(blur, TweenInfo.new(0.25, Enum.EasingStyle.Quad), { Size = 16 }):Play()
+
+    local function removeBlur()
+        TweenService:Create(blur, TweenInfo.new(0.2, Enum.EasingStyle.Quad), { Size = prevBlurSize }):Play()
+        if blurCreated then
+            task.delay(0.25, function()
+                if blur and blur.Parent then blur:Destroy() end
+            end)
+        end
+    end
+
     local DialogGui = Instance.new("ScreenGui")
     DialogGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
     DialogGui.Name = "DialogGui"
     DialogGui.Parent = CoreGui
 
+    -- dim background
     local Overlay = Instance.new("Frame")
     Overlay.Size = UDim2.new(1, 0, 1, 0)
-    Overlay.BackgroundTransparency = 1
+    Overlay.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Overlay.BackgroundTransparency = 0.45
+    Overlay.BorderSizePixel = 0
     Overlay.ZIndex = 50
     Overlay.Name = "Overlay"
     Overlay.Parent = DialogGui
 
+    -- card utama
     local Dialog = Instance.new("Frame")
-    Dialog.Size = UDim2.new(0, 300, 0, 150)
-    Dialog.Position = UDim2.new(0.5, -150, 0.5, -75)
-    Dialog.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    Dialog.Size = UDim2.new(0, 320, 0, 160)
+    Dialog.Position = UDim2.new(0.5, -160, 0.5, -80)
+    Dialog.BackgroundColor3 = Color3.fromRGB(14, 14, 14)
     Dialog.BorderSizePixel = 0
     Dialog.ZIndex = 51
     Dialog.Parent = Overlay
 
-    local UICorner = Instance.new("UICorner")
-    UICorner.CornerRadius = UDim.new(0, 8)
-    UICorner.Parent = Dialog
+    local DialogCorner = Instance.new("UICorner")
+    DialogCorner.CornerRadius = UDim.new(0, 10)
+    DialogCorner.Parent = Dialog
 
-    local UIStroke = Instance.new("UIStroke")
-    UIStroke.Color = Color3.fromRGB(12, 159, 255)
-    UIStroke.Thickness = 1.5
-    UIStroke.Transparency = 0.5
-    UIStroke.Parent = Dialog
+    local DialogStroke = Instance.new("UIStroke")
+    DialogStroke.Color = Color3.fromRGB(35, 35, 35)
+    DialogStroke.Thickness = 1.2
+    DialogStroke.Transparency = 0
+    DialogStroke.Parent = Dialog
 
+    -- garis accent tipis di atas
+    local AccentBar = Instance.new("Frame")
+    AccentBar.Size = UDim2.new(0, 40, 0, 2)
+    AccentBar.Position = UDim2.new(0, 14, 0, 0)
+    AccentBar.BackgroundColor3 = Color3.fromRGB(0, 180, 255)
+    AccentBar.BorderSizePixel = 0
+    AccentBar.ZIndex = 53
+    AccentBar.Parent = Dialog
+
+    local AccentCorner = Instance.new("UICorner")
+    AccentCorner.CornerRadius = UDim.new(0, 2)
+    AccentCorner.Parent = AccentBar
+
+    -- title
     local Title = Instance.new("TextLabel")
-    Title.Size = UDim2.new(1, 0, 0, 40)
-    Title.Position = UDim2.new(0, 0, 0, 4)
+    Title.Size = UDim2.new(1, -20, 0, 22)
+    Title.Position = UDim2.new(0, 14, 0, 14)
     Title.BackgroundTransparency = 1
     Title.Font = Enum.Font.GothamBold
     Title.Text = DialogConfig.Title
-    Title.TextSize = 22
-    Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+    Title.TextSize = 15
+    Title.TextColor3 = Color3.fromRGB(240, 240, 240)
+    Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.ZIndex = 52
     Title.Parent = Dialog
 
+    -- divider tipis
+    local Divider = Instance.new("Frame")
+    Divider.Size = UDim2.new(1, -28, 0, 1)
+    Divider.Position = UDim2.new(0, 14, 0, 42)
+    Divider.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+    Divider.BorderSizePixel = 0
+    Divider.ZIndex = 52
+    Divider.Parent = Dialog
+
+    -- content/message
     local Message = Instance.new("TextLabel")
-    Message.Size = UDim2.new(1, -20, 0, 60)
-    Message.Position = UDim2.new(0, 10, 0, 30)
+    Message.Size = UDim2.new(1, -28, 0, 55)
+    Message.Position = UDim2.new(0, 14, 0, 52)
     Message.BackgroundTransparency = 1
     Message.Font = Enum.Font.Gotham
     Message.Text = DialogConfig.Content
-    Message.TextSize = 14
-    Message.TextColor3 = Color3.fromRGB(200, 200, 200)
+    Message.TextSize = 13
+    Message.TextColor3 = Color3.fromRGB(155, 155, 155)
     Message.TextWrapped = true
+    Message.TextXAlignment = Enum.TextXAlignment.Left
+    Message.TextYAlignment = Enum.TextYAlignment.Top
     Message.ZIndex = 52
     Message.Parent = Dialog
 
+    -- tombol-tombol
+    local btnCount = #DialogConfig.Buttons
+    local btnW = (320 - 28 - (8 * (btnCount - 1))) / math.max(btnCount, 1)
+
     for i, buttonConfig in ipairs(DialogConfig.Buttons) do
+        local isPrimary = (i == 1)
+
         local Button = Instance.new("TextButton")
-        Button.Size = UDim2.new(0.45, -10, 0, 35)
-        if i == 1 then
-            Button.Position = UDim2.new(0.05, 0, 1, -55)
-        else
-            Button.Position = UDim2.new(0.5, 10, 1, -55)
-        end
-        Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-        Button.BackgroundTransparency = 0.935
+        Button.Size = UDim2.new(0, btnW, 0, 30)
+        Button.Position = UDim2.new(0, 14 + (btnW + 8) * (i - 1), 1, -42)
+        Button.BorderSizePixel = 0
         Button.Text = buttonConfig.Name or "Button"
         Button.Font = Enum.Font.GothamBold
-        Button.TextSize = 15
-        Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-        Button.TextTransparency = 0.3
+        Button.TextSize = 13
         Button.ZIndex = 52
         Button.Name = "DialogButton_" .. i
         Button.Parent = Dialog
 
-        local ButtonCorner = Instance.new("UICorner")
-        ButtonCorner.CornerRadius = UDim.new(0, 6)
-        ButtonCorner.Parent = Button
+        if isPrimary then
+            Button.BackgroundColor3 = Color3.fromRGB(0, 150, 220)
+            Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+            Button.BackgroundTransparency = 0
+        else
+            Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            Button.TextColor3 = Color3.fromRGB(180, 180, 180)
+            Button.BackgroundTransparency = 0
+
+            local BtnStroke = Instance.new("UIStroke")
+            BtnStroke.Color = Color3.fromRGB(50, 50, 50)
+            BtnStroke.Thickness = 1
+            BtnStroke.Parent = Button
+        end
+
+        local BtnCorner = Instance.new("UICorner")
+        BtnCorner.CornerRadius = UDim.new(0, 6)
+        BtnCorner.Parent = Button
+
+        -- hover effect pakai MouseEnter/Leave, bukan Tween
+        Button.MouseEnter:Connect(function()
+            if isPrimary then
+                Button.BackgroundColor3 = Color3.fromRGB(20, 170, 240)
+            else
+                Button.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+            end
+        end)
+
+        Button.MouseLeave:Connect(function()
+            if isPrimary then
+                Button.BackgroundColor3 = Color3.fromRGB(0, 150, 220)
+            else
+                Button.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+            end
+        end)
 
         Button.MouseButton1Click:Connect(function()
+            removeBlur()
             if buttonConfig.Callback and type(buttonConfig.Callback) == "function" then
                 pcall(function() buttonConfig.Callback() end)
             end
