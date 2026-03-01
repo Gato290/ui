@@ -1,6 +1,6 @@
--- Main.lua | Version : V0.0.7
+-- Main.lua | Version : V0.0.8
 
-local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService") 
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -311,11 +311,8 @@ function Chloex:MakeNotify(NotifyConfig)
             CoreGui.NotifyGui.NotifyLayout.ChildRemoved:Connect(function()
                 Count = 0
                 for i, v in CoreGui.NotifyGui.NotifyLayout:GetChildren() do
-                    TweenService:Create(
-                        v,
-                        TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-                        { Position = UDim2.new(0, 0, 1, -((v.Size.Y.Offset + 12) * Count)) }
-                    ):Play()
+                    -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
+                    v.Position = UDim2.new(0, 0, 1, -((v.Size.Y.Offset + 12) * Count))
                     Count = Count + 1
                 end
             end)
@@ -475,11 +472,8 @@ function Chloex:MakeNotify(NotifyConfig)
         function NotifyFunction:Close()
             if waitbruh then return false end
             waitbruh = true
-            TweenService:Create(
-                NotifyFrameReal,
-                TweenInfo.new(tonumber(NotifyConfig.Time), Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
-                { Position = UDim2.new(0, 400, 0, 0) }
-            ):Play()
+            -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
+            NotifyFrameReal.Position = UDim2.new(0, 400, 0, 0)
             task.wait(tonumber(NotifyConfig.Time) / 1.2)
             NotifyFrame:Destroy()
         end
@@ -488,11 +482,8 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyFunction:Close()
         end)
 
-        TweenService:Create(
-            NotifyFrameReal,
-            TweenInfo.new(tonumber(NotifyConfig.Time), Enum.EasingStyle.Back, Enum.EasingDirection.InOut),
-            { Position = UDim2.new(0, 0, 0, 0) }
-        ):Play()
+        -- ✅ FIX: Direct assign instead of TweenService (CoreGui tidak bisa di-tween)
+        NotifyFrameReal.Position = UDim2.new(0, 0, 0, 0)
         task.wait(tonumber(NotifyConfig.Delay))
         NotifyFunction:Close()
     end)
