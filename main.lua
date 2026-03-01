@@ -1,6 +1,6 @@
--- Main.lua | Version : V0.0.8
+-- Main.lua | Version : V0.0.9
 
-local HttpService = game:GetService("HttpService") 
+local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -266,12 +266,16 @@ function CircleClick(Button, X, Y)
             Size = Button.AbsoluteSize.X * 1.5
         end
 
-        local Time = 0.5
-        Circle:TweenSizeAndPosition(UDim2.new(0, Size, 0, Size), UDim2.new(0.5, -Size / 2, 0.5, -Size / 2), "Out", "Quad",
-            Time, false, nil)
-        for i = 1, 10 do
-            Circle.ImageTransparency = Circle.ImageTransparency + 0.01
-            wait(Time / 10)
+        -- FIX: TweenSizeAndPosition tidak bisa dipakai di CoreGui
+        -- Ganti dengan loop manual langsung assign Size dan transparency
+        local steps = 20
+        local stepTime = 0.5 / steps
+        for i = 1, steps do
+            local t = i / steps
+            Circle.Size = UDim2.new(0, Size * t, 0, Size * t)
+            Circle.Position = UDim2.new(0.5, -Size * t / 2, 0.5, -Size * t / 2)
+            Circle.ImageTransparency = 0.9 + (0.1 * t)
+            wait(stepTime)
         end
         Circle:Destroy()
     end)
