@@ -1,6 +1,6 @@
--- Version : V0.1.3
+-- // Version : 0.1.5 | Position Icon
 
-local HttpService = game:GetService("HttpService")
+local HttpService = game:GetService("HttpService") 
 local Players     = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
@@ -373,9 +373,9 @@ function Chloex:MakeNotify(NotifyConfig)
         Top.Parent = NotifyFrameReal
 
         local hasIcon = NotifyConfig.Icon and NotifyConfig.Icon ~= ""
-        local iconSize = 20
-        local iconPadding = 8
-        local titleOffsetX = hasIcon and (iconPadding + iconSize + 6) or 10
+        local iconSize = 36
+        local iconPadding = 10
+        local titleOffsetX = hasIcon and (iconPadding + iconSize + 8) or 10
 
         if hasIcon then
             local NotifyIcon = Instance.new("ImageLabel")
@@ -386,7 +386,7 @@ function Chloex:MakeNotify(NotifyConfig)
             NotifyIcon.Size = UDim2.new(0, iconSize, 0, iconSize)
             NotifyIcon.ImageColor3 = NotifyConfig.Color
             NotifyIcon.Name = "NotifyIcon"
-            NotifyIcon.Parent = Top
+            NotifyIcon.Parent = NotifyFrameReal
 
             local iconId = getIconId(NotifyConfig.Icon)
             if iconId and iconId ~= "" then
