@@ -1,22 +1,21 @@
--- // Version : 0.1.2
+-- Version : V0.1.3
 
 local HttpService = game:GetService("HttpService")
-local Players = game:GetService("Players")
+local Players     = game:GetService("Players")
 local LocalPlayer = Players.LocalPlayer
 
--- Load Color Module
-local ColorModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/color.lua"))()
+local BASE = "https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/"
+local function load(path) return loadstring(game:HttpGet(BASE .. path))() end
 
--- Load Elements Module
-local ElementsModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/Elements.lua"))()
+-- Modules
+local ColorModule    = load("Elements/color.lua")
+local ElementsModule = load("Elements/Elements.lua")
+local KeybindModule  = load("Elements/keybind.lua")
 
--- Load Keybind Module
-local KeybindModule = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Elements/keybind.lua"))()
-
--- Load Icon Libraries
-local defaultIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Icon/defaulticons.lua"))()
-local lucideIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Icon/lucideIcons.lua"))()
-local solarIcons = loadstring(game:HttpGet("https://raw.githubusercontent.com/Gato290/ui/refs/heads/main/Icon/solarIcons.lua"))()
+-- Icons
+local defaultIcons = load("Icon/defaulticons.lua")
+local lucideIcons  = load("Icon/lucideIcons.lua")
+local solarIcons   = load("Icon/solarIcons.lua")
 
 -- Merge all icons
 local Icons = {}
