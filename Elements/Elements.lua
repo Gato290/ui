@@ -1,4 +1,4 @@
--- Elements.lua V0.4.1
+-- Elements.lua V0.4.2 | Icon Support
 
 local TweenService = game:GetService("TweenService")
 local UserInputService = game:GetService("UserInputService")
@@ -13,6 +13,26 @@ function Elements:Initialize(config, saveFunc, configData, icons)
     SaveConfig = saveFunc
     ConfigData = configData
     Icons = icons
+end
+
+-- ─────────────────────────────────────────────────────────────────────────────
+--  getIconId  (mirrors Main.lua logic)
+-- ─────────────────────────────────────────────────────────────────────────────
+local function getIconId(iconName)
+    if not iconName or iconName == "" then return "" end
+    -- pure number → rbxassetid
+    if tostring(iconName):match("^%d+$") then
+        return "rbxassetid://" .. tostring(iconName)
+    end
+    -- named icon from merged Icons table
+    if Icons and Icons[iconName] then
+        return Icons[iconName]
+    end
+    -- already a full URL / rbxassetid string
+    if tostring(iconName):match("^https?://") or tostring(iconName):match("^rbxassetid://") then
+        return tostring(iconName)
+    end
+    return ""
 end
 
 local BADGE_CONFIG = {
@@ -249,21 +269,52 @@ local function RoundToFactor(value, factor)
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateParagraph  (V0.4.0 — Image / Video Thumbnail Support)
+--  Helper: build a small icon ImageLabel (reusable across elements)
+-- ─────────────────────────────────────────────────────────────────────────────
+local function MakeIconLabel(parent, iconName, size, posX, posY, anchorX, anchorY, color)
+    size      = size   or 16
+    posX      = posX   or 8
+    posY      = posY   or 0
+    anchorX   = anchorX or 0
+    anchorY   = anchorY or 0.5
+    color     = color  or Color3.fromRGB(220, 220, 220)
+
+    local iconId = getIconId(iconName)
+    if iconId == "" then return nil end
+
+    local img = Instance.new("ImageLabel")
+    img.Name = "ElementIcon"
+    img.BackgroundTransparency = 1
+    img.BorderSizePixel = 0
+    img.AnchorPoint = Vector2.new(anchorX, anchorY)
+    img.Position = UDim2.new(0, posX, 0.5, posY)
+    img.Size = UDim2.new(0, size, 0, size)
+    img.ScaleType = Enum.ScaleType.Fit
+    img.Image = iconId
+    img.ImageColor3 = color
+    img.Parent = parent
+    return img
+end
+
+-- ─────────────────────────────────────────────────────────────────────────────
+--  CreateParagraph  (V0.4.2 — full icon support)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateParagraph(parent, config, countItem)
     local cfg = config or {}
-    cfg.Title      = cfg.Title      or "Title"
-    cfg.Content    = cfg.Content    or "Content"
-    cfg.Badge      = cfg.Badge      or nil
-    cfg.Color      = cfg.Color      or nil
-    cfg.Locked     = cfg.Locked     or false
-    cfg.MediaType  = cfg.MediaType  or nil
-    cfg.MediaId    = cfg.MediaId    or nil
-    cfg.VideoId    = cfg.VideoId    or nil
+    cfg.Title       = cfg.Title       or "Title"
+    cfg.Content     = cfg.Content     or "Content"
+    cfg.Badge       = cfg.Badge       or nil
+    cfg.Color       = cfg.Color       or nil
+    cfg.Locked      = cfg.Locked      or false
+    cfg.Icon        = cfg.Icon        or nil   -- ← NEW: any icon name/id
+    cfg.IconColor   = cfg.IconColor   or Color3.fromRGB(220, 220, 220)
+    cfg.IconSize    = cfg.IconSize    or 20
+    cfg.MediaType   = cfg.MediaType   or nil
+    cfg.MediaId     = cfg.MediaId     or nil
+    cfg.VideoId     = cfg.VideoId     or nil
     cfg.MediaWidth  = cfg.MediaWidth  or 80
     cfg.MediaHeight = cfg.MediaHeight or 60
-    cfg.AutoPlay   = cfg.AutoPlay   or false
+    cfg.AutoPlay    = cfg.AutoPlay    or false
 
     local ParagraphFunc = {}
 
@@ -286,6 +337,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     Instance.new("UICorner", Paragraph).CornerRadius = UDim.new(0, 8)
     if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
+    -- ── Media ────────────────────────────────────────────────────────────────
     local mediaW = 0
     local mediaPadL = 0
     local VideoObject = nil
@@ -294,7 +346,7 @@ function Elements:CreateParagraph(parent, config, countItem)
     local IsPlaying = false
 
     if cfg.MediaType == "Image" or cfg.MediaType == "Video" then
-        mediaW   = cfg.MediaWidth
+        mediaW    = cfg.MediaWidth
         mediaPadL = 10
 
         local MediaContainer = Instance.new("Frame")
@@ -349,45 +401,39 @@ function Elements:CreateParagraph(parent, config, countItem)
             PlayIcon.Parent = PlayOverlay
 
             PlayOverlay.MouseButton1Click:Connect(function()
-                if IsPlaying then
-                    ParagraphFunc:StopVideo()
-                else
-                    ParagraphFunc:StartVideo()
-                end
+                if IsPlaying then ParagraphFunc:StopVideo() else ParagraphFunc:StartVideo() end
             end)
 
-            VideoObject.Ended:Connect(function()
-                ParagraphFunc:StopVideo()
-            end)
+            VideoObject.Ended:Connect(function() ParagraphFunc:StopVideo() end)
         end
     end
 
-    local iconSize = 0
+    -- ── Icon (non-media) ─────────────────────────────────────────────────────
     local iconPadL = 0
-    if cfg.Icon and not cfg.MediaType then
-        iconSize = 36
-        iconPadL = 10
-        local IconContainer = Instance.new("Frame")
-        IconContainer.Name = "IconContainer"
-        IconContainer.Position = UDim2.new(0, iconPadL, 0, 10)
-        IconContainer.Size = UDim2.new(0, iconSize, 0, iconSize)
-        IconContainer.BackgroundTransparency = 1
-        IconContainer.Parent = Paragraph
+    local iconSize = 0
 
-        local IconImg = Instance.new("ImageLabel")
-        IconImg.Name = "ParagraphIcon"
-        IconImg.Size = UDim2.new(1, 0, 1, 0)
-        IconImg.BackgroundTransparency = 1
-        IconImg.ScaleType = Enum.ScaleType.Fit
-        IconImg.Image = (Icons and Icons[cfg.Icon]) and Icons[cfg.Icon] or tostring(cfg.Icon)
-        IconImg.Parent = IconContainer
+    if cfg.Icon and cfg.Icon ~= "" and not cfg.MediaType then
+        iconSize = cfg.IconSize
+        iconPadL = 10
+        MakeIconLabel(
+            Paragraph,
+            cfg.Icon,
+            iconSize,
+            iconPadL,
+            0,           -- posY offset (centered via AnchorPoint)
+            0, 0.5,
+            cfg.IconColor
+        )
     end
 
+    -- ── Text offsets ─────────────────────────────────────────────────────────
     local textLeft
     if cfg.MediaType then
         textLeft = mediaPadL + mediaW + 10
+    elseif cfg.Icon and cfg.Icon ~= "" then
+        textLeft = iconPadL + iconSize + 8
     else
-        textLeft = iconPadL + iconSize + 10
+        textLeft = 10
     end
 
     local ParagraphTitle = Instance.new("TextLabel")
@@ -479,7 +525,7 @@ function Elements:CreateParagraph(parent, config, countItem)
         ParagraphContent.Size = UDim2.new(1, -(textLeft + 10), 0, contentH)
 
         local textBottom = 10 + 15 + 2 + contentH + 8
-        local mediaMinH = (cfg.MediaType and cfg.MediaHeight > 0) and (cfg.MediaHeight + 16) or 0
+        local mediaMinH  = (cfg.MediaType and cfg.MediaHeight > 0) and (cfg.MediaHeight + 16) or 0
         local headerBottom = math.max(textBottom, mediaMinH)
         local totalH = headerBottom
 
@@ -501,11 +547,9 @@ function Elements:CreateParagraph(parent, config, countItem)
 
     local LockFunc = ApplyLock(Paragraph, cfg.Locked)
 
+    -- ── Video controls ────────────────────────────────────────────────────────
     function ParagraphFunc:StartVideo()
-        if not VideoObject then
-            warn("[Elements] StartVideo: bukan tipe Video atau VideoId tidak diset.")
-            return
-        end
+        if not VideoObject then warn("[Elements] StartVideo: bukan tipe Video.") return end
         if IsPlaying then return end
         IsPlaying = true
         if ThumbnailImg then ThumbnailImg.Visible = false end
@@ -517,37 +561,27 @@ function Elements:CreateParagraph(parent, config, countItem)
     end
 
     function ParagraphFunc:StopVideo()
-        if not VideoObject then return end
-        if not IsPlaying then return end
+        if not VideoObject or not IsPlaying then return end
         IsPlaying = false
         VideoObject:Pause()
         VideoObject.Visible = false
-        if ThumbnailImg and cfg.MediaId and cfg.MediaId ~= "" then
-            ThumbnailImg.Visible = true
-        end
+        if ThumbnailImg and cfg.MediaId and cfg.MediaId ~= "" then ThumbnailImg.Visible = true end
         if PlayOverlay and PlayOverlay:FindFirstChild("PlayIcon") then
             PlayOverlay.PlayIcon.Image = "rbxassetid://7743870813"
         end
     end
 
     function ParagraphFunc:SetMedia(mediaType, mediaId, videoId)
-        if not ThumbnailImg then
-            warn("[Elements] SetMedia: Paragraph tidak dibuat dengan MediaType.")
-            return
-        end
+        if not ThumbnailImg then warn("[Elements] SetMedia: Paragraph tidak dibuat dengan MediaType.") return end
         if IsPlaying then ParagraphFunc:StopVideo() end
         ThumbnailImg.Image = mediaId or ""
-        if VideoObject then
-            VideoObject.Video = videoId or ""
-        end
+        if VideoObject then VideoObject.Video = videoId or "" end
         cfg.MediaType = mediaType
         cfg.MediaId   = mediaId
         cfg.VideoId   = videoId
     end
 
-    function ParagraphFunc:IsVideoPlaying()
-        return IsPlaying
-    end
+    function ParagraphFunc:IsVideoPlaying() return IsPlaying end
 
     function ParagraphFunc:SetContent(content)
         ParagraphContent.Text = tostring(content or "Content")
@@ -558,21 +592,20 @@ function Elements:CreateParagraph(parent, config, countItem)
         ParagraphTitle.Text = tostring(title or "Title")
     end
 
-    function ParagraphFunc:GetContent()
-        return ParagraphContent.Text
+    function ParagraphFunc:SetIcon(iconName, iconColor)
+        local img = Paragraph:FindFirstChild("ElementIcon")
+        local id  = getIconId(iconName or "")
+        if img then
+            img.Image = id
+            if iconColor then img.ImageColor3 = iconColor end
+        end
     end
 
-    function ParagraphFunc:GetTitle()
-        return ParagraphTitle.Text
-    end
+    function ParagraphFunc:GetContent() return ParagraphContent.Text end
+    function ParagraphFunc:GetTitle()   return ParagraphTitle.Text end
 
-    function ParagraphFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function ParagraphFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function ParagraphFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function ParagraphFunc:GetLocked()      return LockFunc:GetLocked() end
 
     if cfg.AutoPlay and cfg.MediaType == "Video" then
         task.defer(function() ParagraphFunc:StartVideo() end)
@@ -593,11 +626,11 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
     cfg.Default     = cfg.Default     or ""
     cfg.Badge       = cfg.Badge       or nil
     cfg.Locked      = cfg.Locked      or false
+    cfg.Icon        = cfg.Icon        or nil  -- ← NEW
+    cfg.IconColor   = cfg.IconColor   or Color3.fromRGB(220, 220, 220)
 
     local configKey = "EditableParagraph_" .. cfg.Title
-    if ConfigData[configKey] ~= nil then
-        cfg.Default = ConfigData[configKey]
-    end
+    if ConfigData[configKey] ~= nil then cfg.Default = ConfigData[configKey] end
 
     local ParagraphFunc = { Value = cfg.Default }
 
@@ -621,16 +654,12 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
 
     if cfg.Badge then CreateBadge(Paragraph, cfg.Badge) end
 
+    -- icon or default offset
     local iconOffset = 10
-    if cfg.Icon then
-        local IconImg = Instance.new("ImageLabel")
-        IconImg.Size = UDim2.new(0, 20, 0, 20)
-        IconImg.Position = UDim2.new(0, 8, 0, 10)
-        IconImg.BackgroundTransparency = 1
-        IconImg.Name = "ParagraphIcon"
-        IconImg.Image = (Icons and Icons[cfg.Icon]) and Icons[cfg.Icon] or tostring(cfg.Icon)
-        IconImg.Parent = Paragraph
-        iconOffset = 35
+    if cfg.Icon and cfg.Icon ~= "" then
+        local iconSize = 20
+        iconOffset = iconSize + 16
+        MakeIconLabel(Paragraph, cfg.Icon, iconSize, 8, -10, 0, 0, cfg.IconColor)
     end
 
     ParagraphTitle.Font = Enum.Font.GothamBold
@@ -728,25 +757,20 @@ function Elements:CreateEditableParagraph(parent, config, countItem)
         UpdateSize()
     end
 
-    function ParagraphFunc:GetContent()
-        return ParagraphTextBox.Text
+    function ParagraphFunc:GetContent() return ParagraphTextBox.Text end
+    function ParagraphFunc:SetTitle(title) ParagraphTitle.Text = tostring(title or "Title") end
+    function ParagraphFunc:GetTitle()      return ParagraphTitle.Text end
+
+    function ParagraphFunc:SetIcon(iconName, iconColor)
+        local img = Paragraph:FindFirstChild("ElementIcon")
+        if img then
+            img.Image = getIconId(iconName or "")
+            if iconColor then img.ImageColor3 = iconColor end
+        end
     end
 
-    function ParagraphFunc:SetTitle(title)
-        ParagraphTitle.Text = tostring(title or "Title")
-    end
-
-    function ParagraphFunc:GetTitle()
-        return ParagraphTitle.Text
-    end
-
-    function ParagraphFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function ParagraphFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function ParagraphFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function ParagraphFunc:GetLocked()      return LockFunc:GetLocked() end
 
     return ParagraphFunc
 end
@@ -760,22 +784,22 @@ function Elements:CreatePanel(parent, config, countItem)
     cfg.Content           = cfg.Content        or ""
     cfg.Placeholder       = cfg.Placeholder    or nil
     cfg.Default           = cfg.Default        or ""
-    cfg.ButtonText        = cfg.Button         or cfg.ButtonText     or "Confirm"
-    cfg.ButtonCallback    = cfg.Callback       or cfg.ButtonCallback  or function() end
-    cfg.SubButtonText     = cfg.SubButton      or cfg.SubButtonText   or nil
+    cfg.ButtonText        = cfg.Button         or cfg.ButtonText      or "Confirm"
+    cfg.ButtonCallback    = cfg.Callback       or cfg.ButtonCallback   or function() end
+    cfg.SubButtonText     = cfg.SubButton      or cfg.SubButtonText    or nil
     cfg.SubButtonCallback = cfg.SubCallback    or cfg.SubButtonCallback or function() end
     cfg.Badge             = cfg.Badge          or nil
     cfg.Locked            = cfg.Locked         or false
+    cfg.Icon              = cfg.Icon           or nil  -- ← NEW
+    cfg.IconColor         = cfg.IconColor      or Color3.fromRGB(220, 220, 220)
 
     local configKey = "Panel_" .. cfg.Title
-    if ConfigData[configKey] ~= nil then
-        cfg.Default = ConfigData[configKey]
-    end
+    if ConfigData[configKey] ~= nil then cfg.Default = ConfigData[configKey] end
 
     local PanelFunc = { Value = cfg.Default }
 
     local baseHeight = 50
-    if cfg.Placeholder then baseHeight = baseHeight + 40 end
+    if cfg.Placeholder   then baseHeight = baseHeight + 40 end
     if cfg.SubButtonText then baseHeight = baseHeight + 40 else baseHeight = baseHeight + 36 end
 
     local Panel = Instance.new("Frame")
@@ -788,6 +812,17 @@ function Elements:CreatePanel(parent, config, countItem)
     Instance.new("UICorner", Panel).CornerRadius = UDim.new(0, 4)
     if cfg.Badge then CreateBadge(Panel, cfg.Badge) end
 
+    -- icon
+    local titleOffsetX = 10
+    if cfg.Icon and cfg.Icon ~= "" then
+        local ic = MakeIconLabel(Panel, cfg.Icon, 16, 10, 0, 0, 0.5, cfg.IconColor)
+        if ic then
+            ic.Position = UDim2.new(0, 10, 0, 14)
+            ic.AnchorPoint = Vector2.new(0, 0)
+            titleOffsetX = 33
+        end
+    end
+
     local Title = Instance.new("TextLabel")
     Title.Font = Enum.Font.GothamBold
     Title.Text = cfg.Title
@@ -795,7 +830,7 @@ function Elements:CreatePanel(parent, config, countItem)
     Title.TextColor3 = Color3.fromRGB(255, 255, 255)
     Title.TextXAlignment = Enum.TextXAlignment.Left
     Title.BackgroundTransparency = 1
-    Title.Position = UDim2.new(0, 10, 0, 10)
+    Title.Position = UDim2.new(0, titleOffsetX, 0, 10)
     Title.Size = UDim2.new(1, -20, 0, 13)
     Title.Parent = Panel
 
@@ -807,7 +842,7 @@ function Elements:CreatePanel(parent, config, countItem)
     Content.TextXAlignment = Enum.TextXAlignment.Left
     Content.BackgroundTransparency = 1
     Content.RichText = true
-    Content.Position = UDim2.new(0, 10, 0, 28)
+    Content.Position = UDim2.new(0, titleOffsetX, 0, 28)
     Content.Size = UDim2.new(1, -20, 0, 14)
     Content.Parent = Panel
 
@@ -892,35 +927,27 @@ function Elements:CreatePanel(parent, config, countItem)
 
     local LockFunc = ApplyLock(Panel, cfg.Locked)
 
-    function PanelFunc:GetInput()
-        return InputBox and InputBox.Text or ""
+    function PanelFunc:GetInput()   return InputBox and InputBox.Text or "" end
+    function PanelFunc:GetValue()   return PanelFunc.Value end
+    function PanelFunc:SetContent(text) Content.Text = tostring(text or "") end
+    function PanelFunc:SetTitle(text)   Title.Text   = tostring(text or "Title") end
+
+    function PanelFunc:SetIcon(iconName, iconColor)
+        local img = Panel:FindFirstChild("ElementIcon")
+        if img then
+            img.Image = getIconId(iconName or "")
+            if iconColor then img.ImageColor3 = iconColor end
+        end
     end
 
-    function PanelFunc:GetValue()
-        return PanelFunc.Value
-    end
-
-    function PanelFunc:SetContent(text)
-        Content.Text = tostring(text or "")
-    end
-
-    function PanelFunc:SetTitle(text)
-        Title.Text = tostring(text or "Title")
-    end
-
-    function PanelFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function PanelFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function PanelFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function PanelFunc:GetLocked()      return LockFunc:GetLocked() end
 
     return PanelFunc
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateButton  (V1 = default, V2 = Title+Content kiri, icon circle kanan)
+--  CreateButton  (V1 & V2) — full icon support
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateButton(parent, config, countItem)
     local cfg = config or {}
@@ -932,9 +959,13 @@ function Elements:CreateButton(parent, config, countItem)
     cfg.Badge       = cfg.Badge       or nil
     cfg.Version     = cfg.Version     or "V1"
     cfg.Locked      = cfg.Locked      or false
+    cfg.Icon        = cfg.Icon        or nil  -- ← NEW (both V1 & V2)
+    cfg.IconColor   = cfg.IconColor   or Color3.fromRGB(220, 220, 220)
+    cfg.IconSize    = cfg.IconSize    or 16
 
     local ButtonFunc = {}
 
+    -- ── V2 ────────────────────────────────────────────────────────────────────
     if cfg.Version == "V2" then
         local hasContent = cfg.Content ~= ""
         local frameH = hasContent and 56 or 40
@@ -951,6 +982,13 @@ function Elements:CreateButton(parent, config, countItem)
 
         if cfg.Badge then CreateBadge(Button, cfg.Badge) end
 
+        -- left icon (title-side) for V2
+        local leftOffset = 12
+        if cfg.Icon and cfg.Icon ~= "" then
+            local ic = MakeIconLabel(Button, cfg.Icon, cfg.IconSize, 10, 0, 0, 0.5, cfg.IconColor)
+            if ic then leftOffset = 10 + cfg.IconSize + 6 end
+        end
+
         local TitleLabel = Instance.new("TextLabel")
         TitleLabel.Font = Enum.Font.GothamBold
         TitleLabel.Text = cfg.Title
@@ -963,10 +1001,10 @@ function Elements:CreateButton(parent, config, countItem)
         TitleLabel.Parent = Button
 
         if hasContent then
-            TitleLabel.Position = UDim2.new(0, 12, 0, 10)
+            TitleLabel.Position = UDim2.new(0, leftOffset, 0, 10)
             TitleLabel.Size = UDim2.new(1, -60, 0, 15)
         else
-            TitleLabel.Position = UDim2.new(0, 12, 0.5, -7)
+            TitleLabel.Position = UDim2.new(0, leftOffset, 0.5, -7)
             TitleLabel.Size = UDim2.new(1, -60, 0, 15)
         end
 
@@ -981,7 +1019,7 @@ function Elements:CreateButton(parent, config, countItem)
             ContentLabel.TextXAlignment = Enum.TextXAlignment.Left
             ContentLabel.TextYAlignment = Enum.TextYAlignment.Top
             ContentLabel.BackgroundTransparency = 1
-            ContentLabel.Position = UDim2.new(0, 12, 0, 28)
+            ContentLabel.Position = UDim2.new(0, leftOffset, 0, 28)
             ContentLabel.Size = UDim2.new(1, -60, 0, 14)
             ContentLabel.TextWrapped = true
             ContentLabel.RichText = true
@@ -989,32 +1027,34 @@ function Elements:CreateButton(parent, config, countItem)
             ContentLabel.Parent = Button
         end
 
-        local IconImg
-        if cfg.Icon then
-            IconImg = Instance.new("ImageLabel")
-            IconImg.AnchorPoint = Vector2.new(1, 0.5)
-            IconImg.Position = UDim2.new(1, -10, 0.5, 0)
-            IconImg.Size = UDim2.new(0, 20, 0, 20)
-            IconImg.BackgroundTransparency = 1
-            IconImg.ScaleType = Enum.ScaleType.Fit
-            IconImg.Image = (Icons and Icons[cfg.Icon]) and Icons[cfg.Icon] or tostring(cfg.Icon)
-            IconImg.ImageColor3 = Color3.fromRGB(220, 220, 220)
-            IconImg.ImageTransparency = 0.2
-            IconImg.Name = "IconImg"
-            IconImg.Parent = Button
+        -- right icon (arrow / custom) for V2
+        local RightImg
+        if cfg.RightIcon and cfg.RightIcon ~= "" then
+            RightImg = Instance.new("ImageLabel")
+            RightImg.AnchorPoint = Vector2.new(1, 0.5)
+            RightImg.Position = UDim2.new(1, -10, 0.5, 0)
+            RightImg.Size = UDim2.new(0, 20, 0, 20)
+            RightImg.BackgroundTransparency = 1
+            RightImg.ScaleType = Enum.ScaleType.Fit
+            RightImg.Image = getIconId(cfg.RightIcon)
+            RightImg.ImageColor3 = cfg.IconColor
+            RightImg.ImageTransparency = 0.2
+            RightImg.Name = "RightIcon"
+            RightImg.Parent = Button
         else
-            IconImg = Instance.new("TextLabel")
-            IconImg.AnchorPoint = Vector2.new(1, 0.5)
-            IconImg.Position = UDim2.new(1, -12, 0.5, 0)
-            IconImg.Size = UDim2.new(0, 20, 0, 20)
-            IconImg.BackgroundTransparency = 1
-            IconImg.Font = Enum.Font.GothamBold
-            IconImg.Text = ">"
-            IconImg.TextColor3 = Color3.fromRGB(220, 220, 220)
-            IconImg.TextTransparency = 0.2
-            IconImg.TextSize = 14
-            IconImg.Name = "IconImg"
-            IconImg.Parent = Button
+            -- fallback ">" arrow label
+            RightImg = Instance.new("TextLabel")
+            RightImg.AnchorPoint = Vector2.new(1, 0.5)
+            RightImg.Position = UDim2.new(1, -12, 0.5, 0)
+            RightImg.Size = UDim2.new(0, 20, 0, 20)
+            RightImg.BackgroundTransparency = 1
+            RightImg.Font = Enum.Font.GothamBold
+            RightImg.Text = ">"
+            RightImg.TextColor3 = Color3.fromRGB(220, 220, 220)
+            RightImg.TextTransparency = 0.2
+            RightImg.TextSize = 14
+            RightImg.Name = "RightIcon"
+            RightImg.Parent = Button
         end
 
         local ClickButton = Instance.new("TextButton")
@@ -1039,38 +1079,29 @@ function Elements:CreateButton(parent, config, countItem)
 
         local LockFunc = ApplyLock(Button, cfg.Locked)
 
-        function ButtonFunc:Fire()
-            SafeCall(cfg.Callback)
-        end
-
-        function ButtonFunc:SetTitle(text)
-            TitleLabel.Text = tostring(text or "")
-            cfg.Title = TitleLabel.Text
-        end
-
+        function ButtonFunc:Fire()             SafeCall(cfg.Callback) end
+        function ButtonFunc:SetTitle(text)     TitleLabel.Text = tostring(text or ""); cfg.Title = TitleLabel.Text end
         function ButtonFunc:SetContent(text)
-            if ContentLabel then
-                ContentLabel.Text = tostring(text or "")
-            end
+            if ContentLabel then ContentLabel.Text = tostring(text or "") end
             cfg.Content = tostring(text or "")
         end
+        function ButtonFunc:SetCallback(fn)    cfg.Callback = typeof(fn) == "function" and fn or function() end end
 
-        function ButtonFunc:SetCallback(fn)
-            cfg.Callback = typeof(fn) == "function" and fn or function() end
+        function ButtonFunc:SetIcon(iconName, iconColor)
+            local img = Button:FindFirstChild("ElementIcon")
+            if img then
+                img.Image = getIconId(iconName or "")
+                if iconColor then img.ImageColor3 = iconColor end
+            end
         end
 
-        function ButtonFunc:SetLocked(state)
-            LockFunc:SetLocked(state)
-        end
-
-        function ButtonFunc:GetLocked()
-            return LockFunc:GetLocked()
-        end
+        function ButtonFunc:SetLocked(state) LockFunc:SetLocked(state) end
+        function ButtonFunc:GetLocked()      return LockFunc:GetLocked() end
 
         return ButtonFunc
     end
 
-    -- V1
+    -- ── V1 ────────────────────────────────────────────────────────────────────
     local Button = Instance.new("Frame")
     Button.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     Button.BackgroundTransparency = 0.935
@@ -1081,6 +1112,13 @@ function Elements:CreateButton(parent, config, countItem)
     Instance.new("UICorner", Button).CornerRadius = UDim.new(0, 4)
     if cfg.Badge then CreateBadge(Button, cfg.Badge) end
 
+    -- V1 icon on the far-left of the button row
+    if cfg.Icon and cfg.Icon ~= "" then
+        MakeIconLabel(Button, cfg.Icon, cfg.IconSize, 8, 0, 0, 0.5, cfg.IconColor)
+    end
+
+    local iconShift = (cfg.Icon and cfg.Icon ~= "") and (cfg.IconSize + 12) or 0
+
     local MainButton = Instance.new("TextButton")
     MainButton.Font = Enum.Font.GothamBold
     MainButton.Text = cfg.Title
@@ -1089,8 +1127,10 @@ function Elements:CreateButton(parent, config, countItem)
     MainButton.TextTransparency = 0.3
     MainButton.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
     MainButton.BackgroundTransparency = 0.935
-    MainButton.Size = cfg.SubTitle and UDim2.new(0.5, -8, 1, -10) or UDim2.new(1, -12, 1, -10)
-    MainButton.Position = UDim2.new(0, 6, 0, 5)
+    MainButton.Size = cfg.SubTitle
+        and UDim2.new(0.5, -8 - iconShift/2, 1, -10)
+        or  UDim2.new(1, -12 - iconShift, 1, -10)
+    MainButton.Position = UDim2.new(0, 6 + iconShift, 0, 5)
     MainButton.AutoButtonColor = false
     MainButton.Parent = Button
     Instance.new("UICorner", MainButton).CornerRadius = UDim.new(0, 4)
@@ -1142,33 +1182,28 @@ function Elements:CreateButton(parent, config, countItem)
     end
 
     function ButtonFunc:SetSubTitle(text)
-        if SubButtonRef then
-            SubButtonRef.Text = tostring(text or "")
-            cfg.SubTitle = SubButtonRef.Text
+        if SubButtonRef then SubButtonRef.Text = tostring(text or ""); cfg.SubTitle = SubButtonRef.Text end
+    end
+
+    function ButtonFunc:SetCallback(fn)    cfg.Callback    = typeof(fn) == "function" and fn or function() end end
+    function ButtonFunc:SetSubCallback(fn) cfg.SubCallback = typeof(fn) == "function" and fn or function() end end
+
+    function ButtonFunc:SetIcon(iconName, iconColor)
+        local img = Button:FindFirstChild("ElementIcon")
+        if img then
+            img.Image = getIconId(iconName or "")
+            if iconColor then img.ImageColor3 = iconColor end
         end
     end
 
-    function ButtonFunc:SetCallback(fn)
-        cfg.Callback = typeof(fn) == "function" and fn or function() end
-    end
-
-    function ButtonFunc:SetSubCallback(fn)
-        cfg.SubCallback = typeof(fn) == "function" and fn or function() end
-    end
-
-    function ButtonFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function ButtonFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function ButtonFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function ButtonFunc:GetLocked()      return LockFunc:GetLocked() end
 
     return ButtonFunc
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateToggle  (V0.4.1 — Checkbox Support)
+--  CreateToggle  (V0.4.2 — Checkbox + Icon Support)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -1179,16 +1214,13 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     cfg.Callback = cfg.Callback or function() end
     cfg.Badge    = cfg.Badge    or nil
     cfg.Locked   = cfg.Locked   or false
-    cfg.Type     = cfg.Type     or "Toggle"   -- "Toggle" | "Checkbox"
+    cfg.Type     = cfg.Type     or "Toggle"
+    cfg.Icon     = cfg.Icon     or nil   -- ← NEW
+    cfg.IconColor = cfg.IconColor or Color3.fromRGB(220, 220, 220)
 
     local configKey = "Toggle_" .. cfg.Title
-    if ConfigData[configKey] ~= nil then
-        cfg.Default = ConfigData[configKey]
-    end
-
-    if typeof(cfg.Default) ~= "boolean" then
-        cfg.Default = cfg.Default and true or false
-    end
+    if ConfigData[configKey] ~= nil then cfg.Default = ConfigData[configKey] end
+    if typeof(cfg.Default) ~= "boolean" then cfg.Default = cfg.Default and true or false end
 
     local ToggleFunc = { Value = cfg.Default }
 
@@ -1211,6 +1243,13 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 
     if cfg.Badge then CreateBadge(Toggle, cfg.Badge) end
 
+    -- icon
+    local titleLeft = 10
+    if cfg.Icon and cfg.Icon ~= "" then
+        MakeIconLabel(Toggle, cfg.Icon, 16, 10, 0, 0, 0.5, cfg.IconColor)
+        titleLeft = 32
+    end
+
     ToggleTitle.Font = Enum.Font.GothamBold
     ToggleTitle.Text = cfg.Title
     ToggleTitle.TextSize = 13
@@ -1218,7 +1257,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleTitle.TextXAlignment = Enum.TextXAlignment.Left
     ToggleTitle.TextYAlignment = Enum.TextYAlignment.Top
     ToggleTitle.BackgroundTransparency = 1
-    ToggleTitle.Position = UDim2.new(0, 10, 0, 10)
+    ToggleTitle.Position = UDim2.new(0, titleLeft, 0, 10)
     ToggleTitle.Size = UDim2.new(1, -100, 0, 13)
     ToggleTitle.Name = "ToggleTitle"
     ToggleTitle.Parent = Toggle
@@ -1230,7 +1269,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleTitle2.TextXAlignment = Enum.TextXAlignment.Left
     ToggleTitle2.TextYAlignment = Enum.TextYAlignment.Top
     ToggleTitle2.BackgroundTransparency = 1
-    ToggleTitle2.Position = UDim2.new(0, 10, 0, 23)
+    ToggleTitle2.Position = UDim2.new(0, titleLeft, 0, 23)
     ToggleTitle2.Size = UDim2.new(1, -100, 0, 12)
     ToggleTitle2.Name = "ToggleTitle2"
     ToggleTitle2.Parent = Toggle
@@ -1248,11 +1287,11 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 
     if cfg.Title2 ~= "" then
         Toggle.Size = UDim2.new(1, 0, 0, 57)
-        ToggleContent.Position = UDim2.new(0, 10, 0, 36)
+        ToggleContent.Position = UDim2.new(0, titleLeft, 0, 36)
         ToggleTitle2.Visible = true
     else
         Toggle.Size = UDim2.new(1, 0, 0, 46)
-        ToggleContent.Position = UDim2.new(0, 10, 0, 23)
+        ToggleContent.Position = UDim2.new(0, titleLeft, 0, 23)
         ToggleTitle2.Visible = false
     end
 
@@ -1285,7 +1324,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
     ToggleButton.Name = "ToggleButton"
     ToggleButton.Parent = Toggle
 
-    -- ── Indicator: Toggle (pill) vs Checkbox ─────────────────────────────────
+    -- ── Indicator ────────────────────────────────────────────────────────────
     local FeatureFrame, ToggleCircle, UIStroke8
     local CheckboxFrame, CheckMark
 
@@ -1320,9 +1359,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         CheckMark.ImageTransparency = 1
         CheckMark.ZIndex = 2
         CheckMark.Parent = CheckboxFrame
-
     else
-        -- Pill toggle (perilaku asli)
         FeatureFrame = Instance.new("Frame")
         FeatureFrame.AnchorPoint = Vector2.new(1, 0.5)
         FeatureFrame.BackgroundTransparency = 0.92
@@ -1348,7 +1385,6 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         Instance.new("UICorner", ToggleCircle).CornerRadius = UDim.new(0, 15)
     end
 
-    -- ── Set ───────────────────────────────────────────────────────────────────
     ToggleButton.Activated:Connect(function()
         ToggleFunc:Set(not ToggleFunc.Value)
     end)
@@ -1388,19 +1424,19 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
         end
     end
 
-    function ToggleFunc:GetValue()
-        return ToggleFunc.Value
+    function ToggleFunc:GetValue() return ToggleFunc.Value end
+
+    function ToggleFunc:SetIcon(iconName, iconColor)
+        local img = Toggle:FindFirstChild("ElementIcon")
+        if img then
+            img.Image = getIconId(iconName or "")
+            if iconColor then img.ImageColor3 = iconColor end
+        end
     end
 
     local LockFunc = ApplyLock(Toggle, cfg.Locked)
-
-    function ToggleFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function ToggleFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function ToggleFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function ToggleFunc:GetLocked()      return LockFunc:GetLocked() end
 
     ToggleFunc:Set(ToggleFunc.Value)
     Elements_Table[configKey] = ToggleFunc
@@ -1408,7 +1444,7 @@ function Elements:CreateToggle(parent, config, countItem, updateSectionSize, Ele
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateSlider  (V0.3.2)
+--  CreateSlider  (V0.4.2 — Icon Support)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -1421,14 +1457,14 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     cfg.Callback  = cfg.Callback  or function() end
     cfg.Badge     = cfg.Badge     or nil
     cfg.Locked    = cfg.Locked    or false
+    cfg.Icon      = cfg.Icon      or nil  -- ← NEW
+    cfg.IconColor = cfg.IconColor or Color3.fromRGB(220, 220, 220)
 
     if cfg.Min >= cfg.Max then cfg.Max = cfg.Min + 1 end
     if cfg.Increment <= 0 then cfg.Increment = 1 end
 
     local configKey = "Slider_" .. cfg.Title
-    if ConfigData[configKey] ~= nil then
-        cfg.Default = ConfigData[configKey]
-    end
+    if ConfigData[configKey] ~= nil then cfg.Default = ConfigData[configKey] end
 
     local SliderFunc = { Value = cfg.Default }
 
@@ -1460,6 +1496,13 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
 
     if cfg.Badge then CreateBadge(Slider, cfg.Badge) end
 
+    -- icon
+    local titleLeft = 10
+    if cfg.Icon and cfg.Icon ~= "" then
+        MakeIconLabel(Slider, cfg.Icon, 16, 10, 0, 0, 0.5, cfg.IconColor)
+        titleLeft = 32
+    end
+
     SliderTitle.Font = Enum.Font.GothamBold
     SliderTitle.Text = cfg.Title
     SliderTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
@@ -1467,7 +1510,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderTitle.TextXAlignment = Enum.TextXAlignment.Left
     SliderTitle.TextYAlignment = Enum.TextYAlignment.Top
     SliderTitle.BackgroundTransparency = 1
-    SliderTitle.Position = UDim2.new(0, 10, 0, 10)
+    SliderTitle.Position = UDim2.new(0, titleLeft, 0, 10)
     SliderTitle.Size = UDim2.new(1, -180, 0, 13)
     SliderTitle.Name = "SliderTitle"
     SliderTitle.Parent = Slider
@@ -1480,7 +1523,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     SliderContent.TextXAlignment = Enum.TextXAlignment.Left
     SliderContent.TextYAlignment = Enum.TextYAlignment.Bottom
     SliderContent.BackgroundTransparency = 1
-    SliderContent.Position = UDim2.new(0, 10, 0, 25)
+    SliderContent.Position = UDim2.new(0, titleLeft, 0, 25)
     SliderContent.Size = UDim2.new(1, -180, 0, 12)
     SliderContent.Name = "SliderContent"
     SliderContent.Parent = Slider
@@ -1585,8 +1628,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         _settingFromCode = false
 
         local scale = (Value - cfg.Min) / (cfg.Max - cfg.Min)
-        TweenService:Create(
-            SliderDraggable,
+        TweenService:Create(SliderDraggable,
             TweenInfo.new(0.3, Enum.EasingStyle.Quad, Enum.EasingDirection.Out),
             { Size = UDim2.fromScale(scale, 1) }
         ):Play()
@@ -1596,9 +1638,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         SaveConfig()
     end
 
-    function SliderFunc:GetValue()
-        return SliderFunc.Value
-    end
+    function SliderFunc:GetValue() return SliderFunc.Value end
 
     function SliderFunc:SetMin(min)
         cfg.Min = tonumber(min) or cfg.Min
@@ -1625,8 +1665,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     end)
 
     UserInputService.InputEnded:Connect(function(Input)
-        if Dragging
-        and (Input.UserInputType == Enum.UserInputType.MouseButton1
+        if Dragging and (Input.UserInputType == Enum.UserInputType.MouseButton1
           or Input.UserInputType == Enum.UserInputType.Touch) then
             Dragging = false
             TweenService:Create(SliderCircle,
@@ -1637,8 +1676,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
     end)
 
     UserInputService.InputChanged:Connect(function(Input)
-        if Dragging
-        and (Input.UserInputType == Enum.UserInputType.MouseMovement
+        if Dragging and (Input.UserInputType == Enum.UserInputType.MouseMovement
           or Input.UserInputType == Enum.UserInputType.Touch) then
             SliderFunc:Set(cfg.Min + ((cfg.Max - cfg.Min) * GetScaleFromInput(Input.Position.X)))
         end
@@ -1657,15 +1695,17 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
         end
     end)
 
+    function SliderFunc:SetIcon(iconName, iconColor)
+        local img = Slider:FindFirstChild("ElementIcon")
+        if img then
+            img.Image = getIconId(iconName or "")
+            if iconColor then img.ImageColor3 = iconColor end
+        end
+    end
+
     local LockFunc = ApplyLock(Slider, cfg.Locked)
-
-    function SliderFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function SliderFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function SliderFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function SliderFunc:GetLocked()      return LockFunc:GetLocked() end
 
     SliderFunc:Set(cfg.Default)
     Elements_Table[configKey] = SliderFunc
@@ -1673,7 +1713,7 @@ function Elements:CreateSlider(parent, config, countItem, updateSectionSize, Ele
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateInput
+--  CreateInput  (V0.4.2 — Icon Support)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elements_Table)
     local cfg = config or {}
@@ -1683,11 +1723,11 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     cfg.Default  = cfg.Default  or ""
     cfg.Badge    = cfg.Badge    or nil
     cfg.Locked   = cfg.Locked   or false
+    cfg.Icon     = cfg.Icon     or nil  -- ← NEW
+    cfg.IconColor = cfg.IconColor or Color3.fromRGB(220, 220, 220)
 
     local configKey = "Input_" .. cfg.Title
-    if ConfigData[configKey] ~= nil then
-        cfg.Default = ConfigData[configKey]
-    end
+    if ConfigData[configKey] ~= nil then cfg.Default = ConfigData[configKey] end
 
     local InputFunc = { Value = cfg.Default }
 
@@ -1712,6 +1752,13 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
 
     if cfg.Badge then CreateBadge(Input, cfg.Badge) end
 
+    -- icon
+    local titleLeft = 10
+    if cfg.Icon and cfg.Icon ~= "" then
+        MakeIconLabel(Input, cfg.Icon, 16, 10, 0, 0, 0.5, cfg.IconColor)
+        titleLeft = 32
+    end
+
     InputTitle.Font = Enum.Font.GothamBold
     InputTitle.Text = cfg.Title
     InputTitle.TextColor3 = Color3.fromRGB(231, 231, 231)
@@ -1719,7 +1766,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     InputTitle.TextXAlignment = Enum.TextXAlignment.Left
     InputTitle.TextYAlignment = Enum.TextYAlignment.Top
     InputTitle.BackgroundTransparency = 1
-    InputTitle.Position = UDim2.new(0, 10, 0, 10)
+    InputTitle.Position = UDim2.new(0, titleLeft, 0, 10)
     InputTitle.Size = UDim2.new(1, -180, 0, 13)
     InputTitle.Name = "InputTitle"
     InputTitle.Parent = Input
@@ -1733,7 +1780,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
     InputContent.TextXAlignment = Enum.TextXAlignment.Left
     InputContent.TextYAlignment = Enum.TextYAlignment.Bottom
     InputContent.BackgroundTransparency = 1
-    InputContent.Position = UDim2.new(0, 10, 0, 25)
+    InputContent.Position = UDim2.new(0, titleLeft, 0, 25)
     InputContent.Size = UDim2.new(1, -180, 0, 12)
     InputContent.Name = "InputContent"
     InputContent.Parent = Input
@@ -1789,27 +1836,24 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
         SafeCall(cfg.Callback, Value)
     end
 
-    function InputFunc:GetValue()
-        return InputFunc.Value
-    end
-
-    function InputFunc:Clear()
-        InputFunc:Set("")
-    end
+    function InputFunc:GetValue() return InputFunc.Value end
+    function InputFunc:Clear()    InputFunc:Set("") end
 
     InputTextBox.FocusLost:Connect(function()
         InputFunc:Set(InputTextBox.Text)
     end)
 
+    function InputFunc:SetIcon(iconName, iconColor)
+        local img = Input:FindFirstChild("ElementIcon")
+        if img then
+            img.Image = getIconId(iconName or "")
+            if iconColor then img.ImageColor3 = iconColor end
+        end
+    end
+
     local LockFunc = ApplyLock(Input, cfg.Locked)
-
-    function InputFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function InputFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function InputFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function InputFunc:GetLocked()      return LockFunc:GetLocked() end
 
     InputFunc:Set(InputFunc.Value)
     Elements_Table[configKey] = InputFunc
@@ -1817,7 +1861,7 @@ function Elements:CreateInput(parent, config, countItem, updateSectionSize, Elem
 end
 
 -- ─────────────────────────────────────────────────────────────────────────────
---  CreateDropdown
+--  CreateDropdown  (V0.4.2 — Icon Support)
 -- ─────────────────────────────────────────────────────────────────────────────
 function Elements:CreateDropdown(parent, config, countItem, countDropdown, DropdownFolder, MoreBlur, DropdownSelect, DropPageLayout, Elements_Table)
     local cfg = config or {}
@@ -1829,11 +1873,11 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     cfg.Callback = cfg.Callback or function() end
     cfg.Badge    = cfg.Badge    or nil
     cfg.Locked   = cfg.Locked   or false
+    cfg.Icon     = cfg.Icon     or nil  -- ← NEW
+    cfg.IconColor = cfg.IconColor or Color3.fromRGB(220, 220, 220)
 
     local configKey = "Dropdown_" .. cfg.Title
-    if ConfigData[configKey] ~= nil then
-        cfg.Default = ConfigData[configKey]
-    end
+    if ConfigData[configKey] ~= nil then cfg.Default = ConfigData[configKey] end
 
     local DropdownFunc = { Value = cfg.Default, Options = {} }
 
@@ -1867,13 +1911,20 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
 
     if cfg.Badge then CreateBadge(Dropdown, cfg.Badge) end
 
+    -- icon
+    local titleLeft = 10
+    if cfg.Icon and cfg.Icon ~= "" then
+        MakeIconLabel(Dropdown, cfg.Icon, 16, 10, 0, 0, 0.5, cfg.IconColor)
+        titleLeft = 32
+    end
+
     DropdownTitle.Font = Enum.Font.GothamBold
     DropdownTitle.Text = cfg.Title
     DropdownTitle.TextColor3 = Color3.fromRGB(230, 230, 230)
     DropdownTitle.TextSize = 13
     DropdownTitle.TextXAlignment = Enum.TextXAlignment.Left
     DropdownTitle.BackgroundTransparency = 1
-    DropdownTitle.Position = UDim2.new(0, 10, 0, 10)
+    DropdownTitle.Position = UDim2.new(0, titleLeft, 0, 10)
     DropdownTitle.Size = UDim2.new(1, -180, 0, 13)
     DropdownTitle.Name = "DropdownTitle"
     DropdownTitle.Parent = Dropdown
@@ -1886,7 +1937,7 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     DropdownContent.TextWrapped = true
     DropdownContent.TextXAlignment = Enum.TextXAlignment.Left
     DropdownContent.BackgroundTransparency = 1
-    DropdownContent.Position = UDim2.new(0, 10, 0, 25)
+    DropdownContent.Position = UDim2.new(0, titleLeft, 0, 25)
     DropdownContent.Size = UDim2.new(1, -180, 0, 12)
     DropdownContent.Name = "DropdownContent"
     DropdownContent.Parent = Dropdown
@@ -1993,10 +2044,12 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     end
 
     function DropdownFunc:AddOption(option)
-        local label, value
-        if typeof(option) == "table" and option.Label and option.Value ~= nil then
-            label = tostring(option.Label)
-            value = option.Value
+        local label, value, optionIcon, optionIconColor
+        if typeof(option) == "table" and option.Label then
+            label            = tostring(option.Label)
+            value            = option.Value ~= nil and option.Value or option.Label
+            optionIcon       = option.Icon      or nil  -- ← per-option icon
+            optionIconColor  = option.IconColor or Color3.fromRGB(200, 200, 200)
         else
             label = tostring(option)
             value = option
@@ -2019,12 +2072,19 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         OptionButton.Name = "OptionButton"
         OptionButton.Parent = Option
 
+        -- per-option icon
+        local optTextLeft = 8
+        if optionIcon and optionIcon ~= "" then
+            local oi = MakeIconLabel(Option, optionIcon, 14, 8, 0, 0, 0.5, optionIconColor)
+            if oi then optTextLeft = 26 end
+        end
+
         local OptionText = Instance.new("TextLabel")
         OptionText.Font = Enum.Font.GothamBold
         OptionText.Text = label
         OptionText.TextSize = 13
         OptionText.TextColor3 = Color3.fromRGB(230, 230, 230)
-        OptionText.Position = UDim2.new(0, 8, 0, 8)
+        OptionText.Position = UDim2.new(0, optTextLeft, 0, 8)
         OptionText.Size = UDim2.new(1, -100, 0, 13)
         OptionText.BackgroundTransparency = 1
         OptionText.TextXAlignment = Enum.TextXAlignment.Left
@@ -2052,37 +2112,19 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
         OptionButton.Activated:Connect(function()
             if cfg.Multi then
                 local idx = table.find(DropdownFunc.Value, value)
-                if not idx then
-                    table.insert(DropdownFunc.Value, value)
-                else
-                    table.remove(DropdownFunc.Value, idx)
-                end
+                if not idx then table.insert(DropdownFunc.Value, value) else table.remove(DropdownFunc.Value, idx) end
                 DropdownFunc:Set(DropdownFunc.Value)
             else
-                if DropdownFunc.Value == value then
-                    DropdownFunc:Set(nil)
-                else
-                    DropdownFunc:Set(value)
-                end
+                DropdownFunc:Set(DropdownFunc.Value == value and nil or value)
             end
         end)
     end
 
     function DropdownFunc:Set(Value)
         if cfg.Multi then
-            if type(Value) == "table" then
-                DropdownFunc.Value = Value
-            elseif Value == nil then
-                DropdownFunc.Value = {}
-            else
-                DropdownFunc.Value = { Value }
-            end
+            DropdownFunc.Value = type(Value) == "table" and Value or (Value == nil and {} or { Value })
         else
-            if type(Value) == "table" then
-                DropdownFunc.Value = Value[1]
-            else
-                DropdownFunc.Value = Value
-            end
+            DropdownFunc.Value = type(Value) == "table" and Value[1] or Value
         end
 
         ConfigData[configKey] = DropdownFunc.Value
@@ -2124,27 +2166,27 @@ function Elements:CreateDropdown(parent, config, countItem, countDropdown, Dropd
     end
 
     function DropdownFunc:SetValue(val) self:Set(val) end
-    function DropdownFunc:GetValue() return self.Value end
+    function DropdownFunc:GetValue()    return self.Value end
 
     function DropdownFunc:SetValues(newList, selecting)
         newList   = newList   or {}
         selecting = selecting or (cfg.Multi and {} or nil)
         DropdownFunc:Clear()
-        for _, v in ipairs(newList) do
-            DropdownFunc:AddOption(v)
-        end
+        for _, v in ipairs(newList) do DropdownFunc:AddOption(v) end
         DropdownFunc:Set(selecting)
     end
 
+    function DropdownFunc:SetIcon(iconName, iconColor)
+        local img = Dropdown:FindFirstChild("ElementIcon")
+        if img then
+            img.Image = getIconId(iconName or "")
+            if iconColor then img.ImageColor3 = iconColor end
+        end
+    end
+
     local LockFunc = ApplyLock(Dropdown, cfg.Locked)
-
-    function DropdownFunc:SetLocked(state)
-        LockFunc:SetLocked(state)
-    end
-
-    function DropdownFunc:GetLocked()
-        return LockFunc:GetLocked()
-    end
+    function DropdownFunc:SetLocked(state) LockFunc:SetLocked(state) end
+    function DropdownFunc:GetLocked()      return LockFunc:GetLocked() end
 
     DropdownFunc:SetValues(cfg.Options, cfg.Default)
     Elements_Table[configKey] = DropdownFunc
@@ -2168,9 +2210,9 @@ function Elements:CreateDivider(parent, countItem)
 
     local UIGradient = Instance.new("UIGradient")
     UIGradient.Color = ColorSequence.new {
-        ColorSequenceKeypoint.new(0, Color3.fromRGB(20, 20, 20)),
+        ColorSequenceKeypoint.new(0,   Color3.fromRGB(20, 20, 20)),
         ColorSequenceKeypoint.new(0.5, GuiConfig.Color),
-        ColorSequenceKeypoint.new(1, Color3.fromRGB(20, 20, 20)),
+        ColorSequenceKeypoint.new(1,   Color3.fromRGB(20, 20, 20)),
     }
     UIGradient.Parent = Divider
     Instance.new("UICorner", Divider).CornerRadius = UDim.new(0, 2)
