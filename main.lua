@@ -751,7 +751,7 @@ function Chloex:Window(GuiConfig)
     Main.Parent = DropShadow
 
     MainStroke.Thickness = 1.2
-    MainStroke.Color = GuiConfig.Color
+    MainStroke.Color = Color3.fromRGB(255, 255, 255)
     MainStroke.Transparency = 0.6
     MainStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
     MainStroke.Parent = Main
